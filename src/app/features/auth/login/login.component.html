@@ -1,0 +1,53 @@
+<div class="flex min-h-screen items-center justify-center bg-slate-100 px-4">
+  <section class="w-full max-w-sm rounded-lg border border-slate-200 bg-white p-8 shadow-sm">
+    <div class="mb-6 text-center">
+      <p class="text-sm font-medium uppercase tracking-wide text-indigo-700">Asamblea Regional 2026</p>
+      <h1 class="mt-1 text-2xl font-semibold text-slate-950">Inventario</h1>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-4">
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Usuario</mat-label>
+        <input matInput formControlName="username" autocomplete="username" />
+        @if (form.controls.username.hasError('required')) {
+          <mat-error>El usuario es obligatorio.</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Contrasena</mat-label>
+        <input
+          matInput
+          [type]="hidePassword ? 'password' : 'text'"
+          formControlName="password"
+          autocomplete="current-password"
+        />
+        <button
+          mat-icon-button
+          matSuffix
+          type="button"
+          [attr.aria-label]="hidePassword ? 'Mostrar contrasena' : 'Ocultar contrasena'"
+          (click)="hidePassword = !hidePassword"
+        >
+          <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+        @if (form.controls.password.hasError('required')) {
+          <mat-error>La contrasena es obligatoria.</mat-error>
+        }
+      </mat-form-field>
+
+      @if (errorMessage) {
+        <div class="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {{ errorMessage }}
+        </div>
+      }
+
+      <button mat-flat-button color="primary" type="submit" [disabled]="loading" class="h-11 w-full">
+        @if (loading) {
+          <mat-spinner diameter="20" class="mr-2 inline-block" />
+        }
+        {{ loading ? 'Ingresando...' : 'Ingresar' }}
+      </button>
+    </form>
+  </section>
+</div>
