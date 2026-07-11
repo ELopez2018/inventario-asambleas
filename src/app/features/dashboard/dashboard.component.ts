@@ -25,5 +25,11 @@ export class DashboardComponent {
       title: 'Movimientos',
       caption: 'Historial del inventario',
     },
+    {
+      path: '/inventory-item-details',
+      icon: 'qr_code_2',
+      title: 'Detalle',
+      caption: 'Unidades por articulo y bodega',
+    },
   ];
 }

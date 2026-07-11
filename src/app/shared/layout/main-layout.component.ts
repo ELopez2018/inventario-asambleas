@@ -34,5 +34,6 @@ export class MainLayoutComponent {
     { path: '/events', label: 'Eventos', icon: 'event', exact: false },
     { path: '/inventory-items', label: 'Articulos', icon: 'inventory_2', exact: false },
     { path: '/inventory-transactions', label: 'Movimientos', icon: 'swap_horiz', exact: false },
+    { path: '/inventory-item-details', label: 'Detalle', icon: 'qr_code_2', exact: false },
   ];
 }

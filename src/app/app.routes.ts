@@ -91,6 +91,27 @@ export const routes: Routes = [
             (m) => m.TransactionFormComponent,
           ),
       },
+      {
+        path: 'inventory-item-details',
+        loadComponent: () =>
+          import('./features/inventory-item-details/detail-list/detail-list.component').then(
+            (m) => m.DetailListComponent,
+          ),
+      },
+      {
+        path: 'inventory-item-details/new',
+        loadComponent: () =>
+          import('./features/inventory-item-details/detail-form/detail-form.component').then(
+            (m) => m.DetailFormComponent,
+          ),
+      },
+      {
+        path: 'inventory-item-details/:id/edit',
+        loadComponent: () =>
+          import('./features/inventory-item-details/detail-form/detail-form.component').then(
+            (m) => m.DetailFormComponent,
+          ),
+      },
     ],
   },
   { path: '**', redirectTo: '' },

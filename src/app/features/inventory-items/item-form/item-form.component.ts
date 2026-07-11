@@ -23,7 +23,7 @@ import {
   InventoryItemStoreStock,
 } from '../../../models/inventory-item.model';
 import { UserResponse } from '../../../models/user.model';
-import { STORE_OPTIONS } from '../../../shared/store-options';
+import { INVENTORY_STATES, INVENTORY_STORES } from '../../../shared/catalogs.constants';
 
 function atLeastOneStoreStockValidator(control: AbstractControl): ValidationErrors | null {
   if (!(control instanceof FormArray)) {
@@ -69,13 +69,8 @@ export class ItemFormComponent implements OnInit {
   private readonly userService = inject(UserService);
 
   readonly itemId = Number(this.route.snapshot.paramMap.get('id')) || null;
-  readonly storeOptions = STORE_OPTIONS;
-  readonly stateOptions = [
-    { id: 1, label: 'BUEN ESTADO' },
-    { id: 2, label: 'MAL ESTADO' },
-    { id: 3, label: 'SIN INFORMACION' },
-    { id: 4, label: 'USADO' },
-  ];
+  readonly storeOptions = INVENTORY_STORES;
+  readonly stateOptions = INVENTORY_STATES;
   readonly form = this.fb.group({
     description: ['', [Validators.required, Validators.maxLength(255)]],
     ownerUserId: [0, [Validators.required, Validators.min(1)]],

@@ -15,7 +15,7 @@ import {
   InventoryItemStoreStock,
 } from '../../../models/inventory-item.model';
 import { UserResponse } from '../../../models/user.model';
-import { STORE_OPTIONS } from '../../../shared/store-options';
+import { INVENTORY_STATES, INVENTORY_STORES } from '../../../shared/catalogs.constants';
 
 @Component({
   selector: 'app-item-list',
@@ -51,13 +51,8 @@ export class ItemListComponent implements OnInit {
     'stateId',
     'actions',
   ];
-  private readonly storeLabelMap = new Map(STORE_OPTIONS.map((store) => [store.id, store.label]));
-  private readonly stateLabelMap = new Map<number, string>([
-    [1, 'BUEN ESTADO'],
-    [2, 'MAL ESTADO'],
-    [3, 'SIN INFORMACION'],
-    [4, 'USADO'],
-  ]);
+  private readonly storeLabelMap = new Map(INVENTORY_STORES.map((store) => [store.id, store.code]));
+  private readonly stateLabelMap = new Map(INVENTORY_STATES.map((state) => [state.id, state.code]));
   items: InventoryItemResponse[] = [];
   users: UserResponse[] = [];
   storeTabs: { id: number; label: string }[] = [];

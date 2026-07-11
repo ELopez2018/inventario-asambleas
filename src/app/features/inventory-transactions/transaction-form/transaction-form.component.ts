@@ -26,7 +26,7 @@ import {
   MovementType,
 } from '../../../models/inventory-transaction.model';
 import { UserResponse } from '../../../models/user.model';
-import { STORE_OPTIONS } from '../../../shared/store-options';
+import { INVENTORY_STORES } from '../../../shared/catalogs.constants';
 
 function toLocalDateTime(value: string): string {
   return value.length === 16 ? `${value}:00` : value;
@@ -78,7 +78,7 @@ export class TransactionFormComponent implements OnInit {
   private readonly userService = inject(UserService);
 
   readonly transactionId = Number(this.route.snapshot.paramMap.get('id')) || null;
-  readonly storeOptions = STORE_OPTIONS;
+  readonly storeOptions = INVENTORY_STORES;
   readonly movementTypes: { value: MovementType; label: string }[] = [
     { value: 'INCOME', label: 'Ingreso' },
     { value: 'RETURN', label: 'Retorno' },
