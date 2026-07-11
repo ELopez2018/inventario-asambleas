@@ -4,11 +4,18 @@ import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTabsModule } from '@angular/material/tabs';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { finalize } from 'rxjs';
+import { finalize, forkJoin } from 'rxjs';
 import { InventoryItemService } from '../../../core/services/inventory-item.service';
-import { InventoryItemResponse } from '../../../models/inventory-item.model';
+import { UserService } from '../../../core/services/user.service';
+import {
+  InventoryItemResponse,
+  InventoryItemStoreStock,
+} from '../../../models/inventory-item.model';
+import { UserResponse } from '../../../models/user.model';
+import { STORE_OPTIONS } from '../../../shared/store-options';
 
 @Component({
   selector: 'app-item-list',
@@ -18,98 +25,91 @@ import { InventoryItemResponse } from '../../../models/inventory-item.model';
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
+    MatTabsModule,
     MatTableModule,
     MatTooltipModule,
   ],
-  template: `
-    <section class="mx-auto max-w-6xl">
-      <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 class="text-2xl font-semibold text-slate-950">Articulos</h1>
-          <p class="text-sm text-slate-600">Existencias registradas para la asamblea.</p>
-        </div>
-        <a mat-flat-button color="primary" routerLink="/inventory-items/new">
-          <mat-icon>add</mat-icon>
-          Nuevo
-        </a>
-      </div>
-
-      <div class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-        @if (loading) {
-          <div class="flex items-center justify-center p-10">
-            <mat-spinner diameter="36" />
-          </div>
-        } @else if (errorMessage) {
-          <div class="p-6 text-sm text-red-700">{{ errorMessage }}</div>
-        } @else if (!items.length) {
-          <div class="p-6 text-sm text-slate-600">No hay articulos registrados.</div>
-        } @else {
-          <div class="overflow-x-auto">
-            <table mat-table [dataSource]="items" class="min-w-full">
-              <ng-container matColumnDef="description">
-                <th mat-header-cell *matHeaderCellDef>Descripcion</th>
-                <td mat-cell *matCellDef="let item">{{ item.description }}</td>
-              </ng-container>
-
-              <ng-container matColumnDef="quantity">
-                <th mat-header-cell *matHeaderCellDef>Cantidad</th>
-                <td mat-cell *matCellDef="let item">{{ item.quantity | number: '1.0-2' }}</td>
-              </ng-container>
-
-              <ng-container matColumnDef="ownerUserId">
-                <th mat-header-cell *matHeaderCellDef>Dueno</th>
-                <td mat-cell *matCellDef="let item">#{{ item.ownerUserId }}</td>
-              </ng-container>
-
-              <ng-container matColumnDef="storeId">
-                <th mat-header-cell *matHeaderCellDef>Almacen</th>
-                <td mat-cell *matCellDef="let item">#{{ item.storeId }}</td>
-              </ng-container>
-
-              <ng-container matColumnDef="stateId">
-                <th mat-header-cell *matHeaderCellDef>Estado</th>
-                <td mat-cell *matCellDef="let item">#{{ item.stateId }}</td>
-              </ng-container>
-
-              <ng-container matColumnDef="actions">
-                <th mat-header-cell *matHeaderCellDef class="w-28 text-right">Acciones</th>
-                <td mat-cell *matCellDef="let item" class="text-right">
-                  <a
-                    mat-icon-button
-                    [routerLink]="['/inventory-items', item.id, 'edit']"
-                    matTooltip="Editar"
-                  >
-                    <mat-icon>edit</mat-icon>
-                  </a>
-                  <button mat-icon-button type="button" matTooltip="Eliminar" (click)="deleteItem(item)">
-                    <mat-icon>delete</mat-icon>
-                  </button>
-                </td>
-              </ng-container>
-
-              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-              <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-            </table>
-          </div>
-        }
-      </div>
-    </section>
-  `,
+  templateUrl: './item-list.component.html',
+  styleUrl: './item-list.component.css',
 })
 export class ItemListComponent implements OnInit {
   private readonly itemService = inject(InventoryItemService);
+  private readonly userService = inject(UserService);
 
   readonly displayedColumns = [
     'description',
     'quantity',
+    'totalQuantity',
     'ownerUserId',
-    'storeId',
     'stateId',
     'actions',
   ];
+  readonly storeInventoryColumns = [
+    'description',
+    'storeQuantity',
+    'ownerUserId',
+    'stateId',
+    'actions',
+  ];
+  private readonly storeLabelMap = new Map(STORE_OPTIONS.map((store) => [store.id, store.label]));
+  private readonly stateLabelMap = new Map<number, string>([
+    [1, 'Disponible'],
+    [2, 'Asignado'],
+    [3, 'Dado de baja'],
+  ]);
   items: InventoryItemResponse[] = [];
+  users: UserResponse[] = [];
+  storeTabs: { id: number; label: string }[] = [];
   loading = false;
   errorMessage = '';
+
+  getStoreLabel(storeId: number) {
+    return this.storeLabelMap.get(storeId) ?? `Almacen #${storeId}`;
+  }
+
+  getStoreDisplayName(stock: InventoryItemStoreStock) {
+    const name = stock.storeName?.trim();
+    return name ? name : this.getStoreLabel(stock.storeId);
+  }
+
+  getOwnerName(ownerUserId: number) {
+    const user = this.users.find((currentUser) => currentUser.id === ownerUserId);
+    return user ? `${user.firstName} ${user.lastName}` : `Usuario #${ownerUserId}`;
+  }
+
+  getStateLabel(stateId: number) {
+    return this.stateLabelMap.get(stateId) ?? `Estado #${stateId}`;
+  }
+
+  getTotalStock(item: InventoryItemResponse) {
+    return item.storeStocks.reduce((sum, stock) => sum + stock.quantity, 0);
+  }
+
+  getStoreStock(item: InventoryItemResponse, storeId: number) {
+    return item.storeStocks.find((stock) => stock.storeId === storeId)?.quantity ?? 0;
+  }
+
+  getItemsByStore(storeId: number) {
+    return this.items.filter((item) => item.storeStocks.some((stock) => stock.storeId === storeId));
+  }
+
+  buildStoreTabs(items: InventoryItemResponse[]) {
+    const storeTabsMap = new Map<number, string>();
+
+    for (const item of items) {
+      for (const stock of item.storeStocks) {
+        const currentLabel = storeTabsMap.get(stock.storeId);
+
+        if (!currentLabel) {
+          storeTabsMap.set(stock.storeId, this.getStoreDisplayName(stock));
+        }
+      }
+    }
+
+    this.storeTabs = Array.from(storeTabsMap.entries())
+      .sort((a, b) => a[0] - b[0])
+      .map(([storeId, label]) => ({ id: storeId, label }));
+  }
 
   ngOnInit() {
     this.loadItems();
@@ -119,11 +119,17 @@ export class ItemListComponent implements OnInit {
     this.loading = true;
     this.errorMessage = '';
 
-    this.itemService
-      .getAll()
+    forkJoin({
+      items: this.itemService.getAll(),
+      users: this.userService.getAll(),
+    })
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({
-        next: (items) => (this.items = items),
+        next: ({ items, users }) => {
+          this.items = items;
+          this.users = users;
+          this.buildStoreTabs(items);
+        },
         error: () => (this.errorMessage = 'No se pudieron cargar los articulos.'),
       });
   }

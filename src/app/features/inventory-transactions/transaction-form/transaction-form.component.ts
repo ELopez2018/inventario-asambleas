@@ -1,6 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
-import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  NonNullableFormBuilder,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -20,6 +26,7 @@ import {
   MovementType,
 } from '../../../models/inventory-transaction.model';
 import { UserResponse } from '../../../models/user.model';
+import { STORE_OPTIONS } from '../../../shared/store-options';
 
 function toLocalDateTime(value: string): string {
   return value.length === 16 ? `${value}:00` : value;
@@ -27,6 +34,22 @@ function toLocalDateTime(value: string): string {
 
 function fromLocalDateTime(value: string): string {
   return value ? value.slice(0, 16) : '';
+}
+
+function transferStoresValidator(control: AbstractControl): ValidationErrors | null {
+  const movementType = control.get('movementType')?.value as MovementType | null;
+  const sourceStoreId = Number(control.get('sourceStoreId')?.value || 0);
+  const destinationStoreId = Number(control.get('destinationStoreId')?.value || 0);
+
+  if (movementType !== 'TRANSFER') {
+    return null;
+  }
+
+  if (sourceStoreId > 0 && destinationStoreId > 0 && sourceStoreId === destinationStoreId) {
+    return { sameTransferStore: true };
+  }
+
+  return null;
 }
 
 @Component({
@@ -42,138 +65,8 @@ function fromLocalDateTime(value: string): string {
     MatProgressSpinnerModule,
     MatSelectModule,
   ],
-  template: `
-    <section class="mx-auto max-w-4xl">
-      <div class="mb-5">
-        <a
-          routerLink="/inventory-transactions"
-          class="inline-flex items-center gap-1 text-sm font-medium text-indigo-700"
-        >
-          <mat-icon class="text-base">arrow_back</mat-icon>
-          Movimientos
-        </a>
-        <h1 class="mt-3 text-2xl font-semibold text-slate-950">
-          {{ transactionId ? 'Editar movimiento' : 'Nuevo movimiento' }}
-        </h1>
-      </div>
-
-      <form
-        [formGroup]="form"
-        (ngSubmit)="submit()"
-        class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
-      >
-        @if (loading) {
-          <div class="flex justify-center p-8">
-            <mat-spinner diameter="36" />
-          </div>
-        } @else {
-          <div class="grid gap-4 md:grid-cols-2">
-            <mat-form-field appearance="outline">
-              <mat-label>Articulo</mat-label>
-              <mat-select formControlName="itemId">
-                @for (item of items; track item.id) {
-                  <mat-option [value]="item.id">{{ item.description }}</mat-option>
-                }
-              </mat-select>
-              @if (form.controls.itemId.hasError('min')) {
-                <mat-error>Seleccione un articulo.</mat-error>
-              }
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>Cantidad</mat-label>
-              <input matInput type="number" min="0.01" step="0.01" formControlName="quantity" />
-              @if (form.controls.quantity.hasError('min')) {
-                <mat-error>La cantidad debe ser mayor a cero.</mat-error>
-              }
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>Tipo</mat-label>
-              <mat-select formControlName="movementType">
-                @for (type of movementTypes; track type.value) {
-                  <mat-option [value]="type.value">{{ type.label }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>Fecha</mat-label>
-              <input matInput type="datetime-local" formControlName="movementDate" />
-              @if (form.controls.movementDate.hasError('required')) {
-                <mat-error>La fecha es obligatoria.</mat-error>
-              }
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>Responsable</mat-label>
-              <mat-select formControlName="responsibleUserId">
-                @for (user of users; track user.id) {
-                  <mat-option [value]="user.id">{{ user.firstName }} {{ user.lastName }}</mat-option>
-                }
-              </mat-select>
-              @if (form.controls.responsibleUserId.hasError('min')) {
-                <mat-error>Seleccione un responsable.</mat-error>
-              }
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>Recibido por</mat-label>
-              <mat-select formControlName="receivedByUserId">
-                <mat-option [value]="0">Sin registrar</mat-option>
-                @for (user of users; track user.id) {
-                  <mat-option [value]="user.id">{{ user.firstName }} {{ user.lastName }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>Origen</mat-label>
-              <input matInput formControlName="origin" maxlength="255" />
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>Destino</mat-label>
-              <input matInput formControlName="destination" maxlength="255" />
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>Evento</mat-label>
-              <mat-select formControlName="eventId">
-                @for (event of events; track event.id) {
-                  <mat-option [value]="event.id">{{ event.description }}</mat-option>
-                }
-              </mat-select>
-              @if (form.controls.eventId.hasError('min')) {
-                <mat-error>Seleccione un evento.</mat-error>
-              }
-            </mat-form-field>
-
-            <mat-form-field appearance="outline" class="md:col-span-2">
-              <mat-label>Notas de condicion</mat-label>
-              <textarea matInput rows="4" formControlName="conditionNotes" maxlength="500"></textarea>
-            </mat-form-field>
-          </div>
-
-          @if (errorMessage) {
-            <div class="mb-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-              {{ errorMessage }}
-            </div>
-          }
-
-          <div class="flex justify-end gap-2">
-            <a mat-button routerLink="/inventory-transactions">Cancelar</a>
-            <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid || saving">
-              @if (saving) {
-                <mat-spinner diameter="18" class="mr-2 inline-block" />
-              }
-              Guardar
-            </button>
-          </div>
-        }
-      </form>
-    </section>
-  `,
+  templateUrl: './transaction-form.component.html',
+  styleUrl: './transaction-form.component.css',
 })
 export class TransactionFormComponent implements OnInit {
   private readonly fb = inject(NonNullableFormBuilder);
@@ -185,6 +78,7 @@ export class TransactionFormComponent implements OnInit {
   private readonly userService = inject(UserService);
 
   readonly transactionId = Number(this.route.snapshot.paramMap.get('id')) || null;
+  readonly storeOptions = STORE_OPTIONS;
   readonly movementTypes: { value: MovementType; label: string }[] = [
     { value: 'INCOME', label: 'Ingreso' },
     { value: 'RETURN', label: 'Retorno' },
@@ -192,18 +86,23 @@ export class TransactionFormComponent implements OnInit {
     { value: 'DECOMMISSION', label: 'Baja' },
     { value: 'EGRESS', label: 'Egreso' },
   ];
-  readonly form = this.fb.group({
-    itemId: [0, [Validators.required, Validators.min(1)]],
-    quantity: [1, [Validators.required, Validators.min(0.01)]],
-    movementType: this.fb.control<MovementType>('INCOME', Validators.required),
-    origin: ['', Validators.maxLength(255)],
-    destination: ['', Validators.maxLength(255)],
-    responsibleUserId: [0, [Validators.required, Validators.min(1)]],
-    receivedByUserId: [0],
-    conditionNotes: ['', Validators.maxLength(500)],
-    movementDate: [new Date().toISOString().slice(0, 16), Validators.required],
-    eventId: [0, [Validators.required, Validators.min(1)]],
-  });
+  readonly form = this.fb.group(
+    {
+      itemId: [0, [Validators.required, Validators.min(1)]],
+      quantity: [1, [Validators.required, Validators.min(0.01)]],
+      movementType: this.fb.control<MovementType>('INCOME', Validators.required),
+      sourceStoreId: [0],
+      destinationStoreId: [0],
+      origin: ['', Validators.maxLength(255)],
+      destination: ['', Validators.maxLength(255)],
+      responsibleUserId: [0, [Validators.required, Validators.min(1)]],
+      receivedByUserId: [0],
+      conditionNotes: ['', Validators.maxLength(500)],
+      movementDate: [new Date().toISOString().slice(0, 16), Validators.required],
+      eventId: [0, [Validators.required, Validators.min(1)]],
+    },
+    { validators: transferStoresValidator },
+  );
 
   events: EventResponse[] = [];
   items: InventoryItemResponse[] = [];
@@ -213,6 +112,9 @@ export class TransactionFormComponent implements OnInit {
   errorMessage = '';
 
   ngOnInit() {
+    this.form.controls.movementType.valueChanges.subscribe((type) => this.applyMovementRules(type));
+    this.applyMovementRules(this.form.controls.movementType.value);
+
     this.loading = true;
 
     if (this.transactionId) {
@@ -232,6 +134,8 @@ export class TransactionFormComponent implements OnInit {
               itemId: transaction.itemId,
               quantity: transaction.quantity,
               movementType: transaction.movementType,
+              sourceStoreId: transaction.sourceStoreId ?? 0,
+              destinationStoreId: transaction.destinationStoreId ?? 0,
               origin: transaction.origin ?? '',
               destination: transaction.destination ?? '',
               responsibleUserId: transaction.responsibleUserId,
@@ -240,6 +144,7 @@ export class TransactionFormComponent implements OnInit {
               movementDate: fromLocalDateTime(transaction.movementDate),
               eventId: transaction.eventId,
             });
+            this.applyMovementRules(transaction.movementType);
           },
           error: () => (this.errorMessage = 'No se pudo cargar la informacion del movimiento.'),
         });
@@ -262,6 +167,54 @@ export class TransactionFormComponent implements OnInit {
       });
   }
 
+  applyMovementRules(movementType: MovementType) {
+    const source = this.form.controls.sourceStoreId;
+    const destination = this.form.controls.destinationStoreId;
+    const receivedBy = this.form.controls.receivedByUserId;
+    const conditionNotes = this.form.controls.conditionNotes;
+
+    source.enable({ emitEvent: false });
+    destination.enable({ emitEvent: false });
+    receivedBy.enable({ emitEvent: false });
+    conditionNotes.enable({ emitEvent: false });
+
+    source.setValidators([]);
+    destination.setValidators([]);
+    receivedBy.setValidators([]);
+    conditionNotes.setValidators([Validators.maxLength(500)]);
+
+    switch (movementType) {
+      case 'INCOME':
+        source.setValue(0, { emitEvent: false });
+        source.disable({ emitEvent: false });
+        destination.setValidators([Validators.required, Validators.min(1)]);
+        break;
+      case 'RETURN':
+        source.setValue(0, { emitEvent: false });
+        source.disable({ emitEvent: false });
+        destination.setValidators([Validators.required, Validators.min(1)]);
+        receivedBy.setValidators([Validators.required, Validators.min(1)]);
+        conditionNotes.setValidators([Validators.required, Validators.maxLength(500)]);
+        break;
+      case 'EGRESS':
+      case 'DECOMMISSION':
+        destination.setValue(0, { emitEvent: false });
+        destination.disable({ emitEvent: false });
+        source.setValidators([Validators.required, Validators.min(1)]);
+        break;
+      case 'TRANSFER':
+        source.setValidators([Validators.required, Validators.min(1)]);
+        destination.setValidators([Validators.required, Validators.min(1)]);
+        break;
+    }
+
+    source.updateValueAndValidity({ emitEvent: false });
+    destination.updateValueAndValidity({ emitEvent: false });
+    receivedBy.updateValueAndValidity({ emitEvent: false });
+    conditionNotes.updateValueAndValidity({ emitEvent: false });
+    this.form.updateValueAndValidity({ emitEvent: false });
+  }
+
   submit() {
     if (this.form.invalid || this.saving) {
       this.form.markAllAsTouched();
@@ -275,6 +228,8 @@ export class TransactionFormComponent implements OnInit {
       itemId: Number(raw.itemId),
       quantity: Number(raw.quantity),
       movementType: raw.movementType,
+      sourceStoreId: raw.sourceStoreId ? Number(raw.sourceStoreId) : undefined,
+      destinationStoreId: raw.destinationStoreId ? Number(raw.destinationStoreId) : undefined,
       origin: raw.origin.trim() || undefined,
       destination: raw.destination.trim() || undefined,
       responsibleUserId: Number(raw.responsibleUserId),

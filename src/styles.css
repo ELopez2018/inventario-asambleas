@@ -19,3 +19,8 @@ body {
 .mat-mdc-table {
   background: #ffffff;
 }
+
+/* Tailwind preflight can interfere with Angular Material outlined notch rendering. */
+.mat-mdc-form-field .mdc-notched-outline__notch {
+  border-right: none;
+}

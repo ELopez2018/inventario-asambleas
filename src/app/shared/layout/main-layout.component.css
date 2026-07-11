@@ -1,0 +1,16 @@
+:host {
+  display: block;
+}
+
+.app-nav-list a {
+  color: #e5e7eb;
+}
+
+.app-nav-list a.active-link {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.app-nav-list mat-icon {
+  color: currentColor;
+}

@@ -21,70 +21,8 @@ import { EventResponse } from '../../../models/event.model';
     MatTableModule,
     MatTooltipModule,
   ],
-  template: `
-    <section class="mx-auto max-w-6xl">
-      <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 class="text-2xl font-semibold text-slate-950">Eventos</h1>
-          <p class="text-sm text-slate-600">Fechas relacionadas con la asamblea y el inventario.</p>
-        </div>
-        <a mat-flat-button color="primary" routerLink="/events/new">
-          <mat-icon>add</mat-icon>
-          Nuevo
-        </a>
-      </div>
-
-      <div class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-        @if (loading) {
-          <div class="flex items-center justify-center p-10">
-            <mat-spinner diameter="36" />
-          </div>
-        } @else if (errorMessage) {
-          <div class="p-6 text-sm text-red-700">{{ errorMessage }}</div>
-        } @else if (!events.length) {
-          <div class="p-6 text-sm text-slate-600">No hay eventos registrados.</div>
-        } @else {
-          <div class="overflow-x-auto">
-            <table mat-table [dataSource]="events" class="min-w-full">
-              <ng-container matColumnDef="description">
-                <th mat-header-cell *matHeaderCellDef>Descripcion</th>
-                <td mat-cell *matCellDef="let event">{{ event.description }}</td>
-              </ng-container>
-
-              <ng-container matColumnDef="startDate">
-                <th mat-header-cell *matHeaderCellDef>Inicio</th>
-                <td mat-cell *matCellDef="let event">
-                  {{ event.startDate ? (event.startDate | date: 'short') : '-' }}
-                </td>
-              </ng-container>
-
-              <ng-container matColumnDef="endDate">
-                <th mat-header-cell *matHeaderCellDef>Fin</th>
-                <td mat-cell *matCellDef="let event">
-                  {{ event.endDate ? (event.endDate | date: 'short') : '-' }}
-                </td>
-              </ng-container>
-
-              <ng-container matColumnDef="actions">
-                <th mat-header-cell *matHeaderCellDef class="w-28 text-right">Acciones</th>
-                <td mat-cell *matCellDef="let event" class="text-right">
-                  <a mat-icon-button [routerLink]="['/events', event.id, 'edit']" matTooltip="Editar">
-                    <mat-icon>edit</mat-icon>
-                  </a>
-                  <button mat-icon-button type="button" matTooltip="Eliminar" (click)="deleteEvent(event)">
-                    <mat-icon>delete</mat-icon>
-                  </button>
-                </td>
-              </ng-container>
-
-              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-              <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-            </table>
-          </div>
-        }
-      </div>
-    </section>
-  `,
+  templateUrl: './event-list.component.html',
+  styleUrl: './event-list.component.css',
 })
 export class EventListComponent implements OnInit {
   private readonly eventService = inject(EventService);

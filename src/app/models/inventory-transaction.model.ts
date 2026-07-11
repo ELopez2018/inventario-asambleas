@@ -6,6 +6,8 @@ export interface InventoryTransactionResponse {
   quantity: number;
   movementType: MovementType;
   movedByUserId: number;
+  sourceStoreId: number | null;
+  destinationStoreId: number | null;
   origin: string | null;
   destination: string | null;
   responsibleUserId: number;
@@ -19,6 +21,8 @@ export interface CreateInventoryTransactionRequest {
   itemId: number;
   quantity: number;
   movementType: MovementType;
+  sourceStoreId?: number;
+  destinationStoreId?: number;
   origin?: string;
   destination?: string;
   responsibleUserId: number;

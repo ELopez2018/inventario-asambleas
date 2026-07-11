@@ -1,6 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
-import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormArray,
+  NonNullableFormBuilder,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -11,8 +18,32 @@ import { MatSelectModule } from '@angular/material/select';
 import { finalize, forkJoin } from 'rxjs';
 import { InventoryItemService } from '../../../core/services/inventory-item.service';
 import { UserService } from '../../../core/services/user.service';
-import { CreateInventoryItemRequest } from '../../../models/inventory-item.model';
+import {
+  CreateInventoryItemRequest,
+  InventoryItemStoreStock,
+} from '../../../models/inventory-item.model';
 import { UserResponse } from '../../../models/user.model';
+import { STORE_OPTIONS } from '../../../shared/store-options';
+
+function atLeastOneStoreStockValidator(control: AbstractControl): ValidationErrors | null {
+  if (!(control instanceof FormArray)) {
+    return null;
+  }
+
+  return control.length > 0 ? null : { atLeastOneStore: true };
+}
+
+function uniqueStoreValidator(control: AbstractControl): ValidationErrors | null {
+  if (!(control instanceof FormArray)) {
+    return null;
+  }
+
+  const storeIds = control.controls
+    .map((group) => Number(group.get('storeId')?.value || 0))
+    .filter((storeId) => storeId > 0);
+  const uniqueStoreIds = new Set(storeIds);
+  return uniqueStoreIds.size === storeIds.length ? null : { duplicateStore: true };
+}
 
 @Component({
   selector: 'app-item-form',
@@ -27,102 +58,8 @@ import { UserResponse } from '../../../models/user.model';
     MatProgressSpinnerModule,
     MatSelectModule,
   ],
-  template: `
-    <section class="mx-auto max-w-3xl">
-      <div class="mb-5">
-        <a
-          routerLink="/inventory-items"
-          class="inline-flex items-center gap-1 text-sm font-medium text-indigo-700"
-        >
-          <mat-icon class="text-base">arrow_back</mat-icon>
-          Articulos
-        </a>
-        <h1 class="mt-3 text-2xl font-semibold text-slate-950">
-          {{ itemId ? 'Editar articulo' : 'Nuevo articulo' }}
-        </h1>
-      </div>
-
-      <form
-        [formGroup]="form"
-        (ngSubmit)="submit()"
-        class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
-      >
-        @if (loading) {
-          <div class="flex justify-center p-8">
-            <mat-spinner diameter="36" />
-          </div>
-        } @else {
-          <div class="grid gap-4">
-            <mat-form-field appearance="outline">
-              <mat-label>Descripcion</mat-label>
-              <input matInput formControlName="description" maxlength="255" />
-              @if (form.controls.description.hasError('required')) {
-                <mat-error>La descripcion es obligatoria.</mat-error>
-              }
-            </mat-form-field>
-
-            <div class="grid gap-4 md:grid-cols-2">
-              <mat-form-field appearance="outline">
-                <mat-label>Cantidad</mat-label>
-                <input matInput type="number" min="0" step="0.01" formControlName="quantity" />
-                @if (form.controls.quantity.hasError('min')) {
-                  <mat-error>La cantidad no puede ser negativa.</mat-error>
-                }
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-                <mat-label>Dueno</mat-label>
-                <mat-select formControlName="ownerUserId">
-                  @for (user of users; track user.id) {
-                    <mat-option [value]="user.id">{{ user.firstName }} {{ user.lastName }}</mat-option>
-                  }
-                </mat-select>
-                @if (form.controls.ownerUserId.hasError('min')) {
-                  <mat-error>Seleccione un usuario.</mat-error>
-                }
-              </mat-form-field>
-            </div>
-
-            <div class="grid gap-4 md:grid-cols-2">
-              <mat-form-field appearance="outline">
-                <mat-label>Almacen</mat-label>
-                <mat-select formControlName="storeId">
-                  @for (store of storeOptions; track store.id) {
-                    <mat-option [value]="store.id">{{ store.label }}</mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-                <mat-label>Estado</mat-label>
-                <mat-select formControlName="stateId">
-                  @for (state of stateOptions; track state.id) {
-                    <mat-option [value]="state.id">{{ state.label }}</mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
-            </div>
-          </div>
-
-          @if (errorMessage) {
-            <div class="mb-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-              {{ errorMessage }}
-            </div>
-          }
-
-          <div class="flex justify-end gap-2">
-            <a mat-button routerLink="/inventory-items">Cancelar</a>
-            <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid || saving">
-              @if (saving) {
-                <mat-spinner diameter="18" class="mr-2 inline-block" />
-              }
-              Guardar
-            </button>
-          </div>
-        }
-      </form>
-    </section>
-  `,
+  templateUrl: './item-form.component.html',
+  styleUrl: './item-form.component.css',
 })
 export class ItemFormComponent implements OnInit {
   private readonly fb = inject(NonNullableFormBuilder);
@@ -132,10 +69,7 @@ export class ItemFormComponent implements OnInit {
   private readonly userService = inject(UserService);
 
   readonly itemId = Number(this.route.snapshot.paramMap.get('id')) || null;
-  readonly storeOptions = [
-    { id: 1, label: 'Almacen 1' },
-    { id: 2, label: 'Almacen 2' },
-  ];
+  readonly storeOptions = STORE_OPTIONS;
   readonly stateOptions = [
     { id: 1, label: 'Disponible' },
     { id: 2, label: 'Asignado' },
@@ -143,16 +77,21 @@ export class ItemFormComponent implements OnInit {
   ];
   readonly form = this.fb.group({
     description: ['', [Validators.required, Validators.maxLength(255)]],
-    quantity: [0, [Validators.required, Validators.min(0)]],
     ownerUserId: [0, [Validators.required, Validators.min(1)]],
-    storeId: [1, [Validators.required, Validators.min(1)]],
     stateId: [1, [Validators.required, Validators.min(1)]],
+    storeStocks: this.fb.array([this.createStoreStockGroup()], {
+      validators: [atLeastOneStoreStockValidator, uniqueStoreValidator],
+    }),
   });
 
   users: UserResponse[] = [];
   loading = false;
   saving = false;
   errorMessage = '';
+
+  get storeStocks(): FormArray {
+    return this.form.controls.storeStocks as FormArray;
+  }
 
   ngOnInit() {
     this.loading = true;
@@ -166,7 +105,12 @@ export class ItemFormComponent implements OnInit {
         .subscribe({
           next: ({ users, item }) => {
             this.users = users;
-            this.form.patchValue(item);
+            this.form.patchValue({
+              description: item.description,
+              ownerUserId: item.ownerUserId,
+              stateId: item.stateId,
+            });
+            this.setStoreStocks(item.storeStocks);
           },
           error: () => (this.errorMessage = 'No se pudo cargar la informacion del articulo.'),
         });
@@ -183,6 +127,34 @@ export class ItemFormComponent implements OnInit {
       });
   }
 
+  createStoreStockGroup(stock?: InventoryItemStoreStock) {
+    return this.fb.group({
+      storeId: [stock?.storeId ?? 1, [Validators.required, Validators.min(1)]],
+      quantity: [stock?.quantity ?? 0, [Validators.required, Validators.min(0)]],
+    });
+  }
+
+  setStoreStocks(stocks: InventoryItemStoreStock[]) {
+    const rows = stocks.length ? stocks : [{ storeId: 1, quantity: 0 }];
+    this.storeStocks.clear();
+    rows.forEach((stock) => this.storeStocks.push(this.createStoreStockGroup(stock)));
+    this.storeStocks.updateValueAndValidity();
+  }
+
+  addStoreStock() {
+    this.storeStocks.push(this.createStoreStockGroup());
+    this.storeStocks.updateValueAndValidity();
+  }
+
+  removeStoreStock(index: number) {
+    if (this.storeStocks.length === 1) {
+      return;
+    }
+
+    this.storeStocks.removeAt(index);
+    this.storeStocks.updateValueAndValidity();
+  }
+
   submit() {
     if (this.form.invalid || this.saving) {
       this.form.markAllAsTouched();
@@ -194,10 +166,12 @@ export class ItemFormComponent implements OnInit {
     const raw = this.form.getRawValue();
     const body: CreateInventoryItemRequest = {
       description: raw.description.trim(),
-      quantity: Number(raw.quantity),
       ownerUserId: Number(raw.ownerUserId),
-      storeId: Number(raw.storeId),
       stateId: Number(raw.stateId),
+      storeStocks: raw.storeStocks.map((row) => ({
+        storeId: Number(row.storeId),
+        quantity: Number(row.quantity),
+      })),
     };
 
     const request = this.itemId
