@@ -110,11 +110,17 @@
       <mat-form-field appearance="outline">
         <mat-label>Origen</mat-label>
         <input matInput formControlName="origin" maxlength="255" />
+        @if (form.controls.origin.hasError('required')) {
+        <mat-error>El origen es obligatorio para traslado.</mat-error>
+        }
       </mat-form-field>
 
       <mat-form-field appearance="outline">
         <mat-label>Destino</mat-label>
         <input matInput formControlName="destination" maxlength="255" />
+        @if (form.controls.destination.hasError('required')) {
+        <mat-error>El destino es obligatorio para traslado.</mat-error>
+        }
       </mat-form-field>
 
       <mat-form-field appearance="outline">

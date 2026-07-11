@@ -53,14 +53,16 @@ export class ItemListComponent implements OnInit {
   ];
   private readonly storeLabelMap = new Map(STORE_OPTIONS.map((store) => [store.id, store.label]));
   private readonly stateLabelMap = new Map<number, string>([
-    [1, 'Disponible'],
-    [2, 'Asignado'],
-    [3, 'Dado de baja'],
+    [1, 'BUEN ESTADO'],
+    [2, 'MAL ESTADO'],
+    [3, 'SIN INFORMACION'],
+    [4, 'USADO'],
   ]);
   items: InventoryItemResponse[] = [];
   users: UserResponse[] = [];
   storeTabs: { id: number; label: string }[] = [];
   loading = false;
+  exporting = false;
   errorMessage = '';
 
   getStoreLabel(storeId: number) {
@@ -77,8 +79,14 @@ export class ItemListComponent implements OnInit {
     return user ? `${user.firstName} ${user.lastName}` : `Usuario #${ownerUserId}`;
   }
 
-  getStateLabel(stateId: number) {
-    return this.stateLabelMap.get(stateId) ?? `Estado #${stateId}`;
+  getStateLabel(item: InventoryItemResponse) {
+    const title = item.stateTitle?.trim();
+
+    if (title) {
+      return title;
+    }
+
+    return this.stateLabelMap.get(item.stateId) ?? `Estado #${item.stateId}`;
   }
 
   getTotalStock(item: InventoryItemResponse) {
@@ -131,6 +139,42 @@ export class ItemListComponent implements OnInit {
           this.buildStoreTabs(items);
         },
         error: () => (this.errorMessage = 'No se pudieron cargar los articulos.'),
+      });
+  }
+
+  downloadInventoryExcel() {
+    if (this.exporting) {
+      return;
+    }
+
+    this.exporting = true;
+
+    this.itemService
+      .exportExcel()
+      .pipe(finalize(() => (this.exporting = false)))
+      .subscribe({
+        next: (response) => {
+          const blob = response.body;
+
+          if (!blob) {
+            this.errorMessage = 'No se pudo descargar el archivo de inventario.';
+            return;
+          }
+
+          const contentDisposition = response.headers.get('content-disposition') ?? '';
+          const match = /filename=([^;]+)/i.exec(contentDisposition);
+          const fileName = match ? match[1].replace(/"/g, '').trim() : 'inventory-by-store.xlsx';
+
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = fileName;
+          link.click();
+          window.URL.revokeObjectURL(url);
+        },
+        error: () => {
+          this.errorMessage = 'No se pudo descargar el archivo de inventario.';
+        },
       });
   }
 

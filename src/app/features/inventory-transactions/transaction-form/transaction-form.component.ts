@@ -170,6 +170,8 @@ export class TransactionFormComponent implements OnInit {
   applyMovementRules(movementType: MovementType) {
     const source = this.form.controls.sourceStoreId;
     const destination = this.form.controls.destinationStoreId;
+    const origin = this.form.controls.origin;
+    const destinationText = this.form.controls.destination;
     const receivedBy = this.form.controls.receivedByUserId;
     const conditionNotes = this.form.controls.conditionNotes;
 
@@ -180,6 +182,8 @@ export class TransactionFormComponent implements OnInit {
 
     source.setValidators([]);
     destination.setValidators([]);
+    origin.setValidators([Validators.maxLength(255)]);
+    destinationText.setValidators([Validators.maxLength(255)]);
     receivedBy.setValidators([]);
     conditionNotes.setValidators([Validators.maxLength(500)]);
 
@@ -205,11 +209,15 @@ export class TransactionFormComponent implements OnInit {
       case 'TRANSFER':
         source.setValidators([Validators.required, Validators.min(1)]);
         destination.setValidators([Validators.required, Validators.min(1)]);
+        origin.setValidators([Validators.required, Validators.maxLength(255)]);
+        destinationText.setValidators([Validators.required, Validators.maxLength(255)]);
         break;
     }
 
     source.updateValueAndValidity({ emitEvent: false });
     destination.updateValueAndValidity({ emitEvent: false });
+    origin.updateValueAndValidity({ emitEvent: false });
+    destinationText.updateValueAndValidity({ emitEvent: false });
     receivedBy.updateValueAndValidity({ emitEvent: false });
     conditionNotes.updateValueAndValidity({ emitEvent: false });
     this.form.updateValueAndValidity({ emitEvent: false });

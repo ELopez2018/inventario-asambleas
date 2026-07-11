@@ -1,5 +1,6 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
+import { Observable } from 'rxjs';
 import { API_BASE_URL } from '../api.config';
 import {
   CreateInventoryItemRequest,
@@ -19,6 +20,13 @@ export class InventoryItemService {
 
   getById(id: number) {
     return this.http.get<InventoryItemResponse>(`${BASE}/${id}`);
+  }
+
+  exportExcel(): Observable<HttpResponse<Blob>> {
+    return this.http.get(`${BASE}/export/excel`, {
+      observe: 'response',
+      responseType: 'blob',
+    });
   }
 
   create(body: CreateInventoryItemRequest) {

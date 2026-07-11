@@ -71,9 +71,10 @@ export class ItemFormComponent implements OnInit {
   readonly itemId = Number(this.route.snapshot.paramMap.get('id')) || null;
   readonly storeOptions = STORE_OPTIONS;
   readonly stateOptions = [
-    { id: 1, label: 'Disponible' },
-    { id: 2, label: 'Asignado' },
-    { id: 3, label: 'Dado de baja' },
+    { id: 1, label: 'BUEN ESTADO' },
+    { id: 2, label: 'MAL ESTADO' },
+    { id: 3, label: 'SIN INFORMACION' },
+    { id: 4, label: 'USADO' },
   ];
   readonly form = this.fb.group({
     description: ['', [Validators.required, Validators.maxLength(255)]],

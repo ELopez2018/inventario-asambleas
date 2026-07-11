@@ -4,11 +4,18 @@ export interface InventoryItemStoreStock {
   quantity: number;
 }
 
+export interface InventoryItemStoreStockRequest {
+  storeId: number;
+  quantity: number;
+}
+
 export interface InventoryItemResponse {
   id: number;
   description: string;
   ownerUserId: number;
   stateId: number;
+  stateTitle: string;
+  stateDescription: string | null;
   storeStocks: InventoryItemStoreStock[];
 }
 
@@ -16,7 +23,7 @@ export interface CreateInventoryItemRequest {
   description: string;
   ownerUserId: number;
   stateId: number;
-  storeStocks: InventoryItemStoreStock[];
+  storeStocks: InventoryItemStoreStockRequest[];
 }
 
 export type UpdateInventoryItemRequest = CreateInventoryItemRequest;
