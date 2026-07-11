@@ -9,6 +9,12 @@ body {
   height: 100%;
 }
 
+html {
+  min-width: 320px;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 body {
   margin: 0;
   background: #f8fafc;
@@ -23,4 +29,200 @@ body {
 /* Tailwind preflight can interfere with Angular Material outlined notch rendering. */
 .mat-mdc-form-field .mdc-notched-outline__notch {
   border-right: none;
+}
+
+@layer components {
+  .app-page {
+    @apply mx-auto w-full max-w-7xl;
+  }
+
+  .app-page--medium {
+    @apply max-w-6xl;
+  }
+
+  .app-page--form {
+    @apply max-w-4xl;
+  }
+
+  .app-page-header {
+    @apply mb-5 flex flex-col items-stretch gap-4 sm:flex-row sm:items-center sm:justify-between;
+  }
+
+  .app-page-heading {
+    @apply min-w-0;
+  }
+
+  .app-page-title {
+    @apply text-2xl font-semibold leading-tight text-slate-950 sm:text-3xl;
+  }
+
+  .app-page-subtitle {
+    @apply mt-1 text-sm leading-5 text-slate-600;
+  }
+
+  .app-page-actions {
+    @apply flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center;
+  }
+
+  .app-data-surface {
+    @apply overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm;
+  }
+
+  .app-table-scroll {
+    @apply min-w-0 overflow-x-auto;
+    overscroll-behavior-inline: contain;
+  }
+
+  .app-back-link {
+    @apply inline-flex min-h-11 items-center gap-1 rounded text-sm font-medium text-indigo-700 outline-none transition hover:text-indigo-900 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2;
+  }
+
+  .app-form-card {
+    @apply rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5 md:p-6;
+  }
+
+  .app-form-grid {
+    @apply grid min-w-0 gap-4 md:grid-cols-2;
+  }
+
+  .app-form-actions {
+    @apply mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end;
+  }
+}
+
+.app-page-actions > .mat-mdc-button-base,
+.app-form-actions > .mat-mdc-button-base {
+  width: 100%;
+  min-height: 44px;
+}
+
+.app-form-card .mat-mdc-form-field,
+.app-form-grid > * {
+  width: 100%;
+  min-width: 0;
+}
+
+.app-form-card input[type='datetime-local'] {
+  min-width: 0;
+  width: 100%;
+}
+
+.responsive-table {
+  width: 100%;
+}
+
+.responsive-cell-label {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .app-page-actions > .mat-mdc-button-base,
+  .app-form-actions > .mat-mdc-button-base {
+    width: auto;
+  }
+}
+
+@media (max-width: 1100px) {
+  .responsive-table.mat-mdc-table {
+    display: block;
+    min-width: 0 !important;
+    background: transparent;
+  }
+
+  .responsive-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .responsive-table tbody {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.75rem;
+    padding: 0.75rem;
+  }
+
+  .responsive-table .mat-mdc-row {
+    display: flex;
+    height: auto;
+    min-width: 0;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgb(15 23 42 / 0.05);
+  }
+
+  .responsive-table .mat-mdc-cell {
+    display: grid;
+    min-width: 0;
+    min-height: 0;
+    grid-template-columns: minmax(6.75rem, 36%) minmax(0, 1fr);
+    align-items: start;
+    gap: 0.75rem;
+    overflow: visible;
+    padding: 0.625rem 0.875rem;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155;
+    line-height: 1.35;
+    text-overflow: clip;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .responsive-table .mat-mdc-cell:last-child {
+    border-bottom: 0;
+  }
+
+  .responsive-cell-label {
+    display: block;
+    color: #475569;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.025em;
+    line-height: 1.25rem;
+    text-transform: uppercase;
+  }
+
+  .responsive-table .mat-column-actions {
+    display: flex;
+    min-height: 52px;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.125rem;
+    padding-block: 0.25rem;
+  }
+
+  .responsive-table .mat-column-actions .responsive-cell-label {
+    margin-right: auto;
+  }
+
+  .app-table-scroll {
+    overflow-x: visible;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1100px) {
+  .responsive-table tbody {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1101px) {
+  .responsive-table--wide {
+    min-width: 72rem;
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .mat-mdc-button-base {
+    min-height: 44px;
+  }
 }

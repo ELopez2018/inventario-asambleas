@@ -1,0 +1,216 @@
+<section class="app-page">
+  <div class="app-page-header">
+    <div class="app-page-heading">
+      <h1 class="app-page-title">Fotos por detalle</h1>
+      <p class="app-page-subtitle">Configuracion GPS, carga batch y consulta por alcance.</p>
+    </div>
+  </div>
+
+  <div class="app-data-surface p-4 sm:p-6 space-y-6">
+    @if (loading) {
+    <div class="flex items-center justify-center p-10">
+      <mat-spinner diameter="36" />
+    </div>
+    } @else {
+    @if (errorMessage) {
+    <div class="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+      {{ errorMessage }}
+    </div>
+    }
+
+    <div class="grid gap-4 lg:grid-cols-3">
+      <mat-form-field appearance="outline">
+        <mat-label>Evento</mat-label>
+        <mat-select formControlName="eventId" [formGroup]="scopeForm" (selectionChange)="onScopeChanged()">
+          @for (event of events; track event.id) {
+          <mat-option [value]="event.id">{{ event.description }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Bodega</mat-label>
+        <mat-select formControlName="storeId" [formGroup]="scopeForm" (selectionChange)="onScopeChanged()">
+          @for (store of storeOptions; track store.id) {
+          <mat-option [value]="store.id">{{ store.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Detalle</mat-label>
+        <mat-select formControlName="itemDetailId" [formGroup]="scopeForm" (selectionChange)="onScopeChanged()">
+          @for (detail of detailOptions; track detail.id) {
+          <mat-option [value]="detail.id">{{ detail.code }} - {{ detail.storeName }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div class="grid gap-6 xl:grid-cols-2">
+      <div class="rounded-xl border border-slate-200 p-4">
+        <h2 class="mb-4 text-base font-semibold text-slate-800">Configuracion GPS</h2>
+        <form [formGroup]="configForm" class="grid gap-4 md:grid-cols-2" (ngSubmit)="saveConfig()">
+          <mat-form-field appearance="outline" class="md:col-span-2">
+            <mat-label>Etiqueta de ubicacion</mat-label>
+            <input matInput formControlName="locationLabel" maxlength="120" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Latitud referencia</mat-label>
+            <input matInput type="number" formControlName="referenceLatitude" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Longitud referencia</mat-label>
+            <input matInput type="number" formControlName="referenceLongitude" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Radio GPS (m)</mat-label>
+            <input matInput type="number" formControlName="gpsRadiusMeters" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="md:col-span-2">
+            <mat-label>Observaciones</mat-label>
+            <textarea matInput rows="2" maxlength="1000" formControlName="observations"></textarea>
+          </mat-form-field>
+
+          <div class="md:col-span-2 flex justify-end">
+            <button mat-flat-button color="primary" type="submit" [disabled]="savingConfig">
+              <mat-icon>my_location</mat-icon>
+              @if (savingConfig) {
+              Guardando...
+              } @else {
+              Guardar configuracion
+              }
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="rounded-xl border border-slate-200 p-4">
+        <h2 class="mb-4 text-base font-semibold text-slate-800">Carga de fotos</h2>
+        <form [formGroup]="uploadForm" class="grid gap-4 md:grid-cols-2" (ngSubmit)="uploadPhotos()">
+          <mat-form-field appearance="outline">
+            <mat-label>Latitud GPS</mat-label>
+            <input matInput type="number" formControlName="gpsLatitude" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Longitud GPS</mat-label>
+            <input matInput type="number" formControlName="gpsLongitude" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Capturada en</mat-label>
+            <input matInput type="datetime-local" formControlName="capturedAt" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="md:col-span-2">
+            <mat-label>Observaciones</mat-label>
+            <textarea matInput rows="2" maxlength="1000" formControlName="observations"></textarea>
+          </mat-form-field>
+
+          <div class="md:col-span-2">
+            <label class="mb-1 block text-sm font-medium text-slate-700">Archivos</label>
+            <input type="file" accept="image/*" capture="environment" multiple (change)="onFilesSelected($event)" />
+            @if (selectedFiles.length) {
+            <p class="mt-2 text-sm text-slate-600">{{ selectedFiles.length }} archivo(s) seleccionado(s)</p>
+            }
+          </div>
+
+          <div class="md:col-span-2 flex justify-end">
+            <button mat-flat-button color="primary" type="submit" [disabled]="uploadingPhotos">
+              <mat-icon>cloud_upload</mat-icon>
+              @if (uploadingPhotos) {
+              Cargando...
+              } @else {
+              Subir fotos
+              }
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-between gap-3">
+      <h2 class="text-base font-semibold text-slate-800">Listado de fotos</h2>
+      <button mat-stroked-button type="button" (click)="loadPhotos()" [disabled]="loadingPhotos">
+        <mat-icon>search</mat-icon>
+        Consultar alcance
+      </button>
+    </div>
+
+    @if (loadingPhotos) {
+    <div class="flex items-center justify-center p-6">
+      <mat-spinner diameter="28" />
+    </div>
+    } @else if (!photos.length) {
+    <div class="rounded-md border border-slate-200 bg-white p-4 text-sm text-slate-600">
+      No hay fotos para el alcance seleccionado.
+    </div>
+    } @else {
+    <div class="app-table-scroll">
+      <table mat-table [dataSource]="photos" class="responsive-table responsive-table--wide">
+        <ng-container matColumnDef="fileName">
+          <th mat-header-cell *matHeaderCellDef>Archivo</th>
+          <td mat-cell *matCellDef="let photo">
+            <span class="responsive-cell-label" aria-hidden="true">Archivo</span>
+            {{ photo.fileName }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="contentType">
+          <th mat-header-cell *matHeaderCellDef>Tipo</th>
+          <td mat-cell *matCellDef="let photo">
+            <span class="responsive-cell-label" aria-hidden="true">Tipo</span>
+            {{ photo.contentType }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="fileSizeBytes">
+          <th mat-header-cell *matHeaderCellDef>Tamano</th>
+          <td mat-cell *matCellDef="let photo">
+            <span class="responsive-cell-label" aria-hidden="true">Tamano</span>
+            {{ formatBytes(photo.fileSizeBytes) }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="distance">
+          <th mat-header-cell *matHeaderCellDef>Distancia GPS</th>
+          <td mat-cell *matCellDef="let photo">
+            <span class="responsive-cell-label" aria-hidden="true">Distancia GPS</span>
+            {{ photo.distanceToReferenceMeters | number: '1.0-2' }} m
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="capturedAt">
+          <th mat-header-cell *matHeaderCellDef>Capturada</th>
+          <td mat-cell *matCellDef="let photo">
+            <span class="responsive-cell-label" aria-hidden="true">Capturada</span>
+            {{ photo.capturedAt | date: 'medium' }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="w-28 text-right">Acciones</th>
+          <td mat-cell *matCellDef="let photo" class="text-right">
+            <span class="responsive-cell-label" aria-hidden="true">Acciones</span>
+            <button mat-icon-button type="button" matTooltip="Ver foto" (click)="viewPhoto(photo.id)">
+              <mat-icon>visibility</mat-icon>
+            </button>
+            <button mat-icon-button type="button" matTooltip="Eliminar" (click)="deletePhoto(photo)">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+    </div>
+    }
+    }
+  </div>
+</section>

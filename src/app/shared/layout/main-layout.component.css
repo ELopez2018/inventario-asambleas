@@ -1,5 +1,20 @@
 :host {
   display: block;
+  min-width: 0;
+}
+
+.app-shell {
+  height: 100vh;
+  height: 100dvh;
+}
+
+.app-toolbar {
+  padding-right: max(16px, env(safe-area-inset-right));
+  padding-left: max(16px, env(safe-area-inset-left));
+}
+
+.app-main-content {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
 }
 
 .app-nav-list a {
@@ -13,4 +28,10 @@
 
 .app-nav-list mat-icon {
   color: currentColor;
+}
+
+@media (min-width: 640px) {
+  .app-main-content {
+    padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+  }
 }

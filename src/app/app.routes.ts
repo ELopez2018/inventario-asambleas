@@ -37,17 +37,23 @@ export const routes: Routes = [
       {
         path: 'events',
         loadComponent: () =>
-          import('./features/events/event-list/event-list.component').then((m) => m.EventListComponent),
+          import('./features/events/event-list/event-list.component').then(
+            (m) => m.EventListComponent,
+          ),
       },
       {
         path: 'events/new',
         loadComponent: () =>
-          import('./features/events/event-form/event-form.component').then((m) => m.EventFormComponent),
+          import('./features/events/event-form/event-form.component').then(
+            (m) => m.EventFormComponent,
+          ),
       },
       {
         path: 'events/:id/edit',
         loadComponent: () =>
-          import('./features/events/event-form/event-form.component').then((m) => m.EventFormComponent),
+          import('./features/events/event-form/event-form.component').then(
+            (m) => m.EventFormComponent,
+          ),
       },
       {
         path: 'inventory-items',
@@ -110,6 +116,13 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/inventory-item-details/detail-form/detail-form.component').then(
             (m) => m.DetailFormComponent,
+          ),
+      },
+      {
+        path: 'inventory-item-detail-photos',
+        loadComponent: () =>
+          import('./features/inventory-item-detail-photos/photo-list/photo-list.component').then(
+            (m) => m.PhotoListComponent,
           ),
       },
     ],
