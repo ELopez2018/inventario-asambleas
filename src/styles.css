@@ -21,6 +21,14 @@ body {
   background: #f8fafc;
   color: #111827;
   font-family: Roboto, "Helvetica Neue", Arial, sans-serif;
+  overflow: hidden;
+}
+
+app-root {
+  display: block;
+  min-width: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .mat-mdc-table {
@@ -34,15 +42,15 @@ body {
 
 @layer components {
   .app-page {
-    @apply mx-auto w-full max-w-7xl;
+    @apply w-full max-w-none;
   }
 
   .app-page--medium {
-    @apply max-w-6xl;
+    @apply max-w-none;
   }
 
   .app-page--form {
-    @apply max-w-4xl;
+    @apply max-w-none;
   }
 
   .app-page-header {
@@ -66,7 +74,7 @@ body {
   }
 
   .app-data-surface {
-    @apply overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm;
+    @apply w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm;
   }
 
   .app-table-scroll {
@@ -79,11 +87,11 @@ body {
   }
 
   .app-form-card {
-    @apply rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5 md:p-6;
+    @apply w-full rounded-lg border border-slate-200 bg-white p-3 shadow-sm sm:p-4 lg:p-5;
   }
 
   .app-form-grid {
-    @apply grid min-w-0 gap-4 md:grid-cols-2;
+    @apply grid min-w-0 gap-3 md:grid-cols-2 xl:grid-cols-3;
   }
 
   .app-form-actions {
@@ -106,6 +114,19 @@ body {
 .app-form-card input[type='datetime-local'] {
   min-width: 0;
   width: 100%;
+}
+
+.app-form-card .mat-stepper-horizontal,
+.app-form-card .mat-horizontal-content-container,
+.app-data-surface .mat-stepper-horizontal,
+.app-data-surface .mat-horizontal-content-container {
+  min-width: 0;
+}
+
+.app-form-card .mat-horizontal-content-container,
+.app-data-surface .mat-horizontal-content-container {
+  padding-right: 0;
+  padding-left: 0;
 }
 
 .responsive-table {
@@ -211,7 +232,38 @@ body {
   }
 }
 
-@media (min-width: 768px) and (max-width: 1100px) {
+@media (max-width: 480px) {
+  .responsive-table tbody {
+    padding: 0.5rem;
+  }
+
+  .responsive-table .mat-mdc-cell {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.25rem;
+    padding: 0.625rem 0.75rem;
+  }
+
+  .responsive-table .mat-column-actions {
+    justify-content: flex-start;
+  }
+
+  .responsive-table .mat-column-actions .responsive-cell-label {
+    width: 100%;
+    margin-right: 0;
+  }
+
+  .mat-horizontal-stepper-header-container {
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+  }
+
+  .mat-horizontal-stepper-header {
+    min-width: max-content;
+    padding: 0 0.75rem;
+  }
+}
+
+@media (min-width: 900px) and (max-width: 1100px) {
   .responsive-table tbody {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

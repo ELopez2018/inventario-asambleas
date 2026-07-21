@@ -1,13 +1,23 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
+import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
+import {
+  MAT_DIALOG_DATA,
+  MatDialog,
+  MatDialogModule,
+  MatDialogRef,
+} from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSelectModule } from '@angular/material/select';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { finalize, forkJoin } from 'rxjs';
+import { AuthService } from '../../../core/services/auth.service';
 import { InventoryItemService } from '../../../core/services/inventory-item.service';
 import { UserService } from '../../../core/services/user.service';
 import {
@@ -17,12 +27,18 @@ import {
 import { UserResponse } from '../../../models/user.model';
 import { INVENTORY_STATES, INVENTORY_STORES } from '../../../shared/catalogs.constants';
 
+interface MergeItemsDialogData {
+  targetItem: InventoryItemResponse;
+  items: InventoryItemResponse[];
+}
+
 @Component({
   selector: 'app-item-list',
   imports: [
     CommonModule,
     RouterLink,
     MatButtonModule,
+    MatDialogModule,
     MatIconModule,
     MatProgressSpinnerModule,
     MatTabsModule,
@@ -35,6 +51,8 @@ import { INVENTORY_STATES, INVENTORY_STORES } from '../../../shared/catalogs.con
 export class ItemListComponent implements OnInit {
   private readonly itemService = inject(InventoryItemService);
   private readonly userService = inject(UserService);
+  private readonly dialog = inject(MatDialog);
+  private readonly auth = inject(AuthService);
 
   readonly displayedColumns = [
     'description',
@@ -53,6 +71,7 @@ export class ItemListComponent implements OnInit {
   ];
   private readonly storeLabelMap = new Map(INVENTORY_STORES.map((store) => [store.id, store.code]));
   private readonly stateLabelMap = new Map(INVENTORY_STATES.map((state) => [state.id, state.code]));
+  readonly canMergeItems = this.auth.hasRole('SUPER');
   items: InventoryItemResponse[] = [];
   users: UserResponse[] = [];
   storeTabs: { id: number; label: string }[] = [];
@@ -173,6 +192,29 @@ export class ItemListComponent implements OnInit {
       });
   }
 
+  openMergeDialog(targetItem: InventoryItemResponse) {
+    if (!this.canMergeItems) {
+      return;
+    }
+
+    const dialogRef = this.dialog.open(MergeItemsDialogComponent, {
+      width: 'min(96vw, 680px)',
+      maxWidth: '96vw',
+      data: {
+        targetItem,
+        items: this.items,
+      } satisfies MergeItemsDialogData,
+    });
+
+    dialogRef.afterClosed().subscribe((merged?: boolean) => {
+      if (!merged) {
+        return;
+      }
+
+      this.loadItems();
+    });
+  }
+
   deleteItem(item: InventoryItemResponse) {
     const confirmed = confirm(`Eliminar "${item.description}"?`);
 
@@ -184,5 +226,169 @@ export class ItemListComponent implements OnInit {
       next: () => this.loadItems(),
       error: () => (this.errorMessage = 'No se pudo eliminar el articulo.'),
     });
+  }
+}
+
+@Component({
+  selector: 'app-merge-items-dialog',
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
+    MatSelectModule,
+  ],
+  template: `
+    <h2 mat-dialog-title>Unir inventarios</h2>
+
+    <mat-dialog-content>
+      <div class="space-y-4">
+        <div class="rounded border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+          <div class="font-medium text-slate-950">Inventario que se conserva</div>
+          <div class="mt-1">{{ data.targetItem.description }}</div>
+          <div class="mt-1 text-xs text-slate-500">
+            ID #{{ data.targetItem.id }} - Total:
+            {{ getTotalStock(data.targetItem) | number: '1.0-2' }}
+          </div>
+        </div>
+
+        <div class="rounded border border-amber-200 bg-amber-50 p-3 text-sm leading-5 text-amber-900">
+          <div class="flex items-start gap-2">
+            <mat-icon class="mt-0.5 text-base">warning</mat-icon>
+            <p>
+              Confirme bien la seleccion. El inventario duplicado sera reemplazado y sus
+              movimientos, detalles y existencias pasaran al inventario que se conserva.
+            </p>
+          </div>
+        </div>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Inventario duplicado que se reemplaza</mat-label>
+          <mat-select [formControl]="sourceItemId">
+            @for (item of sourceOptions; track item.id) {
+              <mat-option [value]="item.id">
+                #{{ item.id }} - {{ item.description }} - Total:
+                {{ getTotalStock(item) | number: '1.0-2' }}
+              </mat-option>
+            }
+          </mat-select>
+          @if (sourceItemId.hasError('min')) {
+            <mat-error>Seleccione un inventario distinto al destino.</mat-error>
+          }
+        </mat-form-field>
+
+        @if (successMessage) {
+          <div class="rounded border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
+            <div class="flex items-start gap-2">
+              <mat-icon class="mt-0.5 text-base">check_circle</mat-icon>
+              <span>{{ successMessage }}</span>
+            </div>
+          </div>
+        }
+
+        @if (errorMessage) {
+          <div class="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            <div class="flex items-start gap-2">
+              <mat-icon class="mt-0.5 text-base">error</mat-icon>
+              <span>{{ errorMessage }}</span>
+            </div>
+          </div>
+        }
+      </div>
+    </mat-dialog-content>
+
+    <mat-dialog-actions align="end">
+      @if (successMessage) {
+        <button mat-flat-button color="primary" type="button" (click)="closeAfterSuccess()">
+          Cerrar
+        </button>
+      } @else {
+        <button mat-button type="button" [disabled]="saving" mat-dialog-close>Cancelar</button>
+        <button
+          mat-flat-button
+          color="primary"
+          type="button"
+          [disabled]="sourceItemId.invalid || saving"
+          (click)="confirm()"
+        >
+          @if (saving) {
+            <mat-spinner diameter="18" class="mr-2 inline-block" />
+          }
+          Unir
+        </button>
+      }
+    </mat-dialog-actions>
+  `,
+})
+export class MergeItemsDialogComponent {
+  readonly data = inject<MergeItemsDialogData>(MAT_DIALOG_DATA);
+  private readonly dialogRef = inject(MatDialogRef<MergeItemsDialogComponent, boolean>);
+  private readonly itemService = inject(InventoryItemService);
+
+  readonly sourceItemId = new FormControl(0, {
+    nonNullable: true,
+    validators: [Validators.required, Validators.min(1)],
+  });
+
+  readonly sourceOptions = this.data.items.filter((item) => item.id !== this.data.targetItem.id);
+  saving = false;
+  successMessage = '';
+  errorMessage = '';
+
+  getTotalStock(item: InventoryItemResponse) {
+    return item.storeStocks.reduce((sum, stock) => sum + stock.quantity, 0);
+  }
+
+  confirm() {
+    if (this.sourceItemId.invalid || this.saving) {
+      this.sourceItemId.markAsTouched();
+      return;
+    }
+
+    this.saving = true;
+    this.successMessage = '';
+    this.errorMessage = '';
+
+    this.itemService
+      .merge(this.data.targetItem.id, { sourceItemId: this.sourceItemId.value })
+      .pipe(finalize(() => (this.saving = false)))
+      .subscribe({
+        next: (mergedItem) => {
+          this.successMessage = `Inventarios unidos correctamente. Se conserva "${mergedItem.description}".`;
+          this.sourceItemId.disable({ emitEvent: false });
+        },
+        error: (err) => {
+          this.errorMessage = this.resolveBackendMessage(err);
+        },
+      });
+  }
+
+  closeAfterSuccess() {
+    this.dialogRef.close(true);
+  }
+
+  private resolveBackendMessage(err: any): string {
+    const backendMessage = err?.error?.detail || err?.error?.message || err?.error?.title;
+
+    if (backendMessage) {
+      return backendMessage;
+    }
+
+    if (err?.status === 400) {
+      return 'El backend rechazo la union. Revise que el origen y destino sean inventarios diferentes.';
+    }
+
+    if (err?.status === 404) {
+      return 'No se encontro uno de los inventarios seleccionados.';
+    }
+
+    if (err?.status === 403) {
+      return 'No tiene permisos para unir inventarios.';
+    }
+
+    return 'No se pudieron unir los inventarios. Intente nuevamente.';
   }
 }
