@@ -1,5 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
+import { passwordChangeGuard } from './core/guards/password-change.guard';
+import { superRoleGuard } from './core/guards/super-role.guard';
 
 export const routes: Routes = [
   {
@@ -8,8 +10,16 @@ export const routes: Routes = [
       import('./features/auth/login/login.component').then((m) => m.LoginComponent),
   },
   {
-    path: '',
+    path: 'change-password',
     canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/auth/change-password/change-password.component').then(
+        (m) => m.ChangePasswordComponent,
+      ),
+  },
+  {
+    path: '',
+    canActivate: [authGuard, passwordChangeGuard],
     loadComponent: () =>
       import('./shared/layout/main-layout.component').then((m) => m.MainLayoutComponent),
     children: [
@@ -123,6 +133,35 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/inventory-item-detail-photos/photo-list/photo-list.component').then(
             (m) => m.PhotoListComponent,
+          ),
+      },
+      {
+        path: 'transport-requests',
+        loadComponent: () =>
+          import('./features/transport-requests/request-list/request-list.component').then(
+            (m) => m.RequestListComponent,
+          ),
+      },
+      {
+        path: 'transport-requests/new',
+        loadComponent: () =>
+          import('./features/transport-requests/request-form/request-form.component').then(
+            (m) => m.RequestFormComponent,
+          ),
+      },
+      {
+        path: 'transport-requests/:id/edit',
+        loadComponent: () =>
+          import('./features/transport-requests/request-form/request-form.component').then(
+            (m) => m.RequestFormComponent,
+          ),
+      },
+      {
+        path: 'admin/credentials',
+        canActivate: [superRoleGuard],
+        loadComponent: () =>
+          import('./features/auth/admin-credentials/admin-credentials.component').then(
+            (m) => m.AdminCredentialsComponent,
           ),
       },
     ],

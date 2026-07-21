@@ -27,3 +27,7 @@ export interface CreateInventoryItemRequest {
 }
 
 export type UpdateInventoryItemRequest = CreateInventoryItemRequest;
+
+export interface MergeInventoryItemRequest {
+  sourceItemId: number;
+}

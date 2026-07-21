@@ -1,4 +1,5 @@
 @import '@angular/material/prebuilt-themes/indigo-pink.css';
+@import 'leaflet/dist/leaflet.css';
 
 @tailwind base;
 @tailwind components;
@@ -90,14 +91,14 @@ body {
   }
 }
 
-.app-page-actions > .mat-mdc-button-base,
-.app-form-actions > .mat-mdc-button-base {
+.app-page-actions>.mat-mdc-button-base,
+.app-form-actions>.mat-mdc-button-base {
   width: 100%;
   min-height: 44px;
 }
 
 .app-form-card .mat-mdc-form-field,
-.app-form-grid > * {
+.app-form-grid>* {
   width: 100%;
   min-width: 0;
 }
@@ -116,8 +117,9 @@ body {
 }
 
 @media (min-width: 640px) {
-  .app-page-actions > .mat-mdc-button-base,
-  .app-form-actions > .mat-mdc-button-base {
+
+  .app-page-actions>.mat-mdc-button-base,
+  .app-form-actions>.mat-mdc-button-base {
     width: auto;
   }
 }
@@ -221,7 +223,8 @@ body {
   }
 }
 
-@media (hover: none), (pointer: coarse) {
+@media (hover: none),
+(pointer: coarse) {
   .mat-mdc-button-base {
     min-height: 44px;
   }

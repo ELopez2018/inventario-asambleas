@@ -5,6 +5,7 @@ import { API_BASE_URL } from '../api.config';
 import {
   CreateInventoryItemRequest,
   InventoryItemResponse,
+  MergeInventoryItemRequest,
   UpdateInventoryItemRequest,
 } from '../../models/inventory-item.model';
 
@@ -35,6 +36,10 @@ export class InventoryItemService {
 
   update(id: number, body: UpdateInventoryItemRequest) {
     return this.http.put<InventoryItemResponse>(`${BASE}/${id}`, body);
+  }
+
+  merge(id: number, body: MergeInventoryItemRequest) {
+    return this.http.post<InventoryItemResponse>(`${BASE}/${id}/merge`, body);
   }
 
   delete(id: number) {

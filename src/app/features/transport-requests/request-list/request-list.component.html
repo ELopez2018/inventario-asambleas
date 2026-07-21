@@ -1,0 +1,110 @@
+<section class="app-page">
+  <div class="app-page-header">
+    <div class="app-page-heading">
+      <h1 class="app-page-title">Solicitudes de transporte</h1>
+      <p class="app-page-subtitle">Gestione solicitudes con su lista de items.</p>
+    </div>
+    <div class="app-page-actions">
+      <a mat-flat-button color="primary" routerLink="/transport-requests/new">
+        <mat-icon>add</mat-icon>
+        Nueva
+      </a>
+    </div>
+  </div>
+
+  <div class="app-data-surface">
+    @if (loading) {
+    <div class="flex items-center justify-center p-10">
+      <mat-spinner diameter="36" />
+    </div>
+    } @else if (errorMessage) {
+    <div class="p-6 text-sm text-red-700">{{ errorMessage }}</div>
+    } @else if (!requests.length) {
+    <div class="p-6 text-sm text-slate-600">No hay solicitudes registradas.</div>
+    } @else {
+    <div class="app-table-scroll">
+      <table mat-table [dataSource]="requests" class="responsive-table responsive-table--wide">
+        <ng-container matColumnDef="requestNumber">
+          <th mat-header-cell *matHeaderCellDef>Nro solicitud</th>
+          <td mat-cell *matCellDef="let request">
+            <span class="responsive-cell-label" aria-hidden="true">Nro solicitud</span>
+            {{ request.requestNumber }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="requestDate">
+          <th mat-header-cell *matHeaderCellDef>Fecha</th>
+          <td mat-cell *matCellDef="let request">
+            <span class="responsive-cell-label" aria-hidden="true">Fecha</span>
+            {{ request.requestDate | date: 'mediumDate' }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="requestedFrom">
+          <th mat-header-cell *matHeaderCellDef>Solicita desde</th>
+          <td mat-cell *matCellDef="let request">
+            <span class="responsive-cell-label" aria-hidden="true">Solicita desde</span>
+            {{ request.requestedFrom }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="requestedTo">
+          <th mat-header-cell *matHeaderCellDef>Solicita hacia</th>
+          <td mat-cell *matCellDef="let request">
+            <span class="responsive-cell-label" aria-hidden="true">Solicita hacia</span>
+            {{ request.requestedTo }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="items">
+          <th mat-header-cell *matHeaderCellDef>Items</th>
+          <td mat-cell *matCellDef="let request">
+            <span class="responsive-cell-label" aria-hidden="true">Items</span>
+            <div class="flex flex-col items-start gap-2">
+              <button mat-stroked-button type="button" (click)="toggleItems(request.id)"
+                [matTooltip]="isExpanded(request.id) ? 'Ocultar detalle' : 'Ver detalle por linea'">
+                <mat-icon>{{ isExpanded(request.id) ? 'expand_less' : 'expand_more' }}</mat-icon>
+                {{ request.items.length }} {{ request.items.length === 1 ? 'item' : 'items' }}
+              </button>
+
+              @if (isExpanded(request.id)) {
+              <div class="request-items-panel">
+                <div class="request-items-panel__title">Detalle por linea</div>
+                <div class="request-items-panel__content">
+                  @for (item of request.items; track item.id) {
+                  <div class="request-items-panel__row">
+                    <span class="request-items-panel__line">#{{ item.lineNumber }}</span>
+                    <span>{{ item.description }}</span>
+                    <span class="request-items-panel__qty">Cant: {{ item.quantity }}</span>
+                    @if (item.sizeAndWeight) {
+                    <span class="request-items-panel__meta">{{ item.sizeAndWeight }}</span>
+                    }
+                  </div>
+                  }
+                </div>
+              </div>
+              }
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="w-28 text-right">Acciones</th>
+          <td mat-cell *matCellDef="let request" class="text-right">
+            <span class="responsive-cell-label" aria-hidden="true">Acciones</span>
+            <a mat-icon-button [routerLink]="['/transport-requests', request.id, 'edit']" matTooltip="Editar">
+              <mat-icon>edit</mat-icon>
+            </a>
+            <button mat-icon-button type="button" matTooltip="Eliminar" (click)="deleteRequest(request)">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+    </div>
+    }
+  </div>
+</section>

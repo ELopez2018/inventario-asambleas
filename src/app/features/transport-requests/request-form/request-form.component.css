@@ -1,0 +1,14 @@
+:host {
+  display: block;
+}
+
+.step-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.wizard-help {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.4);
+}

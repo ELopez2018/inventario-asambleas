@@ -1,5 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import {
+  AfterViewChecked,
+  Component,
+  ElementRef,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+  inject,
+} from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -7,6 +15,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
+import { MatStepperModule } from '@angular/material/stepper';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { finalize, forkJoin } from 'rxjs';
@@ -22,6 +31,14 @@ import {
 import { InventoryItemDetailResponse } from '../../../models/inventory-item-detail.model';
 import { INVENTORY_STORES } from '../../../shared/catalogs.constants';
 
+function toApiLocalDateTime(value: string): string | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  return value.length === 16 ? `${value}:00` : value;
+}
+
 @Component({
   selector: 'app-photo-list',
   imports: [
@@ -33,6 +50,7 @@ import { INVENTORY_STORES } from '../../../shared/catalogs.constants';
     MatInputModule,
     MatProgressSpinnerModule,
     MatSelectModule,
+    MatStepperModule,
     MatTableModule,
     MatTooltipModule,
   ],
@@ -83,11 +101,32 @@ export class PhotoListComponent implements OnInit {
     observations: ['', [Validators.maxLength(1000)]],
   });
 
+  readonly gpsGateForm = this.fb.group({
+    gpsReady: [false, Validators.requiredTrue],
+  });
+
+  readonly filesGateForm = this.fb.group({
+    filesReady: [false, Validators.requiredTrue],
+  });
+
   events: EventResponse[] = [];
   details: InventoryItemDetailResponse[] = [];
   configs: InventoryItemDetailPhotoConfigResponse[] = [];
   photos: InventoryItemDetailPhotoResponse[] = [];
   selectedFiles: File[] = [];
+
+  @ViewChild('manualMap') manualMapElement?: ElementRef<HTMLDivElement>;
+
+  locatingGps = false;
+  gpsVerified = false;
+  gpsFallbackConfirmations = 0;
+  showManualMap = false;
+  manualPointSelected = false;
+  gpsStepMessage = 'Paso 3: active el GPS del dispositivo y pulse "Verificar GPS".';
+
+  private mapInitialized = false;
+  private mapInstance?: any;
+  private manualSelectionMarker?: any;
 
   loading = false;
   loadingPhotos = false;
@@ -98,6 +137,18 @@ export class PhotoListComponent implements OnInit {
   ngOnInit() {
     this.syncFormsFromScope();
     this.loadInitialData();
+  }
+
+  ngAfterViewChecked() {
+    if (this.showManualMap && !this.mapInitialized && this.manualMapElement) {
+      void this.initializeManualMap();
+    }
+  }
+
+  ngOnDestroy() {
+    if (this.mapInstance) {
+      this.mapInstance.remove();
+    }
   }
 
   get detailOptions() {
@@ -144,6 +195,168 @@ export class PhotoListComponent implements OnInit {
 
   onScopeChanged() {
     this.syncFormsFromScope();
+    this.resetGpsTutorialState();
+  }
+
+  get canShowMapFallback(): boolean {
+    return this.gpsFallbackConfirmations >= 2;
+  }
+
+  get gpsReadyForUpload(): boolean {
+    return this.gpsVerified || (this.canShowMapFallback && this.manualPointSelected);
+  }
+
+  get canUpload(): boolean {
+    return this.gpsReadyForUpload && this.selectedFiles.length > 0 && !this.uploadingPhotos;
+  }
+
+  get gpsGateCompleted(): boolean {
+    return this.gpsGateForm.valid;
+  }
+
+  get filesGateCompleted(): boolean {
+    return this.filesGateForm.valid;
+  }
+
+  private resetGpsTutorialState() {
+    this.locatingGps = false;
+    this.gpsVerified = false;
+    this.gpsFallbackConfirmations = 0;
+    this.showManualMap = false;
+    this.manualPointSelected = false;
+    this.gpsStepMessage = 'Paso 3: active el GPS del dispositivo y pulse "Verificar GPS".';
+    this.uploadForm.patchValue({
+      gpsLatitude: 0,
+      gpsLongitude: 0,
+    });
+    this.gpsGateForm.patchValue({ gpsReady: false });
+    this.filesGateForm.patchValue({ filesReady: false });
+
+    if (this.mapInstance) {
+      this.mapInstance.remove();
+      this.mapInstance = undefined;
+      this.manualSelectionMarker = undefined;
+      this.mapInitialized = false;
+    }
+  }
+
+  verifyGps(): void {
+    if (!navigator.geolocation) {
+      this.handleGpsFailure('Este navegador no soporta geolocalizacion.');
+      return;
+    }
+
+    this.locatingGps = true;
+    this.errorMessage = '';
+    this.gpsStepMessage = 'Intentando obtener coordenadas con GPS activo...';
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        this.locatingGps = false;
+        this.gpsVerified = true;
+        this.manualPointSelected = false;
+        this.showManualMap = false;
+        this.uploadForm.patchValue({
+          gpsLatitude: Number(position.coords.latitude.toFixed(7)),
+          gpsLongitude: Number(position.coords.longitude.toFixed(7)),
+        });
+        this.gpsGateForm.patchValue({ gpsReady: true });
+        this.gpsStepMessage =
+          'GPS verificado. Puede continuar con la seleccion de archivos y la carga.';
+      },
+      (error) => {
+        this.locatingGps = false;
+        const messageByCode: Record<number, string> = {
+          1: 'Permiso de ubicacion denegado.',
+          2: 'No se pudo determinar la ubicacion del dispositivo.',
+          3: 'Tiempo de espera agotado al consultar GPS.',
+        };
+
+        this.handleGpsFailure(
+          messageByCode[error.code] ?? 'No fue posible obtener coordenadas GPS.',
+        );
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      },
+    );
+  }
+
+  private handleGpsFailure(reason: string): void {
+    this.gpsVerified = false;
+    this.gpsGateForm.patchValue({ gpsReady: false });
+    this.errorMessage = `${reason} Debe encender GPS para continuar con la carga de fotos.`;
+
+    const confirmation = confirm(
+      'No fue posible validar GPS. Confirma que NO es posible encender GPS en este momento.',
+    );
+
+    if (confirmation) {
+      this.gpsFallbackConfirmations += 1;
+    }
+
+    if (this.canShowMapFallback) {
+      this.showManualMap = true;
+      this.gpsStepMessage =
+        'Se habilito mapa de respaldo. Seleccione manualmente un punto para continuar.';
+      return;
+    }
+
+    const pendingConfirmations = 2 - this.gpsFallbackConfirmations;
+    this.gpsStepMessage = `GPS obligatorio. Debe reintentar activarlo. Confirmaciones restantes para habilitar mapa: ${pendingConfirmations}.`;
+  }
+
+  private async initializeManualMap(): Promise<void> {
+    if (!this.manualMapElement || this.mapInitialized) {
+      return;
+    }
+
+    const L = await import('leaflet');
+    const map = L.map(this.manualMapElement.nativeElement).setView([4.5709, -74.2973], 6);
+
+    const layer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors',
+    });
+    layer.addTo(map);
+
+    map.on('click', (event) => {
+      this.selectManualPoint(event.latlng.lat, event.latlng.lng, L);
+    });
+
+    this.mapInstance = map;
+    this.mapInitialized = true;
+
+    setTimeout(() => {
+      this.mapInstance?.invalidateSize();
+    }, 0);
+  }
+
+  private selectManualPoint(lat: number, lng: number, L: typeof import('leaflet')): void {
+    const point: [number, number] = [Number(lat.toFixed(7)), Number(lng.toFixed(7))];
+
+    if (!this.mapInstance) {
+      return;
+    }
+
+    if (!this.manualSelectionMarker) {
+      this.manualSelectionMarker = L.circleMarker(point, {
+        radius: 8,
+        color: '#0f172a',
+        fillColor: '#1d4ed8',
+        fillOpacity: 0.8,
+      }).addTo(this.mapInstance);
+    } else {
+      this.manualSelectionMarker.setLatLng(point);
+    }
+
+    this.manualPointSelected = true;
+    this.uploadForm.patchValue({ gpsLatitude: point[0], gpsLongitude: point[1] });
+    this.gpsGateForm.patchValue({ gpsReady: true });
+    this.gpsStepMessage =
+      'Punto manual seleccionado. Ya puede subir las fotos con estas coordenadas.';
   }
 
   loadInitialData() {
@@ -238,6 +451,7 @@ export class PhotoListComponent implements OnInit {
     const target = event.target as HTMLInputElement;
     const files = Array.from(target.files || []);
     this.selectedFiles = files.filter((file) => file.type.startsWith('image/'));
+    this.filesGateForm.patchValue({ filesReady: this.selectedFiles.length > 0 });
 
     if (this.selectedFiles.length !== files.length) {
       this.errorMessage = 'Solo se permiten archivos de imagen.';
@@ -247,6 +461,12 @@ export class PhotoListComponent implements OnInit {
   uploadPhotos() {
     if (this.uploadForm.invalid || this.uploadingPhotos) {
       this.uploadForm.markAllAsTouched();
+      return;
+    }
+
+    if (!this.gpsReadyForUpload) {
+      this.errorMessage =
+        'GPS obligatorio: valide GPS del dispositivo o seleccione un punto en el mapa de respaldo.';
       return;
     }
 
@@ -273,7 +493,7 @@ export class PhotoListComponent implements OnInit {
         itemDetailId: Number(raw.itemDetailId),
         gpsLatitude: Number(raw.gpsLatitude),
         gpsLongitude: Number(raw.gpsLongitude),
-        capturedAt: raw.capturedAt || undefined,
+        capturedAt: toApiLocalDateTime(raw.capturedAt),
         observations: raw.observations.trim() || undefined,
         files: this.selectedFiles,
       })

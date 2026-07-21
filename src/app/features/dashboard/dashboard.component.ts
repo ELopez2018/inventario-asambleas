@@ -16,7 +16,7 @@ export class DashboardComponent {
     {
       path: '/inventory-items',
       icon: 'inventory_2',
-      title: 'Articulos',
+      title: 'Inventarios',
       caption: 'Existencias y estado',
     },
     {

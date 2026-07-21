@@ -13,11 +13,16 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   return next(req).pipe(
     catchError((err) => {
       const isLoginRequest = req.url.includes('/auth/login');
+      const requiresPasswordChange =
+        err.error?.requiredAction === 'CHANGE_PASSWORD' ||
+        err.error?.errorCode === 'INV-AUTH-PASSWORD-CHANGE-REQUIRED';
 
       if (err.status === 401 && !isLoginRequest) {
         auth.clearSession();
         snackBar.open('Su sesion expiro. Inicie sesion nuevamente.', 'Cerrar', { duration: 4000 });
         void router.navigate(['/login']);
+      } else if (err.status === 403 && requiresPasswordChange) {
+        void router.navigate(['/change-password']);
       } else if (err.status === 0) {
         snackBar.open('Sin conexion con el servidor.', 'Cerrar', { duration: 4000 });
       } else if (err.status === 403) {

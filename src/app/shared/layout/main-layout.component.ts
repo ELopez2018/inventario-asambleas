@@ -55,6 +55,22 @@ export class MainLayoutComponent {
       icon: 'photo_camera',
       exact: false,
     },
+    {
+      path: '/transport-requests',
+      label: 'Transporte',
+      icon: 'local_shipping',
+      exact: false,
+    },
+    ...(this.auth.hasRole('SUPER')
+      ? [
+          {
+            path: '/admin/credentials',
+            label: 'Admin credenciales',
+            icon: 'admin_panel_settings',
+            exact: false,
+          },
+        ]
+      : []),
   ];
 
   closeNavigation(sidenav: MatSidenav): void {

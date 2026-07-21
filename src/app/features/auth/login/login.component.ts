@@ -47,7 +47,10 @@ export class LoginComponent {
     this.errorMessage = '';
 
     this.auth.login(this.form.getRawValue()).subscribe({
-      next: () => void this.router.navigate(['/dashboard']),
+      next: (res) => {
+        const targetRoute = res.passwordChangeRequired ? '/change-password' : '/dashboard';
+        void this.router.navigate([targetRoute]);
+      },
       error: (err) => {
         this.loading = false;
         this.errorMessage =
