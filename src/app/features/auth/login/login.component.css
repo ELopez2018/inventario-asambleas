@@ -10,6 +10,36 @@
   padding-right: max(1rem, env(safe-area-inset-right));
   padding-bottom: max(1rem, env(safe-area-inset-bottom));
   padding-left: max(1rem, env(safe-area-inset-left));
+  background:
+    linear-gradient(90deg, rgba(15, 23, 42, 0.56), rgba(15, 23, 42, 0.28) 50%, rgba(15, 23, 42, 0.62)),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.18), rgba(15, 23, 42, 0.5)),
+    url('/images/login-background.png') var(--login-bg-position, center) / var(--login-bg-size, cover) no-repeat;
+}
+
+.login-shell::before {
+  position: absolute;
+  inset: 0;
+  content: '';
+  background:
+    radial-gradient(circle at 50% 44%, rgba(15, 23, 42, 0.1), rgba(15, 23, 42, 0.58) 72%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 28%);
+  pointer-events: none;
+}
+
+.login-card {
+  animation: login-card-in 220ms ease-out both;
+}
+
+@keyframes login-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (max-height: 640px) {
@@ -22,5 +52,30 @@
   .login-shell {
     padding-top: max(2rem, env(safe-area-inset-top));
     padding-bottom: max(2rem, env(safe-area-inset-bottom));
+  }
+}
+
+@media (max-width: 640px) {
+  .login-shell {
+    --login-bg-position: 56% center;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-shell {
+    --login-bg-position: 58% center;
+  }
+}
+
+@media (max-width: 420px) and (orientation: portrait) {
+  .login-shell {
+    --login-bg-size: auto 100%;
+    --login-bg-position: 57% center;
+  }
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+  .login-shell {
+    --login-bg-position: center 44%;
   }
 }
