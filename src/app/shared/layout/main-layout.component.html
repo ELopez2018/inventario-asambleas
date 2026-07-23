@@ -1,8 +1,8 @@
-<mat-sidenav-container class="app-shell bg-slate-50" [hasBackdrop]="isCompact()">
+<mat-sidenav-container class="app-shell bg-slate-50" [hasBackdrop]="isCompact()" autosize>
   <mat-sidenav
     #sidenav
     id="app-navigation"
-    class="w-64 border-r border-slate-200 bg-slate-950 text-white"
+    class="app-sidenav border-r border-slate-200 bg-slate-950 text-white"
     [mode]="isCompact() ? 'over' : 'side'"
     [opened]="!isCompact()"
     aria-label="Navegacion principal"
@@ -10,7 +10,7 @@
     <div class="flex items-center gap-2 border-b border-white/10 px-5 py-2">
       <div class="min-w-0 flex-1 py-2">
         <div class="text-base font-semibold">Inventario AR 2026</div>
-        <div class="text-xs text-slate-300">Asamblea Regional</div>
+        <div class="text-xs text-slate-300">Asamblea Regional · v{{ appVersion }}</div>
       </div>
       @if (isCompact()) {
         <button
@@ -26,7 +26,7 @@
     </div>
 
     <mat-nav-list class="app-nav-list" aria-label="Secciones de la aplicacion">
-      @for (item of navItems; track item.path) {
+      @for (item of navItems(); track item.code) {
         <a
           mat-list-item
           [routerLink]="item.path"
@@ -42,7 +42,7 @@
     </mat-nav-list>
   </mat-sidenav>
 
-  <mat-sidenav-content class="flex min-h-0 min-w-0 flex-col overflow-hidden">
+  <mat-sidenav-content class="app-sidenav-content flex min-h-0 min-w-0 flex-col overflow-hidden">
     <mat-toolbar color="primary" class="app-toolbar shrink-0">
       @if (isCompact()) {
         <button
@@ -57,7 +57,41 @@
         </button>
       }
       <span class="ml-1 shrink-0 text-base font-medium">Inventario</span>
+      <span class="ml-2 hidden shrink-0 rounded bg-white/15 px-2 py-0.5 text-xs sm:inline">
+        v{{ appVersion }}
+      </span>
+      <div class="app-event-selector ml-3 hidden min-w-0 items-center gap-2 lg:flex">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Evento</mat-label>
+          <mat-select
+            [value]="eventContext.selectedEventId()"
+            (selectionChange)="selectEvent($event.value)"
+          >
+            @for (event of eventContext.events(); track event.id) {
+              <mat-option [value]="event.id">{{ event.description }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        @if (eventContext.selectedAddress()) {
+          <span class="event-address truncate text-xs text-white/80">
+            {{ eventContext.selectedAddress() }}
+          </span>
+        }
+      </div>
       <span class="flex-1"></span>
+      <div class="app-event-selector app-event-selector--compact mr-2 flex min-w-0 lg:hidden">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Evento</mat-label>
+          <mat-select
+            [value]="eventContext.selectedEventId()"
+            (selectionChange)="selectEvent($event.value)"
+          >
+            @for (event of eventContext.events(); track event.id) {
+              <mat-option [value]="event.id">{{ event.description }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
       @if (currentUser?.username) {
         <span class="mr-2 hidden max-w-40 truncate text-sm sm:inline md:max-w-56">
           {{ currentUser?.username }}

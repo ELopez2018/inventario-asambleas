@@ -1,0 +1,215 @@
+<section class="app-page">
+  <div class="app-page-header">
+    <div class="app-page-heading">
+      <h1 class="app-page-title">Permisos de pantallas</h1>
+      <p class="app-page-subtitle">Administre accesos base por rol y ajustes puntuales por usuario.</p>
+    </div>
+  </div>
+
+  @if (loading) {
+    <div class="flex items-center justify-center p-10">
+      <mat-spinner diameter="36" />
+    </div>
+  } @else {
+    <div class="grid gap-4 xl:grid-cols-2">
+      <section class="app-form-card">
+        <div class="mb-4 flex items-center gap-2">
+          <mat-icon class="text-indigo-700">admin_panel_settings</mat-icon>
+          <h2 class="text-base font-semibold text-slate-900">Pantallas por rol</h2>
+        </div>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Rol</mat-label>
+          <mat-select (selectionChange)="onRoleSelected($event.value)">
+            @for (role of roles; track role.code) {
+              <mat-option [value]="role.code">{{ role.code }} - {{ role.description }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        @if (loadingRole) {
+          <div class="flex justify-center p-6">
+            <mat-spinner diameter="30" />
+          </div>
+        } @else if (selectedRole) {
+          <h3 class="section-label">Pantallas</h3>
+          <div class="screen-list">
+            @for (screen of screens; track screen.code) {
+              <mat-checkbox
+                class="screen-row"
+                [checked]="roleScreenCodes.has(screen.code)"
+                (change)="toggleRoleScreen(screen.code, $event.checked)"
+              >
+                <span class="screen-row__title">{{ screen.title }}</span>
+                <span class="screen-row__meta">{{ screen.code }} · {{ screen.route }}</span>
+              </mat-checkbox>
+            }
+          </div>
+
+          <div class="mt-4 flex justify-end">
+            <button mat-flat-button color="primary" type="button" [disabled]="savingRole" (click)="saveRoleScreens()">
+              @if (savingRole) {
+                <mat-spinner diameter="18" class="mr-2 inline-block" />
+              }
+              Guardar rol
+            </button>
+          </div>
+
+          <h3 class="section-label section-label--spaced">Acciones</h3>
+          <div class="screen-list">
+            @for (screen of screens; track screen.code) {
+              @if (getActionsForScreen(screen.code).length) {
+                <div class="screen-action-group">
+                  <div class="screen-row__title">{{ screen.title }}</div>
+                  <div class="screen-row__meta">{{ screen.code }}</div>
+                  <div class="screen-action-group__items">
+                    @for (action of getActionsForScreen(screen.code); track action.code) {
+                      <mat-checkbox
+                        class="screen-row screen-row--compact"
+                        [checked]="roleActionCodes.has(action.code)"
+                        (change)="toggleRoleAction(action.code, $event.checked)"
+                      >
+                        <span class="screen-row__title">{{ action.title }}</span>
+                        <span class="screen-row__meta">{{ action.code }} · {{ action.actionKey }}</span>
+                      </mat-checkbox>
+                    }
+                  </div>
+                </div>
+              }
+            }
+          </div>
+
+          <div class="mt-4 flex justify-end">
+            <button
+              mat-flat-button
+              color="primary"
+              type="button"
+              [disabled]="savingRoleActions"
+              (click)="saveRoleActions()"
+            >
+              @if (savingRoleActions) {
+                <mat-spinner diameter="18" class="mr-2 inline-block" />
+              }
+              Guardar acciones
+            </button>
+          </div>
+        } @else {
+          <p class="text-sm text-slate-600">Seleccione un rol para editar sus pantallas base.</p>
+        }
+      </section>
+
+      <section class="app-form-card">
+        <div class="mb-4 flex items-center gap-2">
+          <mat-icon class="text-indigo-700">person</mat-icon>
+          <h2 class="text-base font-semibold text-slate-900">Ajustes por usuario</h2>
+        </div>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Usuario</mat-label>
+          <mat-select (selectionChange)="onUserSelected($event.value)">
+            <mat-option [value]="0">Seleccione un usuario</mat-option>
+            @for (user of users; track user.id) {
+              <mat-option [value]="user.id">{{ user.firstName }} {{ user.lastName }} ({{ user.email }})</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        @if (loadingUser) {
+          <div class="flex justify-center p-6">
+            <mat-spinner diameter="30" />
+          </div>
+        } @else if (selectedUserId) {
+          <h3 class="section-label">Pantallas</h3>
+          <div class="screen-list">
+            @for (screen of userScreens; track screen.code) {
+              <div class="screen-row screen-row--select">
+                <div class="min-w-0">
+                  <div class="screen-row__title">{{ screen.title }}</div>
+                  <div class="screen-row__meta">
+                    {{ screen.code }} · base:
+                    {{ screen.roleGranted ? 'permitida' : 'sin acceso' }}
+                  </div>
+                </div>
+                <mat-form-field appearance="outline" class="screen-row__select">
+                  <mat-label>Ajuste</mat-label>
+                  <mat-select
+                    [value]="userOverrides.get(screen.code) ?? null"
+                    (selectionChange)="setUserOverride(screen.code, $event.value)"
+                  >
+                    <mat-option [value]="null">Sin ajuste</mat-option>
+                    <mat-option value="ALLOW">Permitir</mat-option>
+                    <mat-option value="DENY">Denegar</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+            }
+          </div>
+
+          <div class="mt-4 flex justify-end">
+            <button mat-flat-button color="primary" type="button" [disabled]="savingUser" (click)="saveUserOverrides()">
+              @if (savingUser) {
+                <mat-spinner diameter="18" class="mr-2 inline-block" />
+              }
+              Guardar usuario
+            </button>
+          </div>
+
+          <h3 class="section-label section-label--spaced">Acciones</h3>
+          <div class="screen-list">
+            @for (action of userActions; track action.code) {
+              <div class="screen-row screen-row--select">
+                <div class="min-w-0">
+                  <div class="screen-row__title">{{ action.title }}</div>
+                  <div class="screen-row__meta">
+                    {{ action.code }} · {{ action.screenCode }} · base:
+                    {{ action.roleGranted ? 'permitida' : 'sin acceso' }}
+                  </div>
+                </div>
+                <mat-form-field appearance="outline" class="screen-row__select">
+                  <mat-label>Ajuste</mat-label>
+                  <mat-select
+                    [value]="userActionOverrides.get(action.code) ?? null"
+                    (selectionChange)="setUserActionOverride(action.code, $event.value)"
+                  >
+                    <mat-option [value]="null">Sin ajuste</mat-option>
+                    <mat-option value="ALLOW">Permitir</mat-option>
+                    <mat-option value="DENY">Denegar</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+            }
+          </div>
+
+          <div class="mt-4 flex justify-end">
+            <button
+              mat-flat-button
+              color="primary"
+              type="button"
+              [disabled]="savingUserActions"
+              (click)="saveUserActionOverrides()"
+            >
+              @if (savingUserActions) {
+                <mat-spinner diameter="18" class="mr-2 inline-block" />
+              }
+              Guardar acciones
+            </button>
+          </div>
+        } @else {
+          <p class="text-sm text-slate-600">Seleccione un usuario para aplicar overrides.</p>
+        }
+      </section>
+    </div>
+
+    @if (errorMessage) {
+      <div class="mt-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        {{ errorMessage }}
+      </div>
+    }
+
+    @if (successMessage) {
+      <div class="mt-4 rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+        {{ successMessage }}
+      </div>
+    }
+  }
+</section>

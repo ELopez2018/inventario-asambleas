@@ -11,6 +11,7 @@ const { ZipArchive } = require('archiver');
 const rootDir = process.cwd();
 const packageJsonPath = path.join(rootDir, 'package.json');
 const packageLockPath = path.join(rootDir, 'package-lock.json');
+const appVersionPath = path.join(rootDir, 'src', 'app', 'core', 'app-version.ts');
 const distDir = path.join(rootDir, 'dist', 'inventario-front');
 const browserDistDir = path.join(distDir, 'browser');
 const releaseDir = path.join(rootDir, 'releases');
@@ -36,8 +37,20 @@ const packageJson = JSON.parse(await readFile(packageJsonPath, 'utf8'));
 const packageName = packageJson.name;
 const currentVersion = String(packageJson.version ?? '0.0.0');
 const nextVersion = incrementVersion(currentVersion, versionType);
+const originalPackageJsonText = await readFile(packageJsonPath, 'utf8');
+const originalPackageLockText = (await fileExists(packageLockPath))
+  ? await readFile(packageLockPath, 'utf8')
+  : null;
+const originalAppVersionText = (await fileExists(appVersionPath))
+  ? await readFile(appVersionPath, 'utf8')
+  : null;
 
 console.log(`Compilando ${packageName} ${currentVersion} -> ${nextVersion} (${versionType})...`);
+
+packageJson.version = nextVersion;
+await writeJson(packageJsonPath, packageJson);
+await updatePackageLockVersion(packageLockPath, nextVersion);
+await writeAppVersion(nextVersion);
 
 const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const build = spawnSync(npmCommand, ['run', 'build:prod'], {
@@ -47,6 +60,8 @@ const build = spawnSync(npmCommand, ['run', 'build:prod'], {
 });
 
 if (build.status !== 0) {
+  await restoreVersionFiles(originalPackageJsonText, originalPackageLockText, originalAppVersionText);
+
   if (build.error) {
     console.error(build.error);
   }
@@ -66,10 +81,6 @@ const zipPath = path.join(releaseDir, zipFileName);
 
 await createZipFromDirectory(sourceDir, zipPath);
 await assertOnlyReleaseZip(zipPath);
-
-packageJson.version = nextVersion;
-await writeJson(packageJsonPath, packageJson);
-await updatePackageLockVersion(packageLockPath, nextVersion);
 
 console.log(`ZIP generado: ${path.relative(rootDir, zipPath)}`);
 
@@ -118,6 +129,22 @@ async function updatePackageLockVersion(filePath, version) {
   }
 
   await writeJson(filePath, packageLock);
+}
+
+async function writeAppVersion(version) {
+  await writeFile(appVersionPath, `export const APP_VERSION = '${version}';\n`, 'utf8');
+}
+
+async function restoreVersionFiles(packageJsonText, packageLockText, appVersionText) {
+  await writeFile(packageJsonPath, packageJsonText, 'utf8');
+
+  if (packageLockText !== null) {
+    await writeFile(packageLockPath, packageLockText, 'utf8');
+  }
+
+  if (appVersionText !== null) {
+    await writeFile(appVersionPath, appVersionText, 'utf8');
+  }
 }
 
 async function createZipFromDirectory(sourceDir, zipPath) {

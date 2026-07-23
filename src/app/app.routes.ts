@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { passwordChangeGuard } from './core/guards/password-change.guard';
+import { screenAccessGuard } from './core/guards/screen-access.guard';
 import { superRoleGuard } from './core/guards/super-role.guard';
 
 export const routes: Routes = [
@@ -26,26 +27,36 @@ export const routes: Routes = [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       {
         path: 'dashboard',
+        canActivate: [screenAccessGuard],
+        data: { screenCode: 'DASHBOARD' },
         loadComponent: () =>
           import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent),
       },
       {
         path: 'users',
+        canActivate: [screenAccessGuard],
+        data: { screenCode: 'USERS' },
         loadComponent: () =>
           import('./features/users/user-list/user-list.component').then((m) => m.UserListComponent),
       },
       {
         path: 'users/new',
+        canActivate: [screenAccessGuard],
+        data: { screenCode: 'USERS' },
         loadComponent: () =>
           import('./features/users/user-form/user-form.component').then((m) => m.UserFormComponent),
       },
       {
         path: 'users/:id/edit',
+        canActivate: [screenAccessGuard],
+        data: { screenCode: 'USERS' },
         loadComponent: () =>
           import('./features/users/user-form/user-form.component').then((m) => m.UserFormComponent),
       },
       {
         path: 'events',
+        canActivate: [screenAccessGuard],
+        data: { screenCode: 'EVENTS' },
         loadComponent: () =>
           import('./features/events/event-list/event-list.component').then(
             (m) => m.EventListComponent,
@@ -53,6 +64,8 @@ export const routes: Routes = [
       },
       {
         path: 'events/new',
+        canActivate: [screenAccessGuard],
+        data: { screenCode: 'EVENTS' },
         loadComponent: () =>
           import('./features/events/event-form/event-form.component').then(
             (m) => m.EventFormComponent,
@@ -60,6 +73,8 @@ export const routes: Routes = [
       },
       {
         path: 'events/:id/edit',
+        canActivate: [screenAccessGuard],
+        data: { screenCode: 'EVENTS' },
         loadComponent: () =>
           import('./features/events/event-form/event-form.component').then(
             (m) => m.EventFormComponent,
@@ -67,6 +82,8 @@ export const routes: Routes = [
       },
       {
         path: 'inventory-items',
+        canActivate: [screenAccessGuard],
+        data: { screenCode: 'INVENTORY_ITEMS' },
         loadComponent: () =>
           import('./features/inventory-items/item-list/item-list.component').then(
             (m) => m.ItemListComponent,
@@ -74,6 +91,8 @@ export const routes: Routes = [
       },
       {
         path: 'inventory-items/new',
+        canActivate: [screenAccessGuard],
+        data: { screenCode: 'INVENTORY_ITEMS' },
         loadComponent: () =>
           import('./features/inventory-items/item-form/item-form.component').then(
             (m) => m.ItemFormComponent,
@@ -81,6 +100,8 @@ export const routes: Routes = [
       },
       {
         path: 'inventory-items/:id/edit',
+        canActivate: [screenAccessGuard],
+        data: { screenCode: 'INVENTORY_ITEMS' },
         loadComponent: () =>
           import('./features/inventory-items/item-form/item-form.component').then(
             (m) => m.ItemFormComponent,
@@ -88,6 +109,8 @@ export const routes: Routes = [
       },
       {
         path: 'inventory-transactions',
+        canActivate: [screenAccessGuard],
+        data: { screenCode: 'INVENTORY_TRANSACTIONS' },
         loadComponent: () =>
           import('./features/inventory-transactions/transaction-list/transaction-list.component').then(
             (m) => m.TransactionListComponent,
@@ -95,6 +118,8 @@ export const routes: Routes = [
       },
       {
         path: 'inventory-transactions/new',
+        canActivate: [screenAccessGuard],
+        data: { screenCode: 'INVENTORY_TRANSACTIONS' },
         loadComponent: () =>
           import('./features/inventory-transactions/transaction-form/transaction-form.component').then(
             (m) => m.TransactionFormComponent,
@@ -102,6 +127,8 @@ export const routes: Routes = [
       },
       {
         path: 'inventory-transactions/:id/edit',
+        canActivate: [screenAccessGuard],
+        data: { screenCode: 'INVENTORY_TRANSACTIONS' },
         loadComponent: () =>
           import('./features/inventory-transactions/transaction-form/transaction-form.component').then(
             (m) => m.TransactionFormComponent,
@@ -109,6 +136,8 @@ export const routes: Routes = [
       },
       {
         path: 'inventory-item-details',
+        canActivate: [screenAccessGuard],
+        data: { screenCode: 'INVENTORY_ITEM_DETAILS' },
         loadComponent: () =>
           import('./features/inventory-item-details/detail-list/detail-list.component').then(
             (m) => m.DetailListComponent,
@@ -116,6 +145,8 @@ export const routes: Routes = [
       },
       {
         path: 'inventory-item-details/new',
+        canActivate: [screenAccessGuard],
+        data: { screenCode: 'INVENTORY_ITEM_DETAILS' },
         loadComponent: () =>
           import('./features/inventory-item-details/detail-form/detail-form.component').then(
             (m) => m.DetailFormComponent,
@@ -123,6 +154,8 @@ export const routes: Routes = [
       },
       {
         path: 'inventory-item-details/:id/edit',
+        canActivate: [screenAccessGuard],
+        data: { screenCode: 'INVENTORY_ITEM_DETAILS' },
         loadComponent: () =>
           import('./features/inventory-item-details/detail-form/detail-form.component').then(
             (m) => m.DetailFormComponent,
@@ -130,6 +163,8 @@ export const routes: Routes = [
       },
       {
         path: 'inventory-item-detail-photos',
+        canActivate: [screenAccessGuard],
+        data: { screenCode: 'INVENTORY_ITEM_DETAIL_PHOTOS' },
         loadComponent: () =>
           import('./features/inventory-item-detail-photos/photo-list/photo-list.component').then(
             (m) => m.PhotoListComponent,
@@ -137,6 +172,8 @@ export const routes: Routes = [
       },
       {
         path: 'transport-requests',
+        canActivate: [screenAccessGuard],
+        data: { screenCode: 'TRANSPORT_REQUESTS' },
         loadComponent: () =>
           import('./features/transport-requests/request-list/request-list.component').then(
             (m) => m.RequestListComponent,
@@ -144,6 +181,8 @@ export const routes: Routes = [
       },
       {
         path: 'transport-requests/new',
+        canActivate: [screenAccessGuard],
+        data: { screenCode: 'TRANSPORT_REQUESTS' },
         loadComponent: () =>
           import('./features/transport-requests/request-form/request-form.component').then(
             (m) => m.RequestFormComponent,
@@ -151,6 +190,8 @@ export const routes: Routes = [
       },
       {
         path: 'transport-requests/:id/edit',
+        canActivate: [screenAccessGuard],
+        data: { screenCode: 'TRANSPORT_REQUESTS' },
         loadComponent: () =>
           import('./features/transport-requests/request-form/request-form.component').then(
             (m) => m.RequestFormComponent,
@@ -162,6 +203,15 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/auth/admin-credentials/admin-credentials.component').then(
             (m) => m.AdminCredentialsComponent,
+          ),
+      },
+      {
+        path: 'admin/screen-access',
+        canActivate: [screenAccessGuard],
+        data: { screenCode: 'SCREEN_ACCESS_ADMIN' },
+        loadComponent: () =>
+          import('./features/auth/screen-access-admin/screen-access-admin.component').then(
+            (m) => m.ScreenAccessAdminComponent,
           ),
       },
     ],

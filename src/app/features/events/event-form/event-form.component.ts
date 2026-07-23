@@ -16,6 +16,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { finalize } from 'rxjs';
 import { EventService } from '../../../core/services/event.service';
 import { CreateEventRequest } from '../../../models/event.model';
+import { NativeDateTimePickerDirective } from '../../../shared/native-date-time-picker.directive';
 
 function dateRangeValidator(control: AbstractControl): ValidationErrors | null {
   const startDate = control.get('startDate')?.value as string | null;
@@ -51,6 +52,7 @@ function fromLocalDateTime(value: string | null): string {
     MatIconModule,
     MatInputModule,
     MatProgressSpinnerModule,
+    NativeDateTimePickerDirective,
   ],
   templateUrl: './event-form.component.html',
   styleUrl: './event-form.component.css',
@@ -65,6 +67,7 @@ export class EventFormComponent implements OnInit {
   readonly form = this.fb.group(
     {
       description: ['', [Validators.required, Validators.maxLength(255)]],
+      address: ['', [Validators.required, Validators.maxLength(255)]],
       startDate: [''],
       endDate: [''],
       observations: ['', Validators.maxLength(5000)],
@@ -89,6 +92,7 @@ export class EventFormComponent implements OnInit {
         next: (event) =>
           this.form.patchValue({
             description: event.description,
+            address: event.address,
             startDate: fromLocalDateTime(event.startDate),
             endDate: fromLocalDateTime(event.endDate),
             observations: event.observations ?? '',
@@ -108,6 +112,7 @@ export class EventFormComponent implements OnInit {
     const raw = this.form.getRawValue();
     const body: CreateEventRequest = {
       description: raw.description.trim(),
+      address: raw.address.trim(),
       startDate: toLocalDateTime(raw.startDate),
       endDate: toLocalDateTime(raw.endDate),
       observations: raw.observations.trim() || null,

@@ -4,7 +4,18 @@
       <mat-icon class="text-base">arrow_back</mat-icon>
       Solicitudes
     </a>
-    <h1 class="app-page-title mt-2">{{ requestId ? 'Editar solicitud' : 'Nueva solicitud' }}</h1>
+    <div class="mt-2 flex flex-wrap items-center justify-between gap-3">
+      <h1 class="app-page-title">{{ requestId ? 'Editar solicitud' : 'Nueva solicitud' }}</h1>
+      <button
+        mat-stroked-button
+        type="button"
+        (click)="openExamplePdf()"
+        [disabled]="loadingExamplePdf"
+      >
+        <mat-icon>help_outline</mat-icon>
+        Ejemplo CO-31
+      </button>
+    </div>
   </div>
 
   <form [formGroup]="form" (ngSubmit)="submit()" class="app-form-card">
@@ -26,22 +37,30 @@
     <mat-stepper linear #stepper>
       <mat-step [stepControl]="generalStepForm" label="Paso 1: Datos generales">
         <div class="app-form-grid mt-4">
-          <mat-form-field appearance="outline">
-            <mat-label>Nro solicitud</mat-label>
-            <input matInput formControlName="requestNumber" maxlength="50" />
-            <button mat-icon-button matSuffix type="button" [matTooltip]="'Ejemplo: CO-31-2026-001'">
-              <mat-icon>help_outline</mat-icon>
-            </button>
-            @if (form.controls.requestNumber.hasError('required')) {
-            <mat-error>Este campo es obligatorio.</mat-error>
-            } @else if (form.controls.requestNumber.hasError('maxlength')) {
-            <mat-error>Maximo 50 caracteres.</mat-error>
-            }
-          </mat-form-field>
+          <div class="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
+            <div class="text-xs font-semibold uppercase text-blue-700">Numero de formulario</div>
+            <div class="mt-1 text-2xl font-bold text-blue-950">
+              {{ requestNumberLabel || 'Cargando...' }}
+            </div>
+          </div>
 
           <mat-form-field appearance="outline">
             <mat-label>Fecha solicitud</mat-label>
-            <input matInput type="date" formControlName="requestDate" />
+            <input
+              #requestDatePicker="nativeDateTimePicker"
+              matInput
+              type="date"
+              formControlName="requestDate"
+            />
+            <button
+              mat-icon-button
+              matSuffix
+              type="button"
+              aria-label="Elegir fecha de solicitud"
+              (click)="requestDatePicker.openPicker()"
+            >
+              <mat-icon>event</mat-icon>
+            </button>
             <button mat-icon-button matSuffix type="button" [matTooltip]="'Fecha de hoy o cuando se hace la solicitud'">
               <mat-icon>help_outline</mat-icon>
             </button>
@@ -51,8 +70,18 @@
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>Solicita desde</mat-label>
-            <input matInput formControlName="requestedFrom" maxlength="255" />
+            <mat-label>Departamento que hace la solicitud</mat-label>
+            <input
+              matInput
+              formControlName="requestedFrom"
+              maxlength="255"
+              [matAutocomplete]="requestedFromAutocomplete"
+            />
+            <mat-autocomplete #requestedFromAutocomplete="matAutocomplete">
+              @for (option of getFilteredTextOptions(requestedFromOptions, form.controls.requestedFrom.value); track option) {
+              <mat-option [value]="option">{{ option }}</mat-option>
+              }
+            </mat-autocomplete>
             <button mat-icon-button matSuffix type="button" [matTooltip]="'Quien hace la solicitud'">
               <mat-icon>help_outline</mat-icon>
             </button>
@@ -64,7 +93,7 @@
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>Solicita hacia</mat-label>
+            <mat-label>Departamento que recibe la solicitud</mat-label>
             <input matInput formControlName="requestedTo" maxlength="255" />
             <button mat-icon-button matSuffix type="button" [matTooltip]="'Lugar o area que recibe'">
               <mat-icon>help_outline</mat-icon>
@@ -77,15 +106,25 @@
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>Dependencia destino</mat-label>
-            <input matInput formControlName="targetDepartment" maxlength="255" />
+            <mat-label>Lugar donde se recoge</mat-label>
+            <input
+              matInput
+              formControlName="targetDepartment"
+              maxlength="255"
+              [matAutocomplete]="targetDepartmentAutocomplete"
+            />
+            <mat-autocomplete #targetDepartmentAutocomplete="matAutocomplete">
+              @for (option of getFilteredTextOptions(targetDepartmentOptions, form.controls.targetDepartment.value); track option) {
+              <mat-option [value]="option">{{ option }}</mat-option>
+              }
+            </mat-autocomplete>
             @if (form.controls.targetDepartment.hasError('maxlength')) {
             <mat-error>Maximo 255 caracteres.</mat-error>
             }
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>Lugar destino</mat-label>
+            <mat-label>Lugar destino (Direccion del local)</mat-label>
             <input matInput formControlName="targetPlace" maxlength="255" />
             @if (form.controls.targetPlace.hasError('maxlength')) {
             <mat-error>Maximo 255 caracteres.</mat-error>
@@ -93,29 +132,57 @@
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>Fecha deseada</mat-label>
-            <input matInput type="date" formControlName="desiredDate" />
+            <mat-label>Fecha deseada de entrega</mat-label>
+            <input
+              #desiredDatePicker="nativeDateTimePicker"
+              matInput
+              type="date"
+              formControlName="desiredDate"
+            />
+            <button
+              mat-icon-button
+              matSuffix
+              type="button"
+              aria-label="Elegir fecha deseada de entrega"
+              (click)="desiredDatePicker.openPicker()"
+            >
+              <mat-icon>event</mat-icon>
+            </button>
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>Hora deseada</mat-label>
-            <input matInput type="time" formControlName="desiredTime" />
+            <mat-label>Hora deseada de entrega</mat-label>
+            <input
+              #desiredTimePicker="nativeDateTimePicker"
+              matInput
+              type="time"
+              formControlName="desiredTime"
+            />
+            <button
+              mat-icon-button
+              matSuffix
+              type="button"
+              aria-label="Elegir hora deseada de entrega"
+              (click)="desiredTimePicker.openPicker()"
+            >
+              <mat-icon>schedule</mat-icon>
+            </button>
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>Monto estimado</mat-label>
+            <mat-label>Valor estimado</mat-label>
             <input matInput type="number" formControlName="estimatedAmount" />
           </mat-form-field>
 
-          <mat-form-field appearance="outline">
-            <mat-label>Evento</mat-label>
-            <mat-select formControlName="eventId">
-              <mat-option [value]="0">Sin evento</mat-option>
-              @for (event of events; track event.id) {
-              <mat-option [value]="event.id">{{ event.description }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
+          <div class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+            <div class="text-xs font-semibold uppercase text-slate-500">Evento seleccionado</div>
+            <div class="mt-1 text-sm font-semibold text-slate-900">
+              {{ eventContext.selectedDescription() || 'Seleccione un evento en la barra superior' }}
+            </div>
+            @if (eventContext.selectedAddress()) {
+            <div class="mt-1 text-xs text-slate-600">{{ eventContext.selectedAddress() }}</div>
+            }
+          </div>
 
           <mat-form-field appearance="outline" class="md:col-span-2">
             <mat-label>Observaciones</mat-label>
@@ -135,16 +202,44 @@
 
           <mat-form-field appearance="outline">
             <mat-label>Fecha recibido</mat-label>
-            <input matInput type="date" formControlName="receivedDate" />
+            <input
+              #receivedDatePicker="nativeDateTimePicker"
+              matInput
+              type="date"
+              formControlName="receivedDate"
+            />
+            <button
+              mat-icon-button
+              matSuffix
+              type="button"
+              aria-label="Elegir fecha recibido"
+              (click)="receivedDatePicker.openPicker()"
+            >
+              <mat-icon>event</mat-icon>
+            </button>
           </mat-form-field>
 
           <mat-form-field appearance="outline">
             <mat-label>Hora recibido</mat-label>
-            <input matInput type="time" formControlName="receivedTime" />
+            <input
+              #receivedTimePicker="nativeDateTimePicker"
+              matInput
+              type="time"
+              formControlName="receivedTime"
+            />
+            <button
+              mat-icon-button
+              matSuffix
+              type="button"
+              aria-label="Elegir hora recibido"
+              (click)="receivedTimePicker.openPicker()"
+            >
+              <mat-icon>schedule</mat-icon>
+            </button>
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>Autorizado por</mat-label>
+            <mat-label>Autorizado por (Quien Solicita/Responsable)</mat-label>
             <input matInput formControlName="authorizedBy" maxlength="255" />
             @if (form.controls.authorizedBy.hasError('maxlength')) {
             <mat-error>Maximo 255 caracteres.</mat-error>
@@ -152,9 +247,16 @@
           </mat-form-field>
         </div>
 
-        <div class="step-actions mt-4">
+        <div class="step-actions mt-5">
+          <div class="step-actions__start">
+            <a mat-stroked-button routerLink="/transport-requests">
+              <mat-icon>close</mat-icon>
+              Cancelar
+            </a>
+          </div>
           <button mat-flat-button color="primary" type="button" (click)="validateGeneralStep(stepper)">
             Continuar
+            <mat-icon iconPositionEnd>arrow_forward</mat-icon>
           </button>
         </div>
       </mat-step>
@@ -187,6 +289,37 @@
 
               <mat-form-field appearance="outline" class="md:col-span-4">
                 <mat-label>Descripcion</mat-label>
+                <input
+                  matInput
+                  formControlName="descriptionSource"
+                  maxlength="255"
+                  [matAutocomplete]="itemDescriptionAutocomplete"
+                  (input)="syncDescriptionFromSearch($index)"
+                />
+                <mat-autocomplete
+                  #itemDescriptionAutocomplete="matAutocomplete"
+                  [displayWith]="displayDescriptionSource"
+                  (optionSelected)="onDescriptionOptionSelected($event, $index)"
+                >
+                  @for (inventoryItem of getFilteredInventoryItems(itemGroup.get('descriptionSource')?.value); track inventoryItem.id) {
+                  <mat-option [value]="inventoryItem.description">
+                    {{ inventoryItem.description }}
+                  </mat-option>
+                  }
+                  <mat-option [value]="newItemOption">
+                    Articulo nuevo
+                  </mat-option>
+                </mat-autocomplete>
+                @if (itemGroup.get('descriptionSource')?.hasError('required')) {
+                <mat-error>Descripcion obligatoria.</mat-error>
+                } @else if (itemGroup.get('descriptionSource')?.hasError('maxlength')) {
+                <mat-error>Maximo 255 caracteres.</mat-error>
+                }
+              </mat-form-field>
+
+              @if (isNewItemDescription($index)) {
+              <mat-form-field appearance="outline" class="md:col-span-4">
+                <mat-label>Descripcion del articulo nuevo</mat-label>
                 <input matInput formControlName="description" maxlength="255" />
                 @if (itemGroup.get('description')?.hasError('required')) {
                 <mat-error>Descripcion obligatoria.</mat-error>
@@ -194,6 +327,7 @@
                 <mat-error>Maximo 255 caracteres.</mat-error>
                 }
               </mat-form-field>
+              }
 
               <mat-form-field appearance="outline" class="md:col-span-3">
                 <mat-label>Tamano/Peso</mat-label>
@@ -204,7 +338,7 @@
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="md:col-span-2">
-                <mat-label>Total linea</mat-label>
+                <mat-label>Total</mat-label>
                 <input matInput type="number" formControlName="lineTotal" />
                 @if (itemGroup.get('lineTotal')?.hasError('decimalPrecision')) {
                 <mat-error>Maximo 10 enteros y 2 decimales.</mat-error>
@@ -222,31 +356,157 @@
           </div>
         </section>
 
-        <div class="step-actions mt-4">
-          <button mat-button matStepperPrevious type="button">Atras</button>
+        <div class="step-actions mt-5">
+          <div class="step-actions__start">
+            <button mat-stroked-button matStepperPrevious type="button">
+              <mat-icon>arrow_back</mat-icon>
+              Atras
+            </button>
+            <a mat-button routerLink="/transport-requests">
+              <mat-icon>close</mat-icon>
+              Cancelar
+            </a>
+          </div>
           <button mat-flat-button color="primary" type="button" (click)="validateItemsStep(stepper)">
             Continuar
+            <mat-icon iconPositionEnd>arrow_forward</mat-icon>
           </button>
         </div>
       </mat-step>
 
       <mat-step label="Paso 3: Revisar y guardar">
-        <div class="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
-          <div class="flex items-start gap-2">
-            <mat-icon class="text-base">task_alt</mat-icon>
-            <p>
-              Revise la informacion. Si todo esta correcto, pulse <strong>Guardar</strong>.
-            </p>
-          </div>
-        </div>
+        <mat-accordion class="mt-4 block" multi>
+          <mat-expansion-panel>
+            <mat-expansion-panel-header>
+              <mat-panel-title>Datos generales</mat-panel-title>
+              <mat-panel-description>{{ requestNumberLabel || 'Pendiente' }}</mat-panel-description>
+            </mat-expansion-panel-header>
 
-        <div class="step-actions mt-4">
-          <button mat-button matStepperPrevious type="button">Atras</button>
+            <dl class="review-grid">
+              <div>
+                <dt>Numero de formulario</dt>
+                <dd>{{ requestNumberLabel || 'Pendiente por asignar' }}</dd>
+              </div>
+              <div>
+                <dt>Evento</dt>
+                <dd>{{ eventContext.selectedDescription() || 'Sin evento seleccionado' }}</dd>
+              </div>
+              <div>
+                <dt>Fecha solicitud</dt>
+                <dd>{{ form.controls.requestDate.value || '-' }}</dd>
+              </div>
+              <div>
+                <dt>Departamento que hace la solicitud</dt>
+                <dd>{{ form.controls.requestedFrom.value || '-' }}</dd>
+              </div>
+              <div>
+                <dt>Departamento que recibe la solicitud</dt>
+                <dd>{{ form.controls.requestedTo.value || '-' }}</dd>
+              </div>
+              <div>
+                <dt>Lugar donde se recoge</dt>
+                <dd>{{ form.controls.targetDepartment.value || '-' }}</dd>
+              </div>
+              <div>
+                <dt>Lugar destino</dt>
+                <dd>{{ form.controls.targetPlace.value || '-' }}</dd>
+              </div>
+              <div>
+                <dt>Fecha deseada de entrega</dt>
+                <dd>{{ form.controls.desiredDate.value || '-' }}</dd>
+              </div>
+              <div>
+                <dt>Hora deseada de entrega</dt>
+                <dd>{{ form.controls.desiredTime.value || '-' }}</dd>
+              </div>
+              <div>
+                <dt>Valor estimado</dt>
+                <dd>{{ form.controls.estimatedAmount.value || 0 }}</dd>
+              </div>
+              <div class="md:col-span-2">
+                <dt>Observaciones</dt>
+                <dd>{{ form.controls.observations.value || '-' }}</dd>
+              </div>
+            </dl>
+          </mat-expansion-panel>
+
+          <mat-expansion-panel>
+            <mat-expansion-panel-header>
+              <mat-panel-title>Recepcion y autorizacion</mat-panel-title>
+              <mat-panel-description>{{ form.controls.receivedBy.value || 'Sin recibir' }}</mat-panel-description>
+            </mat-expansion-panel-header>
+
+            <dl class="review-grid">
+              <div>
+                <dt>Recibido por</dt>
+                <dd>{{ form.controls.receivedBy.value || '-' }}</dd>
+              </div>
+              <div>
+                <dt>Fecha recibido</dt>
+                <dd>{{ form.controls.receivedDate.value || '-' }}</dd>
+              </div>
+              <div>
+                <dt>Hora recibido</dt>
+                <dd>{{ form.controls.receivedTime.value || '-' }}</dd>
+              </div>
+              <div>
+                <dt>Autorizado por</dt>
+                <dd>{{ form.controls.authorizedBy.value || '-' }}</dd>
+              </div>
+            </dl>
+          </mat-expansion-panel>
+
+          <mat-expansion-panel>
+            <mat-expansion-panel-header>
+              <mat-panel-title>Items de transporte</mat-panel-title>
+              <mat-panel-description>{{ itemsArray.length }} item(s)</mat-panel-description>
+            </mat-expansion-panel-header>
+
+            <div class="space-y-3">
+              @for (itemGroup of itemsArray.controls; track $index) {
+              <div class="rounded border border-slate-200 bg-white p-3">
+                <div class="mb-2 text-sm font-semibold text-slate-900">Item {{ $index + 1 }}</div>
+                <dl class="review-grid">
+                  <div>
+                    <dt>Cantidad</dt>
+                    <dd>{{ itemGroup.get('quantity')?.value || '-' }}</dd>
+                  </div>
+                  <div>
+                    <dt>Descripcion</dt>
+                    <dd>{{ itemGroup.get('description')?.value || '-' }}</dd>
+                  </div>
+                  <div>
+                    <dt>Tamano/Peso</dt>
+                    <dd>{{ itemGroup.get('sizeAndWeight')?.value || '-' }}</dd>
+                  </div>
+                  <div>
+                    <dt>Total</dt>
+                    <dd>{{ itemGroup.get('lineTotal')?.value || '-' }}</dd>
+                  </div>
+                </dl>
+              </div>
+              }
+            </div>
+          </mat-expansion-panel>
+        </mat-accordion>
+
+        <div class="step-actions mt-5">
+          <div class="step-actions__start">
+            <button mat-stroked-button matStepperPrevious type="button">
+              <mat-icon>arrow_back</mat-icon>
+              Atras
+            </button>
+            <a mat-button routerLink="/transport-requests">
+              <mat-icon>close</mat-icon>
+              Cancelar
+            </a>
+          </div>
           <button mat-flat-button color="primary" type="submit" [disabled]="saving || form.invalid"
             [matTooltip]="'Guarda la solicitud completa con todos sus items'">
             @if (saving) {
             <mat-spinner diameter="18" class="mr-2 inline-block" />
             }
+            <mat-icon>save</mat-icon>
             Guardar solicitud
           </button>
         </div>
@@ -258,10 +518,6 @@
       {{ errorMessage }}
     </div>
     }
-
-    <div class="app-form-actions mt-3">
-      <a mat-button routerLink="/transport-requests">Cancelar</a>
-    </div>
     }
   </form>
 </section>

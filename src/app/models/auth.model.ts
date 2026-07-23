@@ -24,7 +24,7 @@ export interface CurrentUser {
   roles: RoleCode[];
 }
 
-export type RoleCode = 'SUPER' | 'AUX' | 'USER';
+export type RoleCode = 'SUPER' | 'ADMIN' | 'AUX' | 'USER';
 
 export interface RoleResponse {
   id: number;
@@ -76,4 +76,84 @@ export interface CredentialResponse {
   passwordChangeRequired: boolean;
   roles: RoleCode[];
   message: string;
+}
+
+export type ScreenAccessOverride = 'ALLOW' | 'DENY';
+export type ScreenAccessSource = 'ROLE' | 'USER_ALLOW' | 'USER_DENY' | 'NONE';
+
+export interface AppScreenResponse {
+  code: string;
+  title: string;
+  route: string;
+  icon: string | null;
+  section: string;
+  sortOrder: number;
+  showInMenu: boolean;
+  requiresAuth: boolean;
+  notes: string | null;
+}
+
+export interface AppScreenActionResponse {
+  code: string;
+  screenCode: string;
+  actionKey: string;
+  title: string;
+  icon: string | null;
+  style: string | null;
+  sortOrder: number;
+  confirmationRequired: boolean;
+  notes: string | null;
+}
+
+export interface EffectiveScreenActionAccessResponse extends AppScreenActionResponse {
+  roleGranted: boolean;
+  userOverride: ScreenAccessOverride | null;
+  allowed: boolean;
+  accessSource: ScreenAccessSource;
+}
+
+export interface EffectiveScreenAccessResponse extends AppScreenResponse {
+  roleGranted: boolean;
+  userOverride: ScreenAccessOverride | null;
+  allowed: boolean;
+  accessSource: ScreenAccessSource;
+  actions: EffectiveScreenActionAccessResponse[];
+}
+
+export interface RoleScreenAccessResponse {
+  roleCode: RoleCode;
+  screenCodes: string[];
+  message: string;
+}
+
+export interface SetRoleScreenAccessRequest {
+  screenCodes: string[];
+}
+
+export interface RoleScreenActionAccessResponse {
+  roleCode: RoleCode;
+  actionCodes: string[];
+  message: string;
+}
+
+export interface SetRoleScreenActionAccessRequest {
+  actionCodes: string[];
+}
+
+export interface UserScreenOverrideRequest {
+  screenCode: string;
+  accessOverride: ScreenAccessOverride;
+}
+
+export interface SetUserScreenOverridesRequest {
+  overrides: UserScreenOverrideRequest[];
+}
+
+export interface UserScreenActionOverrideRequest {
+  actionCode: string;
+  accessOverride: ScreenAccessOverride;
+}
+
+export interface SetUserScreenActionOverridesRequest {
+  overrides: UserScreenActionOverrideRequest[];
 }

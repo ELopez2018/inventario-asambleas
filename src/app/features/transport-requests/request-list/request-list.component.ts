@@ -2,13 +2,17 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { finalize } from 'rxjs';
+import { EventService } from '../../../core/services/event.service';
+import { TransportRequestPdfService } from '../../../core/services/transport-request-pdf.service';
 import { TransportRequestService } from '../../../core/services/transport-request.service';
 import { TransportRequestResponse } from '../../../models/transport-request.model';
+import { RequestPdfDialogComponent } from '../request-pdf-dialog/request-pdf-dialog.component';
 
 @Component({
   selector: 'app-request-list',
@@ -16,6 +20,7 @@ import { TransportRequestResponse } from '../../../models/transport-request.mode
     CommonModule,
     RouterLink,
     MatButtonModule,
+    MatDialogModule,
     MatIconModule,
     MatProgressSpinnerModule,
     MatTableModule,
@@ -26,6 +31,9 @@ import { TransportRequestResponse } from '../../../models/transport-request.mode
 })
 export class RequestListComponent implements OnInit {
   private readonly requestService = inject(TransportRequestService);
+  private readonly requestPdfService = inject(TransportRequestPdfService);
+  private readonly eventService = inject(EventService);
+  private readonly dialog = inject(MatDialog);
 
   readonly displayedColumns = [
     'requestNumber',
@@ -37,7 +45,9 @@ export class RequestListComponent implements OnInit {
   ];
 
   requests: TransportRequestResponse[] = [];
+  eventDescriptionsById = new Map<number, string>();
   expandedRequestId: number | null = null;
+  previewingRequestId: number | null = null;
   loading = false;
   errorMessage = '';
 
@@ -50,7 +60,21 @@ export class RequestListComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.loadEvents();
     this.loadRequests();
+  }
+
+  loadEvents(): void {
+    this.eventService.getAll().subscribe({
+      next: (events) => {
+        this.eventDescriptionsById = new Map(
+          events.map((event) => [event.id, event.description] as const),
+        );
+      },
+      error: () => {
+        this.eventDescriptionsById = new Map();
+      },
+    });
   }
 
   loadRequests(): void {
@@ -86,5 +110,35 @@ export class RequestListComponent implements OnInit {
       next: () => this.loadRequests(),
       error: () => (this.errorMessage = 'No se pudo eliminar la solicitud.'),
     });
+  }
+
+  async previewRequestPdf(request: TransportRequestResponse): Promise<void> {
+    if (this.previewingRequestId) {
+      return;
+    }
+
+    this.previewingRequestId = request.id;
+    this.errorMessage = '';
+
+    try {
+      const pdfUrl = await this.requestPdfService.createRequestPdfUrl(
+        request,
+        request.eventId ? (this.eventDescriptionsById.get(request.eventId) ?? null) : null,
+      );
+      const dialogRef = this.dialog.open(RequestPdfDialogComponent, {
+        data: {
+          pdfUrl,
+          requestNumber: request.requestNumber,
+        },
+        maxWidth: '96vw',
+        panelClass: 'request-pdf-dialog-panel',
+      });
+
+      dialogRef.afterClosed().subscribe(() => this.requestPdfService.revokePdfUrl(pdfUrl));
+    } catch {
+      this.errorMessage = 'No se pudo visualizar el formulario CO-31.';
+    } finally {
+      this.previewingRequestId = null;
+    }
   }
 }

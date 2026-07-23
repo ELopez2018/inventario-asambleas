@@ -1,0 +1,599 @@
+[
+  {
+    "code": "LOGIN",
+    "title": "Login",
+    "route": "/login",
+    "icon": "login",
+    "section": "AUTH",
+    "sortOrder": 0,
+    "showInMenu": false,
+    "requiresAuth": false,
+    "defaultRoles": [],
+    "actions": [
+      {
+        "code": "LOGIN_SUBMIT",
+        "actionKey": "submit",
+        "title": "Iniciar sesion",
+        "icon": "login",
+        "style": "primary",
+        "sortOrder": 10,
+        "confirmationRequired": false,
+        "defaultRoles": [],
+        "notes": "Accion publica; no debe depender de permisos autenticados."
+      }
+    ],
+    "notes": "Ruta publica de autenticacion. No debe incluirse en menu ni en /auth/me/screens."
+  },
+  {
+    "code": "CHANGE_PASSWORD",
+    "title": "Cambiar contrasena",
+    "route": "/change-password",
+    "icon": "lock_reset",
+    "section": "AUTH",
+    "sortOrder": 5,
+    "showInMenu": false,
+    "requiresAuth": true,
+    "defaultRoles": ["SUPER", "ADMIN", "AUX", "USER"],
+    "actions": [
+      {
+        "code": "CHANGE_PASSWORD_SUBMIT",
+        "actionKey": "submit",
+        "title": "Cambiar contrasena",
+        "icon": "lock_reset",
+        "style": "primary",
+        "sortOrder": 10,
+        "confirmationRequired": false,
+        "defaultRoles": ["SUPER", "ADMIN", "AUX", "USER"],
+        "notes": "Disponible cuando el usuario autenticado debe o desea cambiar contrasena."
+      },
+      {
+        "code": "CHANGE_PASSWORD_LOGOUT",
+        "actionKey": "logout",
+        "title": "Cerrar sesion",
+        "icon": "logout",
+        "style": "secondary",
+        "sortOrder": 20,
+        "confirmationRequired": false,
+        "defaultRoles": ["SUPER", "ADMIN", "AUX", "USER"],
+        "notes": "Permite salir desde la pantalla de cambio obligatorio."
+      }
+    ],
+    "notes": "Protegida por authGuard. No aparece en menu."
+  },
+  {
+    "code": "DASHBOARD",
+    "title": "Dashboard",
+    "route": "/dashboard",
+    "icon": "dashboard",
+    "section": "GENERAL",
+    "sortOrder": 10,
+    "showInMenu": true,
+    "requiresAuth": true,
+    "defaultRoles": ["SUPER", "ADMIN", "AUX", "USER"],
+    "actions": [
+      {
+        "code": "DASHBOARD_CREATE_MOVEMENT",
+        "actionKey": "createMovement",
+        "title": "Registrar movimiento",
+        "icon": "add",
+        "style": "primary",
+        "sortOrder": 10,
+        "confirmationRequired": false,
+        "defaultRoles": ["SUPER", "ADMIN", "AUX"],
+        "notes": "Shortcut visible si el usuario tambien puede acceder a INVENTORY_TRANSACTIONS."
+      }
+    ],
+    "notes": "Pantalla inicial autenticada. La ruta raiz redirige aqui."
+  },
+  {
+    "code": "USERS",
+    "title": "Usuarios",
+    "route": "/users",
+    "icon": "people",
+    "section": "ADMINISTRACION",
+    "sortOrder": 20,
+    "showInMenu": true,
+    "requiresAuth": true,
+    "defaultRoles": ["SUPER", "ADMIN"],
+    "actions": [
+      {
+        "code": "USERS_CREATE",
+        "actionKey": "create",
+        "title": "Crear usuario",
+        "icon": "add",
+        "style": "primary",
+        "sortOrder": 10,
+        "confirmationRequired": false,
+        "defaultRoles": ["SUPER", "ADMIN"],
+        "notes": "Boton Nuevo."
+      },
+      {
+        "code": "USERS_EDIT",
+        "actionKey": "edit",
+        "title": "Editar usuario",
+        "icon": "edit",
+        "style": "icon",
+        "sortOrder": 20,
+        "confirmationRequired": false,
+        "defaultRoles": ["SUPER", "ADMIN"],
+        "notes": "Acceso a /users/:id/edit."
+      },
+      {
+        "code": "USERS_DELETE",
+        "actionKey": "delete",
+        "title": "Eliminar usuario",
+        "icon": "delete",
+        "style": "danger",
+        "sortOrder": 30,
+        "confirmationRequired": true,
+        "defaultRoles": ["SUPER", "ADMIN"],
+        "notes": "Usa confirmacion del navegador."
+      }
+    ],
+    "notes": "Cubre /users, /users/new y /users/:id/edit."
+  },
+  {
+    "code": "EVENTS",
+    "title": "Eventos",
+    "route": "/events",
+    "icon": "event",
+    "section": "ADMINISTRACION",
+    "sortOrder": 30,
+    "showInMenu": true,
+    "requiresAuth": true,
+    "defaultRoles": ["SUPER", "ADMIN", "AUX"],
+    "actions": [
+      {
+        "code": "EVENTS_CREATE",
+        "actionKey": "create",
+        "title": "Crear evento",
+        "icon": "add",
+        "style": "primary",
+        "sortOrder": 10,
+        "confirmationRequired": false,
+        "defaultRoles": ["SUPER", "ADMIN", "AUX"],
+        "notes": "Boton Nuevo."
+      },
+      {
+        "code": "EVENTS_EDIT",
+        "actionKey": "edit",
+        "title": "Editar evento",
+        "icon": "edit",
+        "style": "icon",
+        "sortOrder": 20,
+        "confirmationRequired": false,
+        "defaultRoles": ["SUPER", "ADMIN", "AUX"],
+        "notes": "Acceso a /events/:id/edit."
+      },
+      {
+        "code": "EVENTS_DELETE",
+        "actionKey": "delete",
+        "title": "Eliminar evento",
+        "icon": "delete",
+        "style": "danger",
+        "sortOrder": 30,
+        "confirmationRequired": true,
+        "defaultRoles": ["SUPER", "ADMIN"],
+        "notes": "Operacion destructiva."
+      }
+    ],
+    "notes": "Cubre /events, /events/new y /events/:id/edit."
+  },
+  {
+    "code": "INVENTORY_ITEMS",
+    "title": "Inventarios",
+    "route": "/inventory-items",
+    "icon": "inventory_2",
+    "section": "INVENTARIO",
+    "sortOrder": 40,
+    "showInMenu": true,
+    "requiresAuth": true,
+    "defaultRoles": ["SUPER", "ADMIN", "AUX", "USER"],
+    "actions": [
+      {
+        "code": "INVENTORY_ITEMS_CREATE",
+        "actionKey": "create",
+        "title": "Crear inventario",
+        "icon": "add",
+        "style": "primary",
+        "sortOrder": 10,
+        "confirmationRequired": false,
+        "defaultRoles": ["SUPER", "ADMIN", "AUX"],
+        "notes": "Boton Nuevo; USER no lo recibe por defecto."
+      },
+      {
+        "code": "INVENTORY_ITEMS_EXPORT",
+        "actionKey": "export",
+        "title": "Descargar Excel",
+        "icon": "download",
+        "style": "secondary",
+        "sortOrder": 20,
+        "confirmationRequired": false,
+        "defaultRoles": ["SUPER", "ADMIN", "AUX"],
+        "notes": "Exportacion del inventario por bodega."
+      },
+      {
+        "code": "INVENTORY_ITEMS_EDIT",
+        "actionKey": "edit",
+        "title": "Editar inventario",
+        "icon": "edit",
+        "style": "icon",
+        "sortOrder": 30,
+        "confirmationRequired": false,
+        "defaultRoles": ["SUPER", "ADMIN", "AUX"],
+        "notes": "Acceso a /inventory-items/:id/edit."
+      },
+      {
+        "code": "INVENTORY_ITEMS_MERGE",
+        "actionKey": "merge",
+        "title": "Unir inventarios",
+        "icon": "call_merge",
+        "style": "admin",
+        "sortOrder": 40,
+        "confirmationRequired": true,
+        "defaultRoles": ["ADMIN"],
+        "notes": "Boton de unir duplicados en modal. Requerido solo para ADMIN segun solicitud actual."
+      },
+      {
+        "code": "INVENTORY_ITEMS_DELETE",
+        "actionKey": "delete",
+        "title": "Eliminar inventario",
+        "icon": "delete",
+        "style": "danger",
+        "sortOrder": 50,
+        "confirmationRequired": true,
+        "defaultRoles": ["SUPER", "ADMIN"],
+        "notes": "Operacion destructiva."
+      }
+    ],
+    "notes": "El menu muestra Inventarios. El front ya oculta crear, exportar, editar, unir y eliminar si la accion no llega autorizada."
+  },
+  {
+    "code": "INVENTORY_TRANSACTIONS",
+    "title": "Movimientos",
+    "route": "/inventory-transactions",
+    "icon": "swap_horiz",
+    "section": "INVENTARIO",
+    "sortOrder": 50,
+    "showInMenu": true,
+    "requiresAuth": true,
+    "defaultRoles": ["SUPER", "ADMIN", "AUX"],
+    "actions": [
+      {
+        "code": "INVENTORY_TRANSACTIONS_CREATE",
+        "actionKey": "create",
+        "title": "Crear movimiento",
+        "icon": "add",
+        "style": "primary",
+        "sortOrder": 10,
+        "confirmationRequired": false,
+        "defaultRoles": ["SUPER", "ADMIN", "AUX"],
+        "notes": "Boton Nuevo."
+      },
+      {
+        "code": "INVENTORY_TRANSACTIONS_EDIT",
+        "actionKey": "edit",
+        "title": "Editar movimiento",
+        "icon": "edit",
+        "style": "icon",
+        "sortOrder": 20,
+        "confirmationRequired": false,
+        "defaultRoles": ["SUPER", "ADMIN", "AUX"],
+        "notes": "Acceso a /inventory-transactions/:id/edit."
+      },
+      {
+        "code": "INVENTORY_TRANSACTIONS_DELETE",
+        "actionKey": "delete",
+        "title": "Eliminar movimiento",
+        "icon": "delete",
+        "style": "danger",
+        "sortOrder": 30,
+        "confirmationRequired": true,
+        "defaultRoles": ["SUPER", "ADMIN"],
+        "notes": "Operacion destructiva."
+      }
+    ],
+    "notes": "USER no debe recibir esta pantalla por defecto."
+  },
+  {
+    "code": "INVENTORY_ITEM_DETAILS",
+    "title": "Detalle de inventario",
+    "route": "/inventory-item-details",
+    "icon": "qr_code_2",
+    "section": "INVENTARIO",
+    "sortOrder": 60,
+    "showInMenu": true,
+    "requiresAuth": true,
+    "defaultRoles": ["SUPER", "ADMIN", "AUX"],
+    "actions": [
+      {
+        "code": "INVENTORY_ITEM_DETAILS_CREATE",
+        "actionKey": "create",
+        "title": "Crear detalle",
+        "icon": "add",
+        "style": "primary",
+        "sortOrder": 10,
+        "confirmationRequired": false,
+        "defaultRoles": ["SUPER", "ADMIN", "AUX"],
+        "notes": "Boton Nuevo."
+      },
+      {
+        "code": "INVENTORY_ITEM_DETAILS_EDIT",
+        "actionKey": "edit",
+        "title": "Editar detalle",
+        "icon": "edit",
+        "style": "icon",
+        "sortOrder": 20,
+        "confirmationRequired": false,
+        "defaultRoles": ["SUPER", "ADMIN", "AUX"],
+        "notes": "Acceso a /inventory-item-details/:id/edit."
+      },
+      {
+        "code": "INVENTORY_ITEM_DETAILS_DELETE",
+        "actionKey": "delete",
+        "title": "Eliminar detalle",
+        "icon": "delete",
+        "style": "danger",
+        "sortOrder": 30,
+        "confirmationRequired": true,
+        "defaultRoles": ["SUPER", "ADMIN"],
+        "notes": "Operacion destructiva."
+      }
+    ],
+    "notes": "Cubre inventario serializado o detallado por articulo/bodega."
+  },
+  {
+    "code": "INVENTORY_ITEM_DETAIL_PHOTOS",
+    "title": "Fotos detalle",
+    "route": "/inventory-item-detail-photos",
+    "icon": "photo_camera",
+    "section": "INVENTARIO",
+    "sortOrder": 70,
+    "showInMenu": true,
+    "requiresAuth": true,
+    "defaultRoles": ["SUPER", "ADMIN", "AUX"],
+    "actions": [
+      {
+        "code": "INVENTORY_ITEM_DETAIL_PHOTOS_SAVE_CONFIG",
+        "actionKey": "saveConfig",
+        "title": "Guardar configuracion",
+        "icon": "save",
+        "style": "primary",
+        "sortOrder": 10,
+        "confirmationRequired": false,
+        "defaultRoles": ["SUPER", "ADMIN", "AUX"],
+        "notes": "Paso de configuracion de alcance y GPS."
+      },
+      {
+        "code": "INVENTORY_ITEM_DETAIL_PHOTOS_VERIFY_GPS",
+        "actionKey": "verifyGps",
+        "title": "Verificar GPS",
+        "icon": "gps_fixed",
+        "style": "secondary",
+        "sortOrder": 20,
+        "confirmationRequired": false,
+        "defaultRoles": ["SUPER", "ADMIN", "AUX"],
+        "notes": "Valida ubicacion antes de subir fotos."
+      },
+      {
+        "code": "INVENTORY_ITEM_DETAIL_PHOTOS_UPLOAD",
+        "actionKey": "upload",
+        "title": "Subir fotos",
+        "icon": "cloud_upload",
+        "style": "primary",
+        "sortOrder": 30,
+        "confirmationRequired": false,
+        "defaultRoles": ["SUPER", "ADMIN", "AUX"],
+        "notes": "Carga batch de archivos seleccionados."
+      },
+      {
+        "code": "INVENTORY_ITEM_DETAIL_PHOTOS_SEARCH",
+        "actionKey": "search",
+        "title": "Consultar fotos",
+        "icon": "search",
+        "style": "secondary",
+        "sortOrder": 40,
+        "confirmationRequired": false,
+        "defaultRoles": ["SUPER", "ADMIN", "AUX"],
+        "notes": "Carga fotos por alcance seleccionado."
+      },
+      {
+        "code": "INVENTORY_ITEM_DETAIL_PHOTOS_VIEW",
+        "actionKey": "view",
+        "title": "Ver foto",
+        "icon": "visibility",
+        "style": "icon",
+        "sortOrder": 50,
+        "confirmationRequired": false,
+        "defaultRoles": ["SUPER", "ADMIN", "AUX"],
+        "notes": "Abre foto existente."
+      },
+      {
+        "code": "INVENTORY_ITEM_DETAIL_PHOTOS_DELETE",
+        "actionKey": "delete",
+        "title": "Eliminar foto",
+        "icon": "delete",
+        "style": "danger",
+        "sortOrder": 60,
+        "confirmationRequired": true,
+        "defaultRoles": ["SUPER", "ADMIN"],
+        "notes": "Operacion destructiva."
+      }
+    ],
+    "notes": "Flujo por pasos con validacion GPS."
+  },
+  {
+    "code": "TRANSPORT_REQUESTS",
+    "title": "Transporte",
+    "route": "/transport-requests",
+    "icon": "local_shipping",
+    "section": "OPERACION",
+    "sortOrder": 80,
+    "showInMenu": true,
+    "requiresAuth": true,
+    "defaultRoles": ["SUPER", "ADMIN", "AUX"],
+    "actions": [
+      {
+        "code": "TRANSPORT_REQUESTS_CREATE",
+        "actionKey": "create",
+        "title": "Crear solicitud",
+        "icon": "add",
+        "style": "primary",
+        "sortOrder": 10,
+        "confirmationRequired": false,
+        "defaultRoles": ["SUPER", "ADMIN", "AUX"],
+        "notes": "Boton Nuevo."
+      },
+      {
+        "code": "TRANSPORT_REQUESTS_VIEW_ITEMS",
+        "actionKey": "viewItems",
+        "title": "Ver detalle por linea",
+        "icon": "expand_more",
+        "style": "secondary",
+        "sortOrder": 20,
+        "confirmationRequired": false,
+        "defaultRoles": ["SUPER", "ADMIN", "AUX"],
+        "notes": "Expande y colapsa items de una solicitud."
+      },
+      {
+        "code": "TRANSPORT_REQUESTS_EDIT",
+        "actionKey": "edit",
+        "title": "Editar solicitud",
+        "icon": "edit",
+        "style": "icon",
+        "sortOrder": 30,
+        "confirmationRequired": false,
+        "defaultRoles": ["SUPER", "ADMIN", "AUX"],
+        "notes": "Acceso a /transport-requests/:id/edit."
+      },
+      {
+        "code": "TRANSPORT_REQUESTS_DELETE",
+        "actionKey": "delete",
+        "title": "Eliminar solicitud",
+        "icon": "delete",
+        "style": "danger",
+        "sortOrder": 40,
+        "confirmationRequired": true,
+        "defaultRoles": ["SUPER", "ADMIN"],
+        "notes": "Operacion destructiva."
+      }
+    ],
+    "notes": "Cubre listado y formulario de solicitudes de transporte."
+  },
+  {
+    "code": "ADMIN_CREDENTIALS",
+    "title": "Credenciales",
+    "route": "/admin/credentials",
+    "icon": "admin_panel_settings",
+    "section": "SEGURIDAD",
+    "sortOrder": 90,
+    "showInMenu": true,
+    "requiresAuth": true,
+    "defaultRoles": ["SUPER"],
+    "actions": [
+      {
+        "code": "ADMIN_CREDENTIALS_CREATE",
+        "actionKey": "create",
+        "title": "Crear credencial",
+        "icon": "person_add",
+        "style": "primary",
+        "sortOrder": 10,
+        "confirmationRequired": false,
+        "defaultRoles": ["SUPER"],
+        "notes": "Crea credencial para un usuario existente."
+      },
+      {
+        "code": "ADMIN_CREDENTIALS_SET_PASSWORD",
+        "actionKey": "setPassword",
+        "title": "Actualizar password",
+        "icon": "lock_reset",
+        "style": "primary",
+        "sortOrder": 20,
+        "confirmationRequired": true,
+        "defaultRoles": ["SUPER"],
+        "notes": "Operacion sensible."
+      },
+      {
+        "code": "ADMIN_CREDENTIALS_FORCE_CHANGE",
+        "actionKey": "forcePasswordChange",
+        "title": "Guardar estado de cambio obligatorio",
+        "icon": "published_with_changes",
+        "style": "secondary",
+        "sortOrder": 30,
+        "confirmationRequired": false,
+        "defaultRoles": ["SUPER"],
+        "notes": "Activa o desactiva passwordChangeRequired."
+      },
+      {
+        "code": "ADMIN_CREDENTIALS_SET_ROLES",
+        "actionKey": "setRoles",
+        "title": "Guardar roles",
+        "icon": "manage_accounts",
+        "style": "primary",
+        "sortOrder": 40,
+        "confirmationRequired": true,
+        "defaultRoles": ["SUPER"],
+        "notes": "Solo SUPER."
+      }
+    ],
+    "notes": "Ruta actualmente protegida por superRoleGuard. El menu debe ocultarse salvo SUPER o autorizacion equivalente backend."
+  },
+  {
+    "code": "SCREEN_ACCESS_ADMIN",
+    "title": "Permisos de pantallas",
+    "route": "/admin/screen-access",
+    "icon": "rule",
+    "section": "SEGURIDAD",
+    "sortOrder": 100,
+    "showInMenu": true,
+    "requiresAuth": true,
+    "defaultRoles": ["SUPER", "ADMIN"],
+    "actions": [
+      {
+        "code": "SCREEN_ACCESS_ADMIN_MANAGE_ROLE_SCREENS",
+        "actionKey": "manageRoleScreens",
+        "title": "Guardar pantallas por rol",
+        "icon": "admin_panel_settings",
+        "style": "primary",
+        "sortOrder": 10,
+        "confirmationRequired": false,
+        "defaultRoles": ["SUPER", "ADMIN"],
+        "notes": "PUT /auth/roles/{roleCode}/screens."
+      },
+      {
+        "code": "SCREEN_ACCESS_ADMIN_MANAGE_ROLE_ACTIONS",
+        "actionKey": "manageRoleActions",
+        "title": "Guardar acciones por rol",
+        "icon": "rule",
+        "style": "primary",
+        "sortOrder": 20,
+        "confirmationRequired": false,
+        "defaultRoles": ["SUPER", "ADMIN"],
+        "notes": "PUT /auth/roles/{roleCode}/screen-actions."
+      },
+      {
+        "code": "SCREEN_ACCESS_ADMIN_MANAGE_USER_SCREENS",
+        "actionKey": "manageUserScreens",
+        "title": "Guardar pantallas por usuario",
+        "icon": "person",
+        "style": "primary",
+        "sortOrder": 30,
+        "confirmationRequired": false,
+        "defaultRoles": ["SUPER", "ADMIN"],
+        "notes": "PUT /auth/users/{userId}/screens."
+      },
+      {
+        "code": "SCREEN_ACCESS_ADMIN_MANAGE_USER_ACTIONS",
+        "actionKey": "manageUserActions",
+        "title": "Guardar acciones por usuario",
+        "icon": "person",
+        "style": "primary",
+        "sortOrder": 40,
+        "confirmationRequired": false,
+        "defaultRoles": ["SUPER", "ADMIN"],
+        "notes": "PUT /auth/users/{userId}/screen-actions."
+      }
+    ],
+    "notes": "Pantalla delegable por rol u override; backend permite usar endpoints si el usuario tiene esta pantalla."
+  }
+]

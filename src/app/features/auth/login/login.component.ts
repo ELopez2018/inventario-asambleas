@@ -7,6 +7,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { of, switchMap, map } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
@@ -46,7 +47,16 @@ export class LoginComponent {
     this.loading = true;
     this.errorMessage = '';
 
-    this.auth.login(this.form.getRawValue()).subscribe({
+    this.auth
+      .login(this.form.getRawValue())
+      .pipe(
+        switchMap((res) =>
+          res.passwordChangeRequired
+            ? of(res)
+            : this.auth.loadMyScreens().pipe(map(() => res)),
+        ),
+      )
+      .subscribe({
       next: (res) => {
         const targetRoute = res.passwordChangeRequired ? '/change-password' : '/dashboard';
         void this.router.navigate([targetRoute]);

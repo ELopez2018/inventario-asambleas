@@ -74,7 +74,12 @@
                   @for (item of request.items; track item.id) {
                   <div class="request-items-panel__row">
                     <span class="request-items-panel__line">#{{ item.lineNumber }}</span>
-                    <span>{{ item.description }}</span>
+                    <span class="request-items-panel__description">
+                      {{ item.description }}
+                      @if (item.newItem) {
+                      <span class="request-items-panel__badge">Nuevo</span>
+                      }
+                    </span>
                     <span class="request-items-panel__qty">Cant: {{ item.quantity }}</span>
                     @if (item.sizeAndWeight) {
                     <span class="request-items-panel__meta">{{ item.sizeAndWeight }}</span>
@@ -89,15 +94,38 @@
         </ng-container>
 
         <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef class="w-28 text-right">Acciones</th>
+          <th mat-header-cell *matHeaderCellDef class="w-40 text-right">Acciones</th>
           <td mat-cell *matCellDef="let request" class="text-right">
             <span class="responsive-cell-label" aria-hidden="true">Acciones</span>
-            <a mat-icon-button [routerLink]="['/transport-requests', request.id, 'edit']" matTooltip="Editar">
-              <mat-icon>edit</mat-icon>
-            </a>
-            <button mat-icon-button type="button" matTooltip="Eliminar" (click)="deleteRequest(request)">
-              <mat-icon>delete</mat-icon>
-            </button>
+            <div class="request-actions">
+              <button
+                mat-icon-button
+                class="request-actions__button request-actions__button--pdf"
+                type="button"
+                matTooltip="Visualizar formulario CO-31"
+                [disabled]="previewingRequestId === request.id"
+                (click)="previewRequestPdf(request)"
+              >
+                <mat-icon>picture_as_pdf</mat-icon>
+              </button>
+              <a
+                mat-icon-button
+                class="request-actions__button"
+                [routerLink]="['/transport-requests', request.id, 'edit']"
+                matTooltip="Editar"
+              >
+                <mat-icon>edit</mat-icon>
+              </a>
+              <button
+                mat-icon-button
+                class="request-actions__button request-actions__button--danger"
+                type="button"
+                matTooltip="Eliminar"
+                (click)="deleteRequest(request)"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
           </td>
         </ng-container>
 

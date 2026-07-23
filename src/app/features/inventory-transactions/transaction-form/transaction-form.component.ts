@@ -15,11 +15,10 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { finalize, forkJoin } from 'rxjs';
-import { EventService } from '../../../core/services/event.service';
+import { EventContextService } from '../../../core/services/event-context.service';
 import { InventoryItemService } from '../../../core/services/inventory-item.service';
 import { InventoryTransactionService } from '../../../core/services/inventory-transaction.service';
 import { UserService } from '../../../core/services/user.service';
-import { EventResponse } from '../../../models/event.model';
 import { InventoryItemResponse } from '../../../models/inventory-item.model';
 import {
   CreateInventoryTransactionRequest,
@@ -27,6 +26,7 @@ import {
 } from '../../../models/inventory-transaction.model';
 import { UserResponse } from '../../../models/user.model';
 import { INVENTORY_STORES } from '../../../shared/catalogs.constants';
+import { NativeDateTimePickerDirective } from '../../../shared/native-date-time-picker.directive';
 
 function toLocalDateTime(value: string): string {
   return value.length === 16 ? `${value}:00` : value;
@@ -64,6 +64,7 @@ function transferStoresValidator(control: AbstractControl): ValidationErrors | n
     MatInputModule,
     MatProgressSpinnerModule,
     MatSelectModule,
+    NativeDateTimePickerDirective,
   ],
   templateUrl: './transaction-form.component.html',
   styleUrl: './transaction-form.component.css',
@@ -72,7 +73,7 @@ export class TransactionFormComponent implements OnInit {
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly eventService = inject(EventService);
+  readonly eventContext = inject(EventContextService);
   private readonly itemService = inject(InventoryItemService);
   private readonly transactionService = inject(InventoryTransactionService);
   private readonly userService = inject(UserService);
@@ -104,7 +105,6 @@ export class TransactionFormComponent implements OnInit {
     { validators: transferStoresValidator },
   );
 
-  events: EventResponse[] = [];
   items: InventoryItemResponse[] = [];
   users: UserResponse[] = [];
   loading = false;
@@ -114,20 +114,19 @@ export class TransactionFormComponent implements OnInit {
   ngOnInit() {
     this.form.controls.movementType.valueChanges.subscribe((type) => this.applyMovementRules(type));
     this.applyMovementRules(this.form.controls.movementType.value);
+    this.form.controls.eventId.setValue(this.eventContext.selectedEventId() ?? 0);
 
     this.loading = true;
 
     if (this.transactionId) {
       forkJoin({
-        events: this.eventService.getAll(),
         items: this.itemService.getAll(),
         users: this.userService.getAll(),
         transaction: this.transactionService.getById(this.transactionId),
       })
         .pipe(finalize(() => (this.loading = false)))
         .subscribe({
-          next: ({ events, items, users, transaction }) => {
-            this.events = events;
+          next: ({ items, users, transaction }) => {
             this.items = items;
             this.users = users;
             this.form.patchValue({
@@ -142,7 +141,7 @@ export class TransactionFormComponent implements OnInit {
               receivedByUserId: transaction.receivedByUserId ?? 0,
               conditionNotes: transaction.conditionNotes ?? '',
               movementDate: fromLocalDateTime(transaction.movementDate),
-              eventId: transaction.eventId,
+              eventId: this.eventContext.selectedEventId() ?? transaction.eventId,
             });
             this.applyMovementRules(transaction.movementType);
           },
@@ -152,14 +151,12 @@ export class TransactionFormComponent implements OnInit {
     }
 
     forkJoin({
-      events: this.eventService.getAll(),
       items: this.itemService.getAll(),
       users: this.userService.getAll(),
     })
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({
-        next: ({ events, items, users }) => {
-          this.events = events;
+        next: ({ items, users }) => {
           this.items = items;
           this.users = users;
         },
@@ -224,6 +221,16 @@ export class TransactionFormComponent implements OnInit {
   }
 
   submit() {
+    let selectedEventId: number;
+
+    try {
+      selectedEventId = this.eventContext.requireSelectedEventId();
+      this.form.controls.eventId.setValue(selectedEventId);
+    } catch {
+      this.errorMessage = 'Seleccione un evento operativo en la barra superior.';
+      return;
+    }
+
     if (this.form.invalid || this.saving) {
       this.form.markAllAsTouched();
       return;
@@ -244,7 +251,7 @@ export class TransactionFormComponent implements OnInit {
       receivedByUserId: raw.receivedByUserId ? Number(raw.receivedByUserId) : undefined,
       conditionNotes: raw.conditionNotes.trim() || undefined,
       movementDate: toLocalDateTime(raw.movementDate),
-      eventId: Number(raw.eventId),
+      eventId: selectedEventId,
     };
 
     const request = this.transactionId

@@ -6,6 +6,7 @@ import {
   OnDestroy,
   OnInit,
   ViewChild,
+  effect,
   inject,
 } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -19,17 +20,17 @@ import { MatStepperModule } from '@angular/material/stepper';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { finalize, forkJoin } from 'rxjs';
-import { EventService } from '../../../core/services/event.service';
+import { EventContextService } from '../../../core/services/event-context.service';
 import { InventoryItemDetailPhotoConfigService } from '../../../core/services/inventory-item-detail-photo-config.service';
 import { InventoryItemDetailPhotoService } from '../../../core/services/inventory-item-detail-photo.service';
 import { InventoryItemDetailService } from '../../../core/services/inventory-item-detail.service';
-import { EventResponse } from '../../../models/event.model';
 import {
   InventoryItemDetailPhotoConfigResponse,
   InventoryItemDetailPhotoResponse,
 } from '../../../models/inventory-item-detail-photo.model';
 import { InventoryItemDetailResponse } from '../../../models/inventory-item-detail.model';
 import { INVENTORY_STORES } from '../../../shared/catalogs.constants';
+import { NativeDateTimePickerDirective } from '../../../shared/native-date-time-picker.directive';
 
 function toApiLocalDateTime(value: string): string | undefined {
   if (!value) {
@@ -53,13 +54,14 @@ function toApiLocalDateTime(value: string): string | undefined {
     MatStepperModule,
     MatTableModule,
     MatTooltipModule,
+    NativeDateTimePickerDirective,
   ],
   templateUrl: './photo-list.component.html',
   styleUrl: './photo-list.component.css',
 })
 export class PhotoListComponent implements OnInit {
   private readonly fb = inject(NonNullableFormBuilder);
-  private readonly eventService = inject(EventService);
+  readonly eventContext = inject(EventContextService);
   private readonly detailService = inject(InventoryItemDetailService);
   private readonly photoConfigService = inject(InventoryItemDetailPhotoConfigService);
   private readonly photoService = inject(InventoryItemDetailPhotoService);
@@ -75,13 +77,13 @@ export class PhotoListComponent implements OnInit {
   ];
 
   readonly scopeForm = this.fb.group({
-    eventId: [1, [Validators.required, Validators.min(1)]],
+    eventId: [0, [Validators.required, Validators.min(1)]],
     storeId: [0, [Validators.required, Validators.min(1)]],
     itemDetailId: [0, [Validators.required, Validators.min(1)]],
   });
 
   readonly configForm = this.fb.group({
-    eventId: [1, [Validators.required, Validators.min(1)]],
+    eventId: [0, [Validators.required, Validators.min(1)]],
     storeId: [0, [Validators.required, Validators.min(1)]],
     itemDetailId: [0, [Validators.required, Validators.min(1)]],
     locationLabel: ['', [Validators.required, Validators.maxLength(120)]],
@@ -92,7 +94,7 @@ export class PhotoListComponent implements OnInit {
   });
 
   readonly uploadForm = this.fb.group({
-    eventId: [1, [Validators.required, Validators.min(1)]],
+    eventId: [0, [Validators.required, Validators.min(1)]],
     storeId: [0, [Validators.required, Validators.min(1)]],
     itemDetailId: [0, [Validators.required, Validators.min(1)]],
     gpsLatitude: [0, [Validators.required, Validators.min(-90), Validators.max(90)]],
@@ -109,7 +111,6 @@ export class PhotoListComponent implements OnInit {
     filesReady: [false, Validators.requiredTrue],
   });
 
-  events: EventResponse[] = [];
   details: InventoryItemDetailResponse[] = [];
   configs: InventoryItemDetailPhotoConfigResponse[] = [];
   photos: InventoryItemDetailPhotoResponse[] = [];
@@ -133,6 +134,13 @@ export class PhotoListComponent implements OnInit {
   savingConfig = false;
   uploadingPhotos = false;
   errorMessage = '';
+
+  private readonly eventSelectionSync = effect(() => {
+    const eventId = this.eventContext.selectedEventId() ?? 0;
+    this.scopeForm.controls.eventId.setValue(eventId, { emitEvent: false });
+    this.configForm.controls.eventId.setValue(eventId, { emitEvent: false });
+    this.uploadForm.controls.eventId.setValue(eventId, { emitEvent: false });
+  });
 
   ngOnInit() {
     this.syncFormsFromScope();
@@ -364,14 +372,12 @@ export class PhotoListComponent implements OnInit {
     this.errorMessage = '';
 
     forkJoin({
-      events: this.eventService.getAll(),
       details: this.detailService.getAll(),
       configs: this.photoConfigService.getAll(),
     })
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({
-        next: ({ events, details, configs }) => {
-          this.events = events;
+        next: ({ details, configs }) => {
           this.details = details;
           this.configs = configs;
         },
@@ -381,16 +387,28 @@ export class PhotoListComponent implements OnInit {
 
   findScopeConfig() {
     const scope = this.scopeForm.getRawValue();
+    const eventId = this.eventContext.selectedEventId() ?? Number(scope.eventId);
 
     return this.configs.find(
       (config) =>
-        config.eventId === Number(scope.eventId) &&
+        config.eventId === eventId &&
         config.storeId === Number(scope.storeId) &&
         config.itemDetailId === Number(scope.itemDetailId),
     );
   }
 
   loadPhotos() {
+    let selectedEventId: number;
+
+    try {
+      selectedEventId = this.eventContext.requireSelectedEventId();
+    } catch {
+      this.errorMessage = 'Seleccione un evento operativo en la barra superior.';
+      return;
+    }
+
+    this.scopeForm.controls.eventId.setValue(selectedEventId);
+
     if (this.scopeForm.invalid) {
       this.scopeForm.markAllAsTouched();
       return;
@@ -401,7 +419,7 @@ export class PhotoListComponent implements OnInit {
     this.errorMessage = '';
 
     this.photoService
-      .listByScope(Number(scope.eventId), Number(scope.storeId), Number(scope.itemDetailId))
+      .listByScope(selectedEventId, Number(scope.storeId), Number(scope.itemDetailId))
       .pipe(finalize(() => (this.loadingPhotos = false)))
       .subscribe({
         next: (photos) => {
@@ -413,6 +431,17 @@ export class PhotoListComponent implements OnInit {
   }
 
   saveConfig() {
+    let selectedEventId: number;
+
+    try {
+      selectedEventId = this.eventContext.requireSelectedEventId();
+    } catch {
+      this.errorMessage = 'Seleccione un evento operativo en la barra superior.';
+      return;
+    }
+
+    this.configForm.controls.eventId.setValue(selectedEventId);
+
     if (this.configForm.invalid || this.savingConfig) {
       this.configForm.markAllAsTouched();
       return;
@@ -423,7 +452,7 @@ export class PhotoListComponent implements OnInit {
 
     const raw = this.configForm.getRawValue();
     const body = {
-      eventId: Number(raw.eventId),
+      eventId: selectedEventId,
       storeId: Number(raw.storeId),
       itemDetailId: Number(raw.itemDetailId),
       locationLabel: raw.locationLabel.trim(),
@@ -459,6 +488,17 @@ export class PhotoListComponent implements OnInit {
   }
 
   uploadPhotos() {
+    let selectedEventId: number;
+
+    try {
+      selectedEventId = this.eventContext.requireSelectedEventId();
+    } catch {
+      this.errorMessage = 'Seleccione un evento operativo en la barra superior.';
+      return;
+    }
+
+    this.uploadForm.controls.eventId.setValue(selectedEventId);
+
     if (this.uploadForm.invalid || this.uploadingPhotos) {
       this.uploadForm.markAllAsTouched();
       return;
@@ -488,7 +528,7 @@ export class PhotoListComponent implements OnInit {
 
     this.photoService
       .uploadBatch({
-        eventId: Number(raw.eventId),
+        eventId: selectedEventId,
         storeId: Number(raw.storeId),
         itemDetailId: Number(raw.itemDetailId),
         gpsLatitude: Number(raw.gpsLatitude),

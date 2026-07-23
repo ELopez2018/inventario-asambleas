@@ -76,7 +76,21 @@
 
         <mat-form-field appearance="outline">
           <mat-label>Fecha</mat-label>
-          <input matInput type="datetime-local" formControlName="movementDate" />
+          <input
+            #movementDatePicker="nativeDateTimePicker"
+            matInput
+            type="datetime-local"
+            formControlName="movementDate"
+          />
+          <button
+            mat-icon-button
+            matSuffix
+            type="button"
+            aria-label="Elegir fecha y hora del movimiento"
+            (click)="movementDatePicker.openPicker()"
+          >
+            <mat-icon>event</mat-icon>
+          </button>
           @if (form.controls.movementDate.hasError('required')) {
             <mat-error>La fecha es obligatoria.</mat-error>
           }
@@ -123,17 +137,15 @@
           }
         </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Evento</mat-label>
-          <mat-select formControlName="eventId">
-            @for (event of events; track event.id) {
-              <mat-option [value]="event.id">{{ event.description }}</mat-option>
-            }
-          </mat-select>
-          @if (form.controls.eventId.hasError('min')) {
-            <mat-error>Seleccione un evento.</mat-error>
+        <div class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+          <div class="text-xs font-semibold uppercase text-slate-500">Evento seleccionado</div>
+          <div class="mt-1 text-sm font-semibold text-slate-900">
+            {{ eventContext.selectedDescription() || 'Seleccione un evento en la barra superior' }}
+          </div>
+          @if (eventContext.selectedAddress()) {
+            <div class="mt-1 text-xs text-slate-600">{{ eventContext.selectedAddress() }}</div>
           }
-        </mat-form-field>
+        </div>
 
         <mat-form-field appearance="outline" class="md:col-span-2">
           <mat-label>Notas de condicion</mat-label>

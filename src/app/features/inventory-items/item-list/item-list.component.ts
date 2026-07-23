@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, computed, inject } from '@angular/core';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -71,7 +71,11 @@ export class ItemListComponent implements OnInit {
   ];
   private readonly storeLabelMap = new Map(INVENTORY_STORES.map((store) => [store.id, store.code]));
   private readonly stateLabelMap = new Map(INVENTORY_STATES.map((state) => [state.id, state.code]));
-  readonly canMergeItems = this.auth.hasRole('SUPER');
+  readonly canCreateItems = computed(() => this.auth.canAccessAction('INVENTORY_ITEMS', 'create'));
+  readonly canExportItems = computed(() => this.auth.canAccessAction('INVENTORY_ITEMS', 'export'));
+  readonly canEditItems = computed(() => this.auth.canAccessAction('INVENTORY_ITEMS', 'edit'));
+  readonly canDeleteItems = computed(() => this.auth.canAccessAction('INVENTORY_ITEMS', 'delete'));
+  readonly canMergeItems = computed(() => this.auth.canAccessAction('INVENTORY_ITEMS', 'merge'));
   items: InventoryItemResponse[] = [];
   users: UserResponse[] = [];
   storeTabs: { id: number; label: string }[] = [];
@@ -193,7 +197,7 @@ export class ItemListComponent implements OnInit {
   }
 
   openMergeDialog(targetItem: InventoryItemResponse) {
-    if (!this.canMergeItems) {
+    if (!this.canMergeItems()) {
       return;
     }
 

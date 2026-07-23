@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -10,26 +11,31 @@ import { MatIconModule } from '@angular/material/icon';
   styleUrl: './dashboard.component.css',
 })
 export class DashboardComponent {
-  readonly modules = [
-    { path: '/users', icon: 'people', title: 'Usuarios', caption: 'Responsables y contactos' },
-    { path: '/events', icon: 'event', title: 'Eventos', caption: 'Fechas y observaciones' },
-    {
-      path: '/inventory-items',
-      icon: 'inventory_2',
-      title: 'Inventarios',
-      caption: 'Existencias y estado',
-    },
-    {
-      path: '/inventory-transactions',
-      icon: 'swap_horiz',
-      title: 'Movimientos',
-      caption: 'Historial del inventario',
-    },
-    {
-      path: '/inventory-item-details',
-      icon: 'qr_code_2',
-      title: 'Detalle',
-      caption: 'Unidades por articulo y bodega',
-    },
-  ];
+  private readonly auth = inject(AuthService);
+  private readonly captions = new Map([
+    ['USERS', 'Responsables y contactos'],
+    ['EVENTS', 'Fechas y observaciones'],
+    ['INVENTORY_ITEMS', 'Existencias y estado'],
+    ['INVENTORY_TRANSACTIONS', 'Historial del inventario'],
+    ['INVENTORY_ITEM_DETAILS', 'Unidades por articulo y bodega'],
+    ['INVENTORY_ITEM_DETAIL_PHOTOS', 'Fotos con validacion GPS'],
+    ['TRANSPORT_REQUESTS', 'Solicitudes y elementos a transportar'],
+    ['SCREEN_ACCESS_ADMIN', 'Permisos por rol y usuario'],
+  ]);
+
+  readonly modules = computed(() =>
+    this.auth
+      .allowedScreens()
+      .filter((screen) => screen.code !== 'DASHBOARD' && screen.showInMenu)
+      .map((screen) => ({
+        path: screen.route.startsWith('/') ? screen.route : `/${screen.route}`,
+        icon: screen.icon || 'chevron_right',
+        title: screen.code === 'INVENTORY_ITEMS' ? 'Inventarios' : screen.title,
+        caption: this.captions.get(screen.code) ?? screen.section,
+      })),
+  );
+
+  readonly canAccessMovements = computed(() =>
+    this.auth.canAccessScreen('INVENTORY_TRANSACTIONS'),
+  );
 }

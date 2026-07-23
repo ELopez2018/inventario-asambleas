@@ -1,16 +1,61 @@
 :host {
   display: block;
   min-width: 0;
+  width: 100%;
 }
 
 .app-shell {
   height: 100vh;
   height: 100dvh;
+  width: 100vw;
+  max-width: 100vw;
+  overflow: hidden;
+}
+
+.app-sidenav {
+  width: 16rem;
+  max-width: min(16rem, 86vw);
+}
+
+.app-sidenav-content {
+  min-width: 0;
 }
 
 .app-toolbar {
   padding-right: max(16px, env(safe-area-inset-right));
   padding-left: max(16px, env(safe-area-inset-left));
+}
+
+.app-event-selector {
+  max-width: min(36rem, 45vw);
+}
+
+.app-event-selector--compact {
+  width: min(12rem, 42vw);
+}
+
+.app-event-selector mat-form-field {
+  width: min(18rem, 34vw);
+  --mat-form-field-container-height: 40px;
+  --mat-form-field-container-vertical-padding: 8px;
+  --mat-form-field-outlined-label-text-color: rgba(255, 255, 255, 0.78);
+  --mat-form-field-outlined-hover-label-text-color: #ffffff;
+  --mat-form-field-outlined-focus-label-text-color: #ffffff;
+  --mat-form-field-outlined-input-text-color: #ffffff;
+  --mat-form-field-outlined-outline-color: rgba(255, 255, 255, 0.45);
+  --mat-form-field-outlined-hover-outline-color: rgba(255, 255, 255, 0.75);
+  --mat-form-field-outlined-focus-outline-color: #ffffff;
+  --mat-select-enabled-trigger-text-color: #ffffff;
+  --mat-select-enabled-arrow-color: #ffffff;
+  --mat-select-focused-arrow-color: #ffffff;
+}
+
+.app-event-selector--compact mat-form-field {
+  width: 100%;
+}
+
+.event-address {
+  max-width: 16rem;
 }
 
 .app-main-content {
@@ -28,6 +73,12 @@
 
 .app-nav-list mat-icon {
   color: currentColor;
+}
+
+@media (min-width: 1101px) {
+  .app-sidenav-content {
+    width: calc(100vw - 16rem);
+  }
 }
 
 @media (min-width: 640px) {

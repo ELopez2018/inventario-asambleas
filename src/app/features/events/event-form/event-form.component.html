@@ -24,14 +24,52 @@
           }
         </mat-form-field>
 
+        <mat-form-field appearance="outline" class="md:col-span-2">
+          <mat-label>Direccion</mat-label>
+          <input matInput formControlName="address" maxlength="255" />
+          @if (form.controls.address.hasError('required')) {
+            <mat-error>La direccion es obligatoria.</mat-error>
+          } @else if (form.controls.address.hasError('maxlength')) {
+            <mat-error>Maximo 255 caracteres.</mat-error>
+          }
+        </mat-form-field>
+
         <mat-form-field appearance="outline">
           <mat-label>Inicio</mat-label>
-          <input matInput type="datetime-local" formControlName="startDate" />
+          <input
+            #startDatePicker="nativeDateTimePicker"
+            matInput
+            type="datetime-local"
+            formControlName="startDate"
+          />
+          <button
+            mat-icon-button
+            matSuffix
+            type="button"
+            aria-label="Elegir fecha y hora de inicio"
+            (click)="startDatePicker.openPicker()"
+          >
+            <mat-icon>event</mat-icon>
+          </button>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
           <mat-label>Fin</mat-label>
-          <input matInput type="datetime-local" formControlName="endDate" />
+          <input
+            #endDatePicker="nativeDateTimePicker"
+            matInput
+            type="datetime-local"
+            formControlName="endDate"
+          />
+          <button
+            mat-icon-button
+            matSuffix
+            type="button"
+            aria-label="Elegir fecha y hora de fin"
+            (click)="endDatePicker.openPicker()"
+          >
+            <mat-icon>event</mat-icon>
+          </button>
           @if (form.hasError('dateRange')) {
             <mat-error>La fecha final debe ser mayor o igual a la inicial.</mat-error>
           }

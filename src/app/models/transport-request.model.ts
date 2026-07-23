@@ -6,7 +6,6 @@ export interface TransportRequestItemRequest {
 }
 
 export interface CreateTransportRequestRequest {
-  requestNumber: string;
   requestDate: string;
   requestedFrom: string;
   requestedTo: string;
@@ -20,7 +19,7 @@ export interface CreateTransportRequestRequest {
   receivedDate?: string | null;
   receivedTime?: string | null;
   authorizedBy?: string | null;
-  eventId?: number | null;
+  eventId: number;
   items: TransportRequestItemRequest[];
 }
 
@@ -33,6 +32,16 @@ export interface TransportRequestItemResponse {
   description: string;
   sizeAndWeight: string | null;
   lineTotal: number | null;
+  newItem: boolean;
+}
+
+export interface TransportRequestNextNumberResponse {
+  requestNumber: string;
+}
+
+export interface TransportRequestAutocompleteOptionsResponse {
+  requestedFrom: string[];
+  targetDepartments: string[];
 }
 
 export interface TransportRequestResponse {

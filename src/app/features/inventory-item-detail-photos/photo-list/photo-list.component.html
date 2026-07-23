@@ -21,7 +21,7 @@
     <section class="tutorial-block rounded-xl border border-blue-200 bg-blue-50/60 p-4">
       <h2 class="text-base font-semibold text-blue-900">Tutorial paso a paso</h2>
       <ol class="mt-2 list-decimal space-y-1 pl-5 text-sm text-blue-900/90">
-        <li>Seleccione el alcance (evento, bodega, detalle).</li>
+        <li>Seleccione el alcance (bodega y detalle) para el evento activo.</li>
         <li>Guarde o actualice la configuracion GPS del alcance.</li>
         <li>
           Verifique GPS del dispositivo. Es obligatorio para cargar fotos. Solo despues de 2
@@ -38,14 +38,15 @@
     <mat-stepper linear class="photo-stepper">
       <mat-step [stepControl]="scopeForm" label="Paso 1: Alcance">
         <form [formGroup]="scopeForm" class="grid gap-4 py-4 lg:grid-cols-3">
-          <mat-form-field appearance="outline">
-            <mat-label>Evento</mat-label>
-            <mat-select formControlName="eventId" (selectionChange)="onScopeChanged()">
-              @for (event of events; track event.id) {
-              <mat-option [value]="event.id">{{ event.description }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
+          <div class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+            <div class="text-xs font-semibold uppercase text-slate-500">Evento seleccionado</div>
+            <div class="mt-1 text-sm font-semibold text-slate-900">
+              {{ eventContext.selectedDescription() || 'Seleccione un evento en la barra superior' }}
+            </div>
+            @if (eventContext.selectedAddress()) {
+            <div class="mt-1 text-xs text-slate-600">{{ eventContext.selectedAddress() }}</div>
+            }
+          </div>
 
           <mat-form-field appearance="outline">
             <mat-label>Bodega</mat-label>
@@ -177,7 +178,21 @@
 
           <mat-form-field appearance="outline">
             <mat-label>Capturada en</mat-label>
-            <input matInput type="datetime-local" formControlName="capturedAt" />
+            <input
+              #capturedAtPicker="nativeDateTimePicker"
+              matInput
+              type="datetime-local"
+              formControlName="capturedAt"
+            />
+            <button
+              mat-icon-button
+              matSuffix
+              type="button"
+              aria-label="Elegir fecha y hora de captura"
+              (click)="capturedAtPicker.openPicker()"
+            >
+              <mat-icon>event</mat-icon>
+            </button>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="md:col-span-2">

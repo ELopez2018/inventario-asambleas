@@ -5,24 +5,28 @@
       <p class="app-page-subtitle">Existencias registradas para la asamblea.</p>
     </div>
     <div class="app-page-actions">
-      <button
-        mat-stroked-button
-        type="button"
-        (click)="downloadInventoryExcel()"
-        [disabled]="exporting"
-      >
-        <mat-icon>download</mat-icon>
-        @if (exporting) {
-          Descargando...
-        } @else {
-          Descargar Excel
-        }
-      </button>
+      @if (canExportItems()) {
+        <button
+          mat-stroked-button
+          type="button"
+          (click)="downloadInventoryExcel()"
+          [disabled]="exporting"
+        >
+          <mat-icon>download</mat-icon>
+          @if (exporting) {
+            Descargando...
+          } @else {
+            Descargar Excel
+          }
+        </button>
+      }
 
-      <a mat-flat-button color="primary" routerLink="/inventory-items/new">
-        <mat-icon>add</mat-icon>
-        Nuevo
-      </a>
+      @if (canCreateItems()) {
+        <a mat-flat-button color="primary" routerLink="/inventory-items/new">
+          <mat-icon>add</mat-icon>
+          Nuevo
+        </a>
+      }
     </div>
   </div>
 
@@ -91,15 +95,17 @@
                 <td mat-cell *matCellDef="let item" class="text-right">
                   <span class="responsive-cell-label" aria-hidden="true">Acciones</span>
                   <div class="item-actions">
-                    <a
-                      mat-icon-button
-                      class="item-actions__button"
-                      [routerLink]="['/inventory-items', item.id, 'edit']"
-                      matTooltip="Editar"
-                    >
-                      <mat-icon>edit</mat-icon>
-                    </a>
-                    @if (canMergeItems) {
+                    @if (canEditItems()) {
+                      <a
+                        mat-icon-button
+                        class="item-actions__button"
+                        [routerLink]="['/inventory-items', item.id, 'edit']"
+                        matTooltip="Editar"
+                      >
+                        <mat-icon>edit</mat-icon>
+                      </a>
+                    }
+                    @if (canMergeItems()) {
                       <button
                         mat-icon-button
                         class="item-actions__button item-actions__button--merge"
@@ -111,15 +117,17 @@
                         <mat-icon>call_merge</mat-icon>
                       </button>
                     }
-                    <button
-                      mat-icon-button
-                      class="item-actions__button item-actions__button--danger"
-                      type="button"
-                      matTooltip="Eliminar"
-                      (click)="deleteItem(item)"
-                    >
-                      <mat-icon>delete</mat-icon>
-                    </button>
+                    @if (canDeleteItems()) {
+                      <button
+                        mat-icon-button
+                        class="item-actions__button item-actions__button--danger"
+                        type="button"
+                        matTooltip="Eliminar"
+                        (click)="deleteItem(item)"
+                      >
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    }
                   </div>
                 </td>
               </ng-container>
@@ -182,15 +190,17 @@
                     <td mat-cell *matCellDef="let item" class="text-right">
                       <span class="responsive-cell-label" aria-hidden="true">Acciones</span>
                       <div class="item-actions">
-                        <a
-                          mat-icon-button
-                          class="item-actions__button"
-                          [routerLink]="['/inventory-items', item.id, 'edit']"
-                          matTooltip="Editar"
-                        >
-                          <mat-icon>edit</mat-icon>
-                        </a>
-                        @if (canMergeItems) {
+                        @if (canEditItems()) {
+                          <a
+                            mat-icon-button
+                            class="item-actions__button"
+                            [routerLink]="['/inventory-items', item.id, 'edit']"
+                            matTooltip="Editar"
+                          >
+                            <mat-icon>edit</mat-icon>
+                          </a>
+                        }
+                        @if (canMergeItems()) {
                           <button
                             mat-icon-button
                             class="item-actions__button item-actions__button--merge"
@@ -202,15 +212,17 @@
                             <mat-icon>call_merge</mat-icon>
                           </button>
                         }
-                        <button
-                          mat-icon-button
-                          class="item-actions__button item-actions__button--danger"
-                          type="button"
-                          matTooltip="Eliminar"
-                          (click)="deleteItem(item)"
-                        >
-                          <mat-icon>delete</mat-icon>
-                        </button>
+                        @if (canDeleteItems()) {
+                          <button
+                            mat-icon-button
+                            class="item-actions__button item-actions__button--danger"
+                            type="button"
+                            matTooltip="Eliminar"
+                            (click)="deleteItem(item)"
+                          >
+                            <mat-icon>delete</mat-icon>
+                          </button>
+                        }
                       </div>
                     </td>
                   </ng-container>
