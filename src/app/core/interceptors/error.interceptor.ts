@@ -4,9 +4,11 @@ import { Router } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { catchError, throwError } from 'rxjs';
 import { AuthService } from '../services/auth.service';
+import { EventContextService } from '../services/event-context.service';
 
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
+  const eventContext = inject(EventContextService);
   const router = inject(Router);
   const snackBar = inject(MatSnackBar);
 
@@ -16,6 +18,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       const requiresPasswordChange =
         err.error?.requiredAction === 'CHANGE_PASSWORD' ||
         err.error?.errorCode === 'INV-AUTH-PASSWORD-CHANGE-REQUIRED';
+      const activeEventConflict = err.error?.errorCode === 'INV-EVENT-ACTIVE-409';
 
       if (err.status === 401 && !isLoginRequest) {
         auth.clearSession();
@@ -23,6 +26,13 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         void router.navigate(['/login']);
       } else if (err.status === 403 && requiresPasswordChange) {
         void router.navigate(['/change-password']);
+      } else if (err.status === 409 && activeEventConflict) {
+        snackBar.open(
+          err.error?.userMessage || err.error?.detail || 'Otro usuario ya activo un evento.',
+          'Cerrar',
+          { duration: 6000 },
+        );
+        eventContext.loadActiveEvent();
       } else if (err.status === 0) {
         snackBar.open('Sin conexion con el servidor.', 'Cerrar', { duration: 4000 });
       } else if (err.status === 403) {

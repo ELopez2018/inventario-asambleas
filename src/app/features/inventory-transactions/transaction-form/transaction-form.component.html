@@ -140,7 +140,7 @@
         <div class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
           <div class="text-xs font-semibold uppercase text-slate-500">Evento seleccionado</div>
           <div class="mt-1 text-sm font-semibold text-slate-900">
-            {{ eventContext.selectedDescription() || 'Seleccione un evento en la barra superior' }}
+            {{ eventContext.selectedDescription() || 'Sin evento activo' }}
           </div>
           @if (eventContext.selectedAddress()) {
             <div class="mt-1 text-xs text-slate-600">{{ eventContext.selectedAddress() }}</div>

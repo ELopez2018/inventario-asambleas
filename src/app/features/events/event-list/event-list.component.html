@@ -32,6 +32,18 @@
             </td>
           </ng-container>
 
+          <ng-container matColumnDef="active">
+            <th mat-header-cell *matHeaderCellDef>Activo</th>
+            <td mat-cell *matCellDef="let event">
+              <span class="responsive-cell-label" aria-hidden="true">Activo</span>
+              @if (event.active) {
+                <span class="event-status event-status--active">Activo</span>
+              } @else {
+                <span class="event-status">Inactivo</span>
+              }
+            </td>
+          </ng-container>
+
           <ng-container matColumnDef="startDate">
             <th mat-header-cell *matHeaderCellDef>Inicio</th>
             <td mat-cell *matCellDef="let event">
@@ -55,6 +67,17 @@
               <a mat-icon-button [routerLink]="['/events', event.id, 'edit']" matTooltip="Editar">
                 <mat-icon>edit</mat-icon>
               </a>
+              @if (canActivateEvents()) {
+                <button
+                  mat-icon-button
+                  type="button"
+                  matTooltip="Establecer como activo"
+                  [disabled]="event.active || activatingEventId === event.id"
+                  (click)="activateEvent(event)"
+                >
+                  <mat-icon>event_available</mat-icon>
+                </button>
+              }
               <button
                 mat-icon-button
                 type="button"

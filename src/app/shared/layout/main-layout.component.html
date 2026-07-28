@@ -90,18 +90,11 @@
         <div class="toolbar-subtitle">Panel de gestion</div>
       </div>
 
-      <div class="app-event-selector hidden min-w-0 items-center gap-2 lg:flex">
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Evento</mat-label>
-          <mat-select
-            [value]="eventContext.selectedEventId()"
-            (selectionChange)="selectEvent($event.value)"
-          >
-            @for (event of eventContext.events(); track event.id) {
-              <mat-option [value]="event.id">{{ event.description }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
+      <div class="app-event-context hidden min-w-0 items-center gap-2 lg:flex">
+        <span class="event-summary">
+          <mat-icon aria-hidden="true">event_available</mat-icon>
+          {{ eventContext.selectedDescription() || 'Sin evento activo' }}
+        </span>
         @if (eventContext.selectedAddress()) {
           <span class="event-address">
             <mat-icon aria-hidden="true">location_on</mat-icon>
@@ -110,19 +103,10 @@
         }
       </div>
       <span class="flex-1"></span>
-      <div class="app-event-selector app-event-selector--compact flex min-w-0 lg:hidden">
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Evento</mat-label>
-          <mat-select
-            [value]="eventContext.selectedEventId()"
-            (selectionChange)="selectEvent($event.value)"
-          >
-            @for (event of eventContext.events(); track event.id) {
-              <mat-option [value]="event.id">{{ event.description }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-      </div>
+      <span class="event-summary event-summary--compact flex min-w-0 lg:hidden">
+        <mat-icon aria-hidden="true">event_available</mat-icon>
+        {{ eventContext.selectedDescription() || 'Sin evento activo' }}
+      </span>
       @if (displayName()) {
         <span class="toolbar-user hidden max-w-40 truncate text-sm sm:inline-flex md:max-w-56 lg:hidden">
           <mat-icon aria-hidden="true">person</mat-icon>

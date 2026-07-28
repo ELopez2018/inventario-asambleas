@@ -5,6 +5,8 @@ export interface EventResponse {
   startDate: string | null;
   endDate: string | null;
   observations: string | null;
+  active: boolean;
+  activeLockedByUserId: number | null;
 }
 
 export interface CreateEventRequest {

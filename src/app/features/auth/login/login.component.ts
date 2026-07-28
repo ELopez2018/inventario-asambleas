@@ -10,6 +10,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { of, switchMap, map } from 'rxjs';
 import { AppIdentityService } from '../../../core/services/app-identity.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { EventContextService } from '../../../core/services/event-context.service';
 
 @Component({
   selector: 'app-login',
@@ -29,6 +30,7 @@ export class LoginComponent {
   private readonly fb = inject(FormBuilder).nonNullable;
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly eventContext = inject(EventContextService);
   readonly appIdentity = inject(AppIdentityService);
 
   readonly form = this.fb.group({
@@ -52,11 +54,13 @@ export class LoginComponent {
     this.auth
       .login(this.form.getRawValue())
       .pipe(
-        switchMap((res) =>
-          res.passwordChangeRequired
+        switchMap((res) => {
+          this.eventContext.setActiveEvent(res.activeEvent ?? null);
+
+          return res.passwordChangeRequired
             ? of(res)
-            : this.auth.loadMyScreens().pipe(map(() => res)),
-        ),
+            : this.auth.loadMyScreens().pipe(map(() => res));
+        }),
       )
       .subscribe({
       next: (res) => {

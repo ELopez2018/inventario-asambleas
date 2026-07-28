@@ -184,7 +184,7 @@ export class RequestFormComponent implements OnInit {
     this.loadInventoryItems();
     this.loadAutocompleteOptions();
     this.loadReceivedByDefault();
-    this.form.controls.eventId.setValue(this.eventContext.selectedEventId() ?? 0);
+    this.form.controls.eventId.setValue(this.eventContext.activeEventId() ?? 0);
 
     if (this.requestId) {
       this.loadRequest();
@@ -377,9 +377,9 @@ export class RequestFormComponent implements OnInit {
 
   validateGeneralStep(stepper: MatStepper): void {
     try {
-      this.form.controls.eventId.setValue(this.eventContext.requireSelectedEventId());
+      this.form.controls.eventId.setValue(this.eventContext.requireActiveEventId());
     } catch {
-      this.errorMessage = 'Seleccione un evento operativo en la barra superior.';
+      this.errorMessage = 'No hay evento activo configurado.';
       return;
     }
 
@@ -485,10 +485,10 @@ export class RequestFormComponent implements OnInit {
     let selectedEventId: number;
 
     try {
-      selectedEventId = this.eventContext.requireSelectedEventId();
+      selectedEventId = this.eventContext.requireActiveEventId();
       this.form.controls.eventId.setValue(selectedEventId);
     } catch {
-      this.errorMessage = 'Seleccione un evento operativo en la barra superior.';
+      this.errorMessage = 'No hay evento activo configurado.';
       return;
     }
 

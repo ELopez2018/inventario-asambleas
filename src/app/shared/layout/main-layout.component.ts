@@ -5,9 +5,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatListModule } from '@angular/material/list';
-import { MatSelectModule } from '@angular/material/select';
 import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { map } from 'rxjs';
@@ -28,10 +26,8 @@ const COMPACT_LAYOUT_QUERY = '(max-width: 1100px)';
     RouterLink,
     RouterLinkActive,
     MatButtonModule,
-    MatFormFieldModule,
     MatIconModule,
     MatListModule,
-    MatSelectModule,
     MatSidenavModule,
     MatToolbarModule,
   ],
@@ -71,12 +67,9 @@ export class MainLayoutComponent implements OnInit {
 
   ngOnInit(): void {
     this.auth.ensureMyScreensLoaded().subscribe({ error: () => undefined });
-    this.eventContext.loadEvents();
+    this.eventContext.setActiveEvent(this.currentUser?.activeEvent ?? null);
+    this.eventContext.loadActiveEvent();
     this.loadCurrentUserName();
-  }
-
-  selectEvent(eventId: number): void {
-    this.eventContext.selectEvent(Number(eventId) || null);
   }
 
   closeNavigation(sidenav: MatSidenav): void {

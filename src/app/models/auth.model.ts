@@ -1,3 +1,5 @@
+import type { EventResponse } from './event.model';
+
 export interface LoginRequest {
   username: string;
   password: string;
@@ -13,6 +15,7 @@ export interface LoginResponse {
   passwordChangeRequired: boolean;
   requiredAction: 'CHANGE_PASSWORD' | null;
   roles: RoleCode[];
+  activeEvent: EventResponse | null;
   message: string;
 }
 
@@ -22,6 +25,7 @@ export interface CurrentUser {
   passwordChangeRequired: boolean;
   requiredAction: 'CHANGE_PASSWORD' | null;
   roles: RoleCode[];
+  activeEvent: EventResponse | null;
 }
 
 export type RoleCode = 'SUPER' | 'ADMIN' | 'AUX' | 'USER';

@@ -9,7 +9,7 @@ export class AppIdentityService {
 
   readonly appName = signal('Transporte & Materiales');
   readonly appSubtitle = computed(
-    () => this.eventContext.selectedDescription() || 'Sin evento seleccionado',
+    () => this.eventContext.selectedDescription() || 'Sin evento activo',
   );
   readonly browserTitle = computed(() => {
     const subtitle = this.appSubtitle();

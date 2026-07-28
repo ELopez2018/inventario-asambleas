@@ -114,7 +114,7 @@ export class TransactionFormComponent implements OnInit {
   ngOnInit() {
     this.form.controls.movementType.valueChanges.subscribe((type) => this.applyMovementRules(type));
     this.applyMovementRules(this.form.controls.movementType.value);
-    this.form.controls.eventId.setValue(this.eventContext.selectedEventId() ?? 0);
+    this.form.controls.eventId.setValue(this.eventContext.activeEventId() ?? 0);
 
     this.loading = true;
 
@@ -141,7 +141,7 @@ export class TransactionFormComponent implements OnInit {
               receivedByUserId: transaction.receivedByUserId ?? 0,
               conditionNotes: transaction.conditionNotes ?? '',
               movementDate: fromLocalDateTime(transaction.movementDate),
-              eventId: this.eventContext.selectedEventId() ?? transaction.eventId,
+              eventId: this.eventContext.activeEventId() ?? transaction.eventId,
             });
             this.applyMovementRules(transaction.movementType);
           },
@@ -224,10 +224,10 @@ export class TransactionFormComponent implements OnInit {
     let selectedEventId: number;
 
     try {
-      selectedEventId = this.eventContext.requireSelectedEventId();
+      selectedEventId = this.eventContext.requireActiveEventId();
       this.form.controls.eventId.setValue(selectedEventId);
     } catch {
-      this.errorMessage = 'Seleccione un evento operativo en la barra superior.';
+      this.errorMessage = 'No hay evento activo configurado.';
       return;
     }
 

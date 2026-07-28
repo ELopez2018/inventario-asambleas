@@ -136,7 +136,7 @@ export class PhotoListComponent implements OnInit {
   errorMessage = '';
 
   private readonly eventSelectionSync = effect(() => {
-    const eventId = this.eventContext.selectedEventId() ?? 0;
+    const eventId = this.eventContext.activeEventId() ?? 0;
     this.scopeForm.controls.eventId.setValue(eventId, { emitEvent: false });
     this.configForm.controls.eventId.setValue(eventId, { emitEvent: false });
     this.uploadForm.controls.eventId.setValue(eventId, { emitEvent: false });
@@ -387,7 +387,7 @@ export class PhotoListComponent implements OnInit {
 
   findScopeConfig() {
     const scope = this.scopeForm.getRawValue();
-    const eventId = this.eventContext.selectedEventId() ?? Number(scope.eventId);
+    const eventId = this.eventContext.activeEventId() ?? Number(scope.eventId);
 
     return this.configs.find(
       (config) =>
@@ -401,9 +401,9 @@ export class PhotoListComponent implements OnInit {
     let selectedEventId: number;
 
     try {
-      selectedEventId = this.eventContext.requireSelectedEventId();
+      selectedEventId = this.eventContext.requireActiveEventId();
     } catch {
-      this.errorMessage = 'Seleccione un evento operativo en la barra superior.';
+      this.errorMessage = 'No hay evento activo configurado.';
       return;
     }
 
@@ -434,9 +434,9 @@ export class PhotoListComponent implements OnInit {
     let selectedEventId: number;
 
     try {
-      selectedEventId = this.eventContext.requireSelectedEventId();
+      selectedEventId = this.eventContext.requireActiveEventId();
     } catch {
-      this.errorMessage = 'Seleccione un evento operativo en la barra superior.';
+      this.errorMessage = 'No hay evento activo configurado.';
       return;
     }
 
@@ -491,9 +491,9 @@ export class PhotoListComponent implements OnInit {
     let selectedEventId: number;
 
     try {
-      selectedEventId = this.eventContext.requireSelectedEventId();
+      selectedEventId = this.eventContext.requireActiveEventId();
     } catch {
-      this.errorMessage = 'Seleccione un evento operativo en la barra superior.';
+      this.errorMessage = 'No hay evento activo configurado.';
       return;
     }
 

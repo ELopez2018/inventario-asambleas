@@ -2,67 +2,75 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { EventResponse } from '../../models/event.model';
 import { EventService } from './event.service';
 
-const SELECTED_EVENT_ID_KEY = 'ar_selected_event_id';
-
 @Injectable({ providedIn: 'root' })
 export class EventContextService {
   private readonly eventService = inject(EventService);
   private readonly eventsState = signal<EventResponse[]>([]);
-  private readonly selectedEventIdState = signal<number | null>(this.readStoredEventId());
+  private readonly activeEventState = signal<EventResponse | null>(null);
 
   readonly events = this.eventsState.asReadonly();
-  readonly selectedEventId = this.selectedEventIdState.asReadonly();
-  readonly selectedEvent = computed(
-    () =>
-      this.eventsState().find((event) => event.id === this.selectedEventIdState()) ??
-      null,
-  );
-  readonly selectedDescription = computed(() => this.selectedEvent()?.description ?? '');
-  readonly selectedAddress = computed(() => this.selectedEvent()?.address ?? '');
-  readonly hasSelectedEvent = computed(() => this.selectedEvent() !== null);
+  readonly activeEvent = this.activeEventState.asReadonly();
+  readonly activeEventId = computed(() => this.activeEventState()?.id ?? null);
+  readonly selectedEventId = this.activeEventId;
+  readonly selectedEvent = this.activeEvent;
+  readonly selectedDescription = computed(() => this.activeEventState()?.description ?? '');
+  readonly selectedAddress = computed(() => this.activeEventState()?.address ?? '');
+  readonly hasActiveEvent = computed(() => this.activeEventState() !== null);
+  readonly hasSelectedEvent = this.hasActiveEvent;
+
+  setActiveEvent(event: EventResponse | null): void {
+    this.activeEventState.set(event);
+  }
+
+  loadActiveEvent() {
+    return this.eventService.getActive().subscribe({
+      next: (event) => this.activeEventState.set(event),
+      error: () => this.activeEventState.set(null),
+    });
+  }
 
   loadEvents() {
     return this.eventService.getAll().subscribe({
       next: (events) => {
         this.eventsState.set(events);
-        const currentId = this.selectedEventIdState();
-        const nextSelected =
-          currentId && events.some((event) => event.id === currentId)
-            ? currentId
-            : (events[0]?.id ?? null);
-        this.selectEvent(nextSelected);
+        const active = events.find((event) => event.active) ?? this.activeEventState();
+
+        if (active) {
+          this.activeEventState.set(active);
+          return;
+        }
+
+        this.loadActiveEvent();
       },
       error: () => {
         this.eventsState.set([]);
-        this.selectEvent(null);
+        this.loadActiveEvent();
       },
     });
   }
 
-  selectEvent(eventId: number | null): void {
-    this.selectedEventIdState.set(eventId);
-
-    if (eventId) {
-      localStorage.setItem(SELECTED_EVENT_ID_KEY, String(eventId));
-    } else {
-      localStorage.removeItem(SELECTED_EVENT_ID_KEY);
-    }
+  activateEvent(eventId: number) {
+    return this.eventService.activate(eventId).subscribe({
+      next: (event) => this.activeEventState.set(event),
+    });
   }
 
-  requireSelectedEventId(): number {
-    const eventId = this.selectedEventIdState();
+  selectEvent(eventId: number | null): void {
+    const event = this.eventsState().find((currentEvent) => currentEvent.id === eventId) ?? null;
+    this.activeEventState.set(event);
+  }
+
+  requireActiveEventId(): number {
+    const eventId = this.activeEventId();
 
     if (!eventId) {
-      throw new Error('Debe seleccionar un evento antes de continuar.');
+      throw new Error('Debe existir un evento activo antes de continuar.');
     }
 
     return eventId;
   }
 
-  private readStoredEventId(): number | null {
-    const value = localStorage.getItem(SELECTED_EVENT_ID_KEY);
-    const parsed = value ? Number(value) : NaN;
-
-    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  requireSelectedEventId(): number {
+    return this.requireActiveEventId();
   }
 }

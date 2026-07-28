@@ -1,0 +1,19 @@
+.event-status {
+  display: inline-flex;
+  min-height: 1.75rem;
+  align-items: center;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #f1f5f9;
+  padding: 0.25rem 0.625rem;
+  color: #475569;
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.event-status--active {
+  border-color: #99f6e4;
+  background: #ccfbf1;
+  color: #0f766e;
+}

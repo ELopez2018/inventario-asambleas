@@ -17,6 +17,10 @@ export class EventService {
     return this.http.get<EventResponse>(`${BASE}/${id}`);
   }
 
+  getActive() {
+    return this.http.get<EventResponse | null>(`${BASE}/active`);
+  }
+
   create(body: CreateEventRequest) {
     return this.http.post<EventResponse>(BASE, body);
   }
@@ -27,5 +31,9 @@ export class EventService {
 
   delete(id: number) {
     return this.http.delete<void>(`${BASE}/${id}`);
+  }
+
+  activate(id: number) {
+    return this.http.patch<EventResponse>(`${BASE}/${id}/active`, {});
   }
 }

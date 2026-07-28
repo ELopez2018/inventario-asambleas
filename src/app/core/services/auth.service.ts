@@ -57,12 +57,27 @@ export class AuthService {
   }
 
   private sanitizeCurrentUser(rawUser: Partial<CurrentUser>): CurrentUser {
+    const activeEvent = rawUser.activeEvent;
+
     return {
       userId: Number(rawUser.userId || 0),
       username: String(rawUser.username || ''),
       passwordChangeRequired: Boolean(rawUser.passwordChangeRequired),
       requiredAction: rawUser.requiredAction === 'CHANGE_PASSWORD' ? 'CHANGE_PASSWORD' : null,
       roles: this.sanitizeRoles(rawUser.roles),
+      activeEvent:
+        activeEvent && typeof activeEvent === 'object'
+          ? {
+              id: Number(activeEvent.id || 0),
+              description: String(activeEvent.description || ''),
+              address: String(activeEvent.address || ''),
+              startDate: activeEvent.startDate ?? null,
+              endDate: activeEvent.endDate ?? null,
+              observations: activeEvent.observations ?? null,
+              active: Boolean(activeEvent.active),
+              activeLockedByUserId: activeEvent.activeLockedByUserId ?? null,
+            }
+          : null,
     };
   }
 
@@ -76,6 +91,7 @@ export class AuthService {
           passwordChangeRequired: res.passwordChangeRequired,
           requiredAction: res.requiredAction,
           roles: res.roles,
+          activeEvent: res.activeEvent,
         });
         localStorage.setItem(USER_KEY, JSON.stringify(currentUser satisfies CurrentUser));
       }),
