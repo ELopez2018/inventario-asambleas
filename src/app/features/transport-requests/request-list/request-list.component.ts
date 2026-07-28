@@ -66,10 +66,8 @@ export class RequestListComponent implements OnInit {
   readonly canDeleteRequests = computed(() =>
     this.auth.canAccessAction('TRANSPORT_REQUESTS', 'delete'),
   );
-  readonly canGenerateReceipt = computed(
-    () =>
-      this.auth.canAccessScreen('TRANSPORT_DELIVERY_RECEIPTS') ||
-      this.auth.canAccessAction('TRANSPORT_REQUESTS', 'generateDeliveryReceipt'),
+  readonly canGenerateReceipt = computed(() =>
+    this.auth.canAccessAction('TRANSPORT_REQUESTS', 'generateDeliveryReceipt'),
   );
 
   requests: TransportRequestResponse[] = [];
@@ -89,14 +87,12 @@ export class RequestListComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.realtime.inventoryStockEvents$
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.snackBar.open('El inventario cambio por una reserva o liberacion.', 'Cerrar', {
-          duration: 4000,
-        });
-        this.loadRequests();
+    this.realtime.inventoryStockEvents$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.snackBar.open('El inventario cambio por una reserva o liberacion.', 'Cerrar', {
+        duration: 4000,
       });
+      this.loadRequests();
+    });
     this.loadEvents();
     this.loadRequests();
   }

@@ -1,10 +1,12 @@
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { finalize } from 'rxjs';
@@ -34,6 +36,7 @@ export class DeliveryReceiptListComponent implements OnInit {
   private readonly receiptPdfService = inject(TransportDeliveryReceiptPdfService);
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
+  private readonly snackBar = inject(MatSnackBar);
 
   readonly displayedColumns = [
     'receiptNumber',
@@ -46,9 +49,13 @@ export class DeliveryReceiptListComponent implements OnInit {
   readonly canEditReceipts = computed(() =>
     this.auth.canAccessAction('TRANSPORT_DELIVERY_RECEIPTS', 'edit'),
   );
+  readonly canDeleteReceipts = computed(() =>
+    this.auth.canAccessAction('TRANSPORT_DELIVERY_RECEIPTS', 'delete'),
+  );
 
   receipts: TransportDeliveryReceiptResponse[] = [];
   previewingReceiptId: number | null = null;
+  deletingReceiptId: number | null = null;
   loading = false;
   errorMessage = '';
 
@@ -96,5 +103,39 @@ export class DeliveryReceiptListComponent implements OnInit {
     } finally {
       this.previewingReceiptId = null;
     }
+  }
+
+  deleteReceipt(receipt: TransportDeliveryReceiptResponse): void {
+    if (this.deletingReceiptId) {
+      return;
+    }
+
+    const confirmed = confirm(`Eliminar recibo CO-30 ${receipt.receiptNumber}?`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    this.deletingReceiptId = receipt.id;
+    this.errorMessage = '';
+
+    this.receiptService
+      .delete(receipt.id)
+      .pipe(finalize(() => (this.deletingReceiptId = null)))
+      .subscribe({
+        next: () => {
+          this.snackBar.open('Recibo CO-30 eliminado correctamente.', 'Cerrar', { duration: 3500 });
+          this.loadReceipts();
+        },
+        error: (err: HttpErrorResponse) => {
+          if (err.status === 404) {
+            this.errorMessage = 'El recibo ya no existe o fue eliminado.';
+            this.loadReceipts();
+            return;
+          }
+
+          this.errorMessage = 'No se pudo eliminar el recibo CO-30.';
+        },
+      });
   }
 }

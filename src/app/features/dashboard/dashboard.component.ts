@@ -95,7 +95,7 @@ export class DashboardComponent {
     const normalizedTitle = title.trim().toLowerCase();
 
     if (normalizedTitle.includes('recib') && normalizedTitle.includes('oper')) {
-      return '/transport-requests';
+      return '/transport-delivery-receipts';
     }
 
     return normalizedRoute;

@@ -9,11 +9,11 @@ const TEMPLATE_URL = '/forms/CO-30_S.pdf';
 const MAX_VISIBLE_ITEMS = 5;
 
 const ITEM_FIELDS = [
-  { articleNumber: 'Text6', description: 'Text7', requestNumber: 'Text8', quantity: 'Text9' },
-  { articleNumber: 'Text10', description: 'Text11', requestNumber: 'Text12', quantity: 'Text13' },
-  { articleNumber: 'Text14', description: 'Text15', requestNumber: 'Text16', quantity: 'Text17' },
-  { articleNumber: 'Text18', description: 'Text19', requestNumber: 'Text20', quantity: 'Text21' },
-  { articleNumber: 'Text22', description: 'Text23', requestNumber: 'Text24', quantity: 'Text25' },
+  { articleNumber: 'Text6', description: 'Text7', assignedTo: 'Text8', requestNumber: 'Text9' },
+  { articleNumber: 'Text10', description: 'Text11', assignedTo: 'Text12', requestNumber: 'Text13' },
+  { articleNumber: 'Text14', description: 'Text15', assignedTo: 'Text16', requestNumber: 'Text17' },
+  { articleNumber: 'Text18', description: 'Text19', assignedTo: 'Text20', requestNumber: 'Text21' },
+  { articleNumber: 'Text22', description: 'Text23', assignedTo: 'Text24', requestNumber: 'Text25' },
 ];
 
 @Injectable({ providedIn: 'root' })
@@ -57,7 +57,7 @@ export class TransportDeliveryReceiptPdfService {
 
     for (const [index, fields] of ITEM_FIELDS.entries()) {
       const item = receipt.items[index];
-      this.fillItemRow(setText, fields, item, receipt.transportRequestNumber);
+      this.fillItemRow(setText, fields, item);
     }
 
     setText('Text26', this.buildObservations(receipt));
@@ -86,12 +86,11 @@ export class TransportDeliveryReceiptPdfService {
     setText: (fieldName: string, value: string | number | null | undefined) => void,
     fields: (typeof ITEM_FIELDS)[number],
     item: TransportDeliveryReceiptItemResponse | undefined,
-    transportRequestNumber: string,
   ): void {
     setText(fields.articleNumber, item?.articleNumber);
     setText(fields.description, item?.description);
-    setText(fields.requestNumber, item?.requestNumber ?? transportRequestNumber);
-    setText(fields.quantity, item ? this.formatQuantity(item.quantity) : null);
+    setText(fields.assignedTo, item?.assignedTo);
+    setText(fields.requestNumber, item?.requestNumber);
   }
 
   private buildObservations(receipt: TransportDeliveryReceiptResponse): string {
@@ -121,13 +120,6 @@ export class TransportDeliveryReceiptPdfService {
     }
 
     return `${day}/${month}/${year}`;
-  }
-
-  private formatQuantity(value: number): string {
-    return new Intl.NumberFormat('es-CO', {
-      maximumFractionDigits: 2,
-      minimumFractionDigits: Number.isInteger(value) ? 0 : 2,
-    }).format(value);
   }
 
   private toDisplayText(value: string | number | null | undefined): string {
