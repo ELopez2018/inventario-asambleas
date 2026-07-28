@@ -22,6 +22,16 @@ export class DashboardComponent {
     ['TRANSPORT_REQUESTS', 'Solicitudes y elementos a transportar'],
     ['SCREEN_ACCESS_ADMIN', 'Permisos por rol y usuario'],
   ]);
+  private readonly accents = new Map([
+    ['USERS', 'violet'],
+    ['EVENTS', 'emerald'],
+    ['INVENTORY_ITEMS', 'amber'],
+    ['INVENTORY_TRANSACTIONS', 'orange'],
+    ['INVENTORY_ITEM_DETAILS', 'cyan'],
+    ['INVENTORY_ITEM_DETAIL_PHOTOS', 'rose'],
+    ['TRANSPORT_REQUESTS', 'blue'],
+    ['SCREEN_ACCESS_ADMIN', 'fuchsia'],
+  ]);
 
   readonly modules = computed(() =>
     this.auth
@@ -32,10 +42,11 @@ export class DashboardComponent {
         icon: screen.icon || 'chevron_right',
         title: screen.code === 'INVENTORY_ITEMS' ? 'Inventarios' : screen.title,
         caption: this.captions.get(screen.code) ?? screen.section,
+        accent: this.accents.get(screen.code) ?? 'slate',
       })),
   );
 
-  readonly canAccessMovements = computed(() =>
-    this.auth.canAccessScreen('INVENTORY_TRANSACTIONS'),
+  readonly canAccessTransportRequests = computed(() =>
+    this.auth.canAccessScreen('TRANSPORT_REQUESTS'),
   );
 }
