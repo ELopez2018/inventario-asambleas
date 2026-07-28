@@ -1,12 +1,6 @@
 <mat-sidenav-container class="app-shell bg-slate-50" [hasBackdrop]="isCompact()" autosize>
-  <mat-sidenav
-    #sidenav
-    id="app-navigation"
-    class="app-sidenav"
-    [mode]="isCompact() ? 'over' : 'side'"
-    [opened]="!isCompact()"
-    aria-label="Navegacion principal"
-  >
+  <mat-sidenav #sidenav id="app-navigation" class="app-sidenav" [mode]="isCompact() ? 'over' : 'side'"
+    [opened]="!isCompact()" aria-label="Navegacion principal">
     <div class="sidenav-inner">
       <div class="sidenav-brand">
         <div class="brand-mark" aria-hidden="true">
@@ -17,15 +11,10 @@
           <div class="brand-subtitle">{{ appIdentity.appSubtitle() }}</div>
         </div>
         @if (isCompact()) {
-          <button
-            mat-icon-button
-            type="button"
-            class="sidenav-close"
-            aria-label="Cerrar menu de navegacion"
-            (click)="sidenav.close()"
-          >
-            <mat-icon>close</mat-icon>
-          </button>
+        <button mat-icon-button type="button" class="sidenav-close" aria-label="Cerrar menu de navegacion"
+          (click)="sidenav.close()">
+          <mat-icon>close</mat-icon>
+        </button>
         }
       </div>
 
@@ -38,18 +27,12 @@
 
       <mat-nav-list class="app-nav-list" aria-label="Secciones de la aplicacion">
         @for (item of navItems(); track item.code) {
-          <a
-            mat-list-item
-            [routerLink]="item.path"
-            routerLinkActive="active-link"
-            ariaCurrentWhenActive="page"
-            [routerLinkActiveOptions]="{ exact: item.exact }"
-            [attr.data-accent]="item.accent"
-            (click)="closeNavigation(sidenav)"
-          >
-            <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
-            <span matListItemTitle>{{ item.label }}</span>
-          </a>
+        <a mat-list-item [routerLink]="item.path" routerLinkActive="active-link" ariaCurrentWhenActive="page"
+          [routerLinkActiveOptions]="{ exact: item.exact }" [attr.data-accent]="item.accent"
+          (click)="closeNavigation(sidenav)">
+          <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+          <span matListItemTitle>{{ item.label }}</span>
+        </a>
         }
       </mat-nav-list>
 
@@ -73,22 +56,11 @@
   <mat-sidenav-content class="app-sidenav-content flex min-h-0 min-w-0 flex-col overflow-hidden">
     <mat-toolbar class="app-toolbar shrink-0">
       @if (isCompact()) {
-        <button
-          mat-icon-button
-          type="button"
-          class="toolbar-icon-button"
-          aria-label="Abrir menu de navegacion"
-          aria-controls="app-navigation"
-          [attr.aria-expanded]="sidenav.opened"
-          (click)="sidenav.toggle()"
-        >
-          <mat-icon>menu</mat-icon>
-        </button>
+      <button mat-icon-button type="button" class="toolbar-icon-button" aria-label="Abrir menu de navegacion"
+        aria-controls="app-navigation" [attr.aria-expanded]="sidenav.opened" (click)="sidenav.toggle()">
+        <mat-icon>menu</mat-icon>
+      </button>
       }
-      <div class="toolbar-title-block">
-        <div class="toolbar-title">{{ appIdentity.appName() }}</div>
-        <div class="toolbar-subtitle">Panel de gestion</div>
-      </div>
 
       <div class="app-event-context hidden min-w-0 items-center gap-2 lg:flex">
         <span class="event-summary">
@@ -96,30 +68,25 @@
           {{ eventContext.selectedDescription() || 'Sin evento activo' }}
         </span>
         @if (eventContext.selectedAddress()) {
-          <span class="event-address">
-            <mat-icon aria-hidden="true">location_on</mat-icon>
-            {{ eventContext.selectedAddress() }}
-          </span>
+        <span class="event-address">
+          <mat-icon aria-hidden="true">location_on</mat-icon>
+          {{ eventContext.selectedAddress() }}
+        </span>
         }
       </div>
-      <span class="flex-1"></span>
-      <span class="event-summary event-summary--compact flex min-w-0 lg:hidden">
-        <mat-icon aria-hidden="true">event_available</mat-icon>
-        {{ eventContext.selectedDescription() || 'Sin evento activo' }}
+      <span class="flex-1 lg:hidden"></span>
+      <span class="event-summary event-summary--compact ml-auto flex min-w-0 lg:hidden">
+        <mat-icon aria-hidden="true">person</mat-icon>
+        {{ displayName() || 'Usuario' }}
       </span>
       @if (displayName()) {
-        <span class="toolbar-user hidden max-w-40 truncate text-sm sm:inline-flex md:max-w-56 lg:hidden">
-          <mat-icon aria-hidden="true">person</mat-icon>
-          {{ displayName() }}
-        </span>
+      <span class="toolbar-user ml-auto hidden max-w-40 truncate text-sm sm:inline-flex md:max-w-56 lg:hidden">
+        <mat-icon aria-hidden="true">person</mat-icon>
+        {{ displayName() }}
+      </span>
       }
-      <button
-        mat-icon-button
-        type="button"
-        class="toolbar-icon-button lg:hidden"
-        aria-label="Cerrar sesion"
-        (click)="logout()"
-      >
+      <button mat-icon-button type="button" class="toolbar-icon-button lg:hidden" aria-label="Cerrar sesion"
+        (click)="logout()">
         <mat-icon>logout</mat-icon>
       </button>
     </mat-toolbar>
