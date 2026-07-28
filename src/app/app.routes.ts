@@ -2,7 +2,6 @@ import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { passwordChangeGuard } from './core/guards/password-change.guard';
 import { screenAccessGuard } from './core/guards/screen-access.guard';
-import { superRoleGuard } from './core/guards/super-role.guard';
 
 export const routes: Routes = [
   {
@@ -199,7 +198,8 @@ export const routes: Routes = [
       },
       {
         path: 'admin/credentials',
-        canActivate: [superRoleGuard],
+        canActivate: [screenAccessGuard],
+        data: { screenCode: 'ADMIN_CREDENTIALS' },
         loadComponent: () =>
           import('./features/auth/admin-credentials/admin-credentials.component').then(
             (m) => m.AdminCredentialsComponent,

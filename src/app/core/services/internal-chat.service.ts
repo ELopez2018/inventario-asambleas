@@ -21,10 +21,11 @@ export class InternalChatService {
   readonly connectedUsers$ = this.realtime.connectedUsers$;
   readonly selectedRecipient = this.selectedRecipientState.asReadonly();
   readonly currentUserId = computed(() => this.auth.getCurrentUser()?.userId ?? null);
-  readonly availableUsers = computed(() =>
-    (this.connectedUsersState()?.users ?? []).filter(
-      (user) => user.userId !== this.currentUserId(),
-    ),
+  // La guia exige mostrar todos los usuarios conectados (incluido el actual).
+  // El chat privado consigo mismo se deshabilita, no se oculta.
+  readonly connectedUsers = computed(() => this.connectedUsersState()?.users ?? []);
+  readonly totalConnectedUsers = computed(
+    () => this.connectedUsersState()?.totalUsers ?? this.connectedUsers().length,
   );
   readonly selectedTitle = computed(() => this.selectedRecipientState()?.username ?? 'Todos');
 
@@ -46,7 +47,16 @@ export class InternalChatService {
     this.selectedRecipientState.set(null);
   }
 
+  isSelf(user: ConnectedChatUserResponse): boolean {
+    return user.userId === this.currentUserId();
+  }
+
   selectUser(user: ConnectedChatUserResponse): void {
+    // No permitir chat privado consigo mismo; el usuario sigue visible en la lista.
+    if (this.isSelf(user)) {
+      return;
+    }
+
     this.selectedRecipientState.set(user);
   }
 

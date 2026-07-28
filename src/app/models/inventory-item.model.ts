@@ -1,6 +1,6 @@
 export interface InventoryItemStoreStock {
   storeId: number;
-  storeName?: string | null;
+  storeName: string;
   quantity: number;
 }
 

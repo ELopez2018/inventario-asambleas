@@ -12,7 +12,14 @@ import { ChatMessageResponse, ConnectedChatUserResponse } from '../../../models/
 
 @Component({
   selector: 'app-internal-chat-floating-panel',
-  imports: [CommonModule, FormsModule, MatBadgeModule, MatButtonModule, MatIconModule, MatTooltipModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatBadgeModule,
+    MatButtonModule,
+    MatIconModule,
+    MatTooltipModule,
+  ],
   templateUrl: './internal-chat-floating-panel.component.html',
   styleUrl: './internal-chat-floating-panel.component.css',
 })
@@ -24,7 +31,8 @@ export class InternalChatFloatingPanelComponent {
   readonly open = signal(false);
   readonly draft = signal('');
   readonly unread = signal(0);
-  readonly users = computed(() => this.chat.availableUsers());
+  readonly users = computed(() => this.chat.connectedUsers());
+  readonly totalUsers = computed(() => this.chat.totalConnectedUsers());
   readonly title = computed(() => this.chat.selectedTitle());
   readonly currentUserId = computed(() => this.auth.getCurrentUser()?.userId ?? null);
 
@@ -50,6 +58,10 @@ export class InternalChatFloatingPanelComponent {
 
   selectUser(user: ConnectedChatUserResponse): void {
     this.chat.selectUser(user);
+  }
+
+  isSelf(user: ConnectedChatUserResponse): boolean {
+    return this.chat.isSelf(user);
   }
 
   send(): void {

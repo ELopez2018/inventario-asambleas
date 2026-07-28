@@ -123,7 +123,7 @@ export class ItemFormComponent implements OnInit {
       });
   }
 
-  createStoreStockGroup(stock?: InventoryItemStoreStock) {
+  createStoreStockGroup(stock?: Pick<InventoryItemStoreStock, 'storeId' | 'quantity'>) {
     return this.fb.group({
       storeId: [stock?.storeId ?? 1, [Validators.required, Validators.min(1)]],
       quantity: [stock?.quantity ?? 0, [Validators.required, Validators.min(0)]],
@@ -131,7 +131,9 @@ export class ItemFormComponent implements OnInit {
   }
 
   setStoreStocks(stocks: InventoryItemStoreStock[]) {
-    const rows = stocks.length ? stocks : [{ storeId: 1, quantity: 0 }];
+    const rows: Pick<InventoryItemStoreStock, 'storeId' | 'quantity'>[] = stocks.length
+      ? stocks
+      : [{ storeId: 1, quantity: 0 }];
     this.storeStocks.clear();
     rows.forEach((stock) => this.storeStocks.push(this.createStoreStockGroup(stock)));
     this.storeStocks.updateValueAndValidity();

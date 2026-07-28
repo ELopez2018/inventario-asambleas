@@ -20,6 +20,7 @@ export class DashboardComponent {
     ['INVENTORY_ITEM_DETAILS', 'Unidades por articulo y bodega'],
     ['INVENTORY_ITEM_DETAIL_PHOTOS', 'Fotos con validacion GPS'],
     ['TRANSPORT_REQUESTS', 'Solicitudes y elementos a transportar'],
+    ['ADMIN_CREDENTIALS', 'Credenciales y roles del sistema'],
     ['SCREEN_ACCESS_ADMIN', 'Permisos por rol y usuario'],
   ]);
   private readonly accents = new Map([
@@ -30,6 +31,7 @@ export class DashboardComponent {
     ['INVENTORY_ITEM_DETAILS', 'cyan'],
     ['INVENTORY_ITEM_DETAIL_PHOTOS', 'rose'],
     ['TRANSPORT_REQUESTS', 'blue'],
+    ['ADMIN_CREDENTIALS', 'indigo'],
     ['SCREEN_ACCESS_ADMIN', 'fuchsia'],
   ]);
 
