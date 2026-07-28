@@ -27,6 +27,178 @@
   line-height: 1;
 }
 
+.inventory-tabs {
+  --inventory-tab-accent: #14b8a6;
+}
+
+.inventory-tab-label {
+  display: inline-flex;
+  max-width: 13rem;
+  min-width: 0;
+  align-items: center;
+  gap: 0.5rem;
+  overflow: hidden;
+  color: inherit;
+  line-height: 1;
+}
+
+.inventory-tab-label mat-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex: 0 0 auto;
+  color: #64748b;
+  font-size: 1.125rem;
+}
+
+.inventory-tab-label span {
+  overflow: hidden;
+  min-width: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inventory-tab-label strong {
+  display: inline-flex;
+  min-width: 1.45rem;
+  height: 1.45rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #e2e8f0;
+  color: #334155;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+:host ::ng-deep .inventory-tabs > .mat-mdc-tab-header {
+  border-bottom: 1px solid #e2e8f0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.95)),
+    #ffffff;
+  padding: 0.625rem 0.75rem 0;
+}
+
+:host ::ng-deep .inventory-tabs .mat-mdc-tab-label-container {
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+}
+
+:host ::ng-deep .inventory-tabs .mat-mdc-tab-list {
+  gap: 0.375rem;
+}
+
+:host ::ng-deep .inventory-tabs .mdc-tab {
+  min-width: max-content;
+  height: 2.75rem;
+  padding: 0 0.875rem;
+  border: 1px solid #e2e8f0;
+  border-bottom-color: transparent;
+  border-radius: 0.5rem 0.5rem 0 0;
+  background: #f8fafc;
+  color: #475569;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+:host ::ng-deep .inventory-tabs .mdc-tab:hover {
+  border-color: #cbd5e1;
+  background: #ffffff;
+  color: #0f172a;
+}
+
+:host ::ng-deep .inventory-tabs .mdc-tab--active {
+  border-color: #99f6e4;
+  border-bottom-color: #ffffff;
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 -1px 0 #ffffff inset, 0 10px 22px rgb(15 23 42 / 0.08);
+}
+
+:host ::ng-deep .inventory-tabs .mdc-tab--active .inventory-tab-label mat-icon {
+  color: var(--inventory-tab-accent);
+}
+
+:host ::ng-deep .inventory-tabs .mdc-tab--active .inventory-tab-label strong {
+  background: #ccfbf1;
+  color: #0f766e;
+}
+
+:host ::ng-deep .inventory-tabs .mdc-tab-indicator {
+  display: none;
+}
+
+:host ::ng-deep .inventory-tabs .mat-mdc-tab-body-content {
+  background: #ffffff;
+}
+
+:host ::ng-deep .responsive-table .mat-mdc-header-row {
+  height: 3.25rem;
+  background:
+    linear-gradient(180deg, rgba(248, 250, 252, 0.98), rgba(241, 245, 249, 0.98)),
+    #f8fafc;
+}
+
+:host ::ng-deep .responsive-table .mat-mdc-header-cell {
+  border-bottom: 1px solid #dbe3ee;
+  color: #334155;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+:host ::ng-deep .responsive-table .mat-mdc-header-cell:first-child {
+  padding-left: 1.25rem;
+}
+
+:host ::ng-deep .responsive-table .mat-mdc-row:hover {
+  background: #f8fafc;
+}
+
+.state-pill {
+  display: inline-flex;
+  min-height: 1.75rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.state-pill[data-state='good'] {
+  border-color: #bbf7d0;
+  background: #dcfce7;
+  color: #166534;
+}
+
+.state-pill[data-state='bad'] {
+  border-color: #fecaca;
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.state-pill[data-state='used'] {
+  border-color: #fed7aa;
+  background: #ffedd5;
+  color: #9a3412;
+}
+
+.state-pill[data-state='unknown'] {
+  border-color: #cbd5e1;
+  background: #f1f5f9;
+  color: #475569;
+}
+
 .item-actions {
   display: inline-flex;
   align-items: center;
@@ -55,6 +227,10 @@
 }
 
 @media (max-width: 1100px) {
+  :host ::ng-deep .responsive-table .mat-mdc-row:hover {
+    background: #ffffff;
+  }
+
   .inventory-filter {
     align-items: stretch;
     flex-direction: column;
@@ -66,6 +242,10 @@
 
   .inventory-filter__count {
     align-self: flex-start;
+  }
+
+  .inventory-tab-label {
+    max-width: 10rem;
   }
 
   .item-actions {

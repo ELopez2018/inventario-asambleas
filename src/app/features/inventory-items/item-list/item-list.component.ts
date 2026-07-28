@@ -117,6 +117,24 @@ export class ItemListComponent implements OnInit {
     return this.stateLabelMap.get(item.stateId) ?? `Estado #${item.stateId}`;
   }
 
+  getStateTone(item: InventoryItemResponse) {
+    const stateText = this.normalizeFilterText(this.getStateLabel(item));
+
+    if (stateText.includes('buen')) {
+      return 'good';
+    }
+
+    if (stateText.includes('mal')) {
+      return 'bad';
+    }
+
+    if (stateText.includes('usado')) {
+      return 'used';
+    }
+
+    return 'unknown';
+  }
+
   getTotalStock(item: InventoryItemResponse) {
     return item.storeStocks.reduce((sum, stock) => sum + stock.quantity, 0);
   }
