@@ -38,8 +38,13 @@ export class AuthService {
   private readonly router = inject(Router);
   private readonly allowedScreensState = signal<EffectiveScreenAccessResponse[]>([]);
   private screensLoaded = false;
+  private sessionExpirationTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly allowedScreens = this.allowedScreensState.asReadonly();
+
+  constructor() {
+    this.syncSessionExpirationTimer();
+  }
 
   private sanitizeRoles(roles: unknown): RoleCode[] {
     if (!Array.isArray(roles)) {
@@ -98,6 +103,7 @@ export class AuthService {
           activeEvent: res.activeEvent,
         });
         localStorage.setItem(USER_KEY, JSON.stringify(currentUser satisfies CurrentUser));
+        this.syncSessionExpirationTimer();
       }),
     );
   }
@@ -170,7 +176,9 @@ export class AuthService {
   }
 
   getRoleScreens(roleCode: RoleCode) {
-    return this.http.get<RoleScreenAccessResponse>(`${API_BASE_URL}/auth/roles/${roleCode}/screens`);
+    return this.http.get<RoleScreenAccessResponse>(
+      `${API_BASE_URL}/auth/roles/${roleCode}/screens`,
+    );
   }
 
   setRoleScreens(roleCode: RoleCode, body: SetRoleScreenAccessRequest) {
@@ -242,7 +250,12 @@ export class AuthService {
     void this.router.navigate(['/login']);
   }
 
+  expireSession() {
+    this.logout();
+  }
+
   clearSession() {
+    this.clearSessionExpirationTimer();
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     this.allowedScreensState.set([]);
@@ -250,7 +263,18 @@ export class AuthService {
   }
 
   getToken(): string | null {
-    return localStorage.getItem(TOKEN_KEY);
+    const token = localStorage.getItem(TOKEN_KEY);
+
+    if (!token) {
+      return null;
+    }
+
+    if (this.isTokenExpired(token)) {
+      this.expireSession();
+      return null;
+    }
+
+    return token;
   }
 
   isLoggedIn(): boolean {
@@ -332,5 +356,76 @@ export class AuthService {
 
   private normalizeRoute(route: string): string {
     return route.startsWith('/') ? route : `/${route}`;
+  }
+
+  private syncSessionExpirationTimer() {
+    this.clearSessionExpirationTimer();
+
+    const token = localStorage.getItem(TOKEN_KEY);
+
+    if (!token) {
+      return;
+    }
+
+    const expiresAt = this.getTokenExpirationEpochMs(token);
+
+    if (!expiresAt) {
+      return;
+    }
+
+    const delayMs = expiresAt - Date.now();
+
+    if (delayMs <= 0) {
+      this.expireSession();
+      return;
+    }
+
+    this.sessionExpirationTimer = setTimeout(() => {
+      this.expireSession();
+    }, delayMs);
+  }
+
+  private clearSessionExpirationTimer() {
+    if (this.sessionExpirationTimer) {
+      clearTimeout(this.sessionExpirationTimer);
+      this.sessionExpirationTimer = null;
+    }
+  }
+
+  private isTokenExpired(token: string): boolean {
+    const expiresAt = this.getTokenExpirationEpochMs(token);
+
+    if (!expiresAt) {
+      return false;
+    }
+
+    return Date.now() >= expiresAt;
+  }
+
+  private getTokenExpirationEpochMs(token: string): number | null {
+    const parts = token.split('.');
+
+    if (parts.length < 2) {
+      return null;
+    }
+
+    try {
+      const payload = JSON.parse(this.decodeBase64Url(parts[1])) as { exp?: number };
+      const expSeconds = Number(payload.exp);
+
+      if (!Number.isFinite(expSeconds) || expSeconds <= 0) {
+        return null;
+      }
+
+      return expSeconds * 1000;
+    } catch {
+      return null;
+    }
+  }
+
+  private decodeBase64Url(input: string): string {
+    const normalized = input.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=');
+    return atob(padded);
   }
 }

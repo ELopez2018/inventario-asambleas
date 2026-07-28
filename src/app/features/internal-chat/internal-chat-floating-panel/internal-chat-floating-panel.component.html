@@ -1,4 +1,4 @@
-<button type="button" mat-fab class="chat-fab" [matBadge]="unread() || null" matBadgeColor="warn"
+<button type="button" mat-fab class="chat-fab" [matBadge]="totalUsers() || null" matBadgeColor="warn"
   matTooltip="Chat interno" (click)="toggle()">
   <mat-icon>{{ open() ? 'close' : 'chat' }}</mat-icon>
 </button>
@@ -10,7 +10,13 @@
       <mat-icon aria-hidden="true">forum</mat-icon>
       <div>
         <div>Chat interno</div>
-        <span>{{ totalUsers() }} online &middot; Conversacion: {{ title() }}</span>
+        <span>{{ totalUsers() }} online &middot; Conversacion:
+          @if (title() !== 'Todos') {
+          <span [matTooltip]="title()">{{ getInitials(title()) }}</span>
+          } @else {
+          {{ title() }}
+          }
+        </span>
       </div>
     </div>
     <button type="button" mat-icon-button matTooltip="Cerrar chat" (click)="toggle()">
@@ -26,10 +32,11 @@
     </button>
     @for (user of users(); track user.userId) {
     <button type="button" class="chat-recipient" [class.chat-recipient--active]="isSelectedUser(user)"
-      [disabled]="isSelf(user)" [matTooltip]="isSelf(user) ? 'No puedes iniciar un chat privado contigo mismo' : ''"
+      [disabled]="isSelf(user)"
+      [matTooltip]="isSelf(user) ? 'No puedes iniciar un chat privado contigo mismo' : user.username"
       (click)="selectUser(user)">
       <mat-icon aria-hidden="true">person</mat-icon>
-      <span>{{ user.username }}@if (isSelf(user)) { <em> (tu)</em> }</span>
+      <span>{{ getInitials(user.username) }}@if (isSelf(user)) { <em> (tu)</em> }</span>
       @if (user.sessionCount > 1) {
       <strong>{{ user.sessionCount }}</strong>
       }
@@ -42,7 +49,7 @@
     @if (isVisible(message)) {
     <article class="chat-message" [class.chat-message--mine]="isMine(message)">
       <div class="chat-message__meta">
-        <span>{{ message.senderUsername }}</span>
+        <span [matTooltip]="message.senderUsername">{{ getInitials(message.senderUsername) }}</span>
         @if (message.type === 'PRIVATE') {
         <strong>Privado</strong>
         }

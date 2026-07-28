@@ -17,6 +17,7 @@ const TRACE_HEADER = 'X-Trace-Id';
 export class RealtimeService {
   private readonly auth = inject(AuthService);
   private client: Client | null = null;
+  private authFailureHandled = false;
 
   private readonly chatMessagesSubject = new Subject<ChatMessageResponse>();
   private readonly connectedUsersSubject = new BehaviorSubject<ConnectedChatUsersResponse | null>(
@@ -32,6 +33,8 @@ export class RealtimeService {
     if (!token || this.client?.active) {
       return;
     }
+
+    this.authFailureHandled = false;
 
     try {
       this.client = new Client({
@@ -66,10 +69,16 @@ export class RealtimeService {
           });
         },
         onStompError: (frame) => {
+          const message = `${frame.headers?.['message'] ?? ''} ${frame.body ?? ''}`.toLowerCase();
           console.warn('[realtime] STOMP error', frame.headers?.['message'] ?? frame.body);
+          this.handleAuthFailureIfNeeded(message);
         },
         onWebSocketError: (event) => {
           console.warn('[realtime] websocket error', event);
+        },
+        onWebSocketClose: (event) => {
+          const reason = `${event.code} ${event.reason ?? ''}`.toLowerCase();
+          this.handleAuthFailureIfNeeded(reason);
         },
       });
 
@@ -144,5 +153,26 @@ export class RealtimeService {
     return (
       globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`
     );
+  }
+
+  private handleAuthFailureIfNeeded(message: string): void {
+    if (this.authFailureHandled) {
+      return;
+    }
+
+    const looksLikeAuthFailure =
+      message.includes('401') ||
+      message.includes('403') ||
+      message.includes('unauthor') ||
+      message.includes('forbidden') ||
+      message.includes('token') ||
+      message.includes('jwt');
+
+    if (!looksLikeAuthFailure) {
+      return;
+    }
+
+    this.authFailureHandled = true;
+    this.auth.expireSession();
   }
 }

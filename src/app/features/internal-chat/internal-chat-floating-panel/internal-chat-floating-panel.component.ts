@@ -1,6 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatButtonModule } from '@angular/material/button';
@@ -24,32 +23,19 @@ import { ChatMessageResponse, ConnectedChatUserResponse } from '../../../models/
   styleUrl: './internal-chat-floating-panel.component.css',
 })
 export class InternalChatFloatingPanelComponent {
-  private readonly destroyRef = inject(DestroyRef);
   private readonly auth = inject(AuthService);
 
   readonly chat = inject(InternalChatService);
   readonly open = signal(false);
   readonly draft = signal('');
-  readonly unread = signal(0);
   readonly users = computed(() => this.chat.connectedUsers());
   readonly totalUsers = computed(() => this.chat.totalConnectedUsers());
   readonly title = computed(() => this.chat.selectedTitle());
   readonly currentUserId = computed(() => this.auth.getCurrentUser()?.userId ?? null);
 
-  constructor() {
-    this.chat.messages$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
-      if (!this.open()) {
-        this.unread.update((count) => count + 1);
-      }
-    });
-  }
-
   toggle(): void {
     this.open.update((value) => !value);
-
-    if (this.open()) {
-      this.unread.set(0);
-    }
+    this.chat.setChatOpen(this.open());
   }
 
   selectAll(): void {
@@ -97,5 +83,9 @@ export class InternalChatFloatingPanelComponent {
 
     event.preventDefault();
     this.send();
+  }
+
+  getInitials(username: string): string {
+    return this.chat.getInitials(username);
   }
 }
