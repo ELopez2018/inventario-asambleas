@@ -512,6 +512,28 @@
         "confirmationRequired": false,
         "defaultRoles": ["SUPER", "ADMIN", "AUX"],
         "notes": "Acceso a /transport-delivery-receipts/:id/edit y guardado con PUT /transport-delivery-receipts/{id}."
+      },
+      {
+        "code": "TRANSPORT_DELIVERY_RECEIPTS_UPDATE",
+        "actionKey": "update",
+        "title": "Guardar recibo",
+        "icon": "save",
+        "style": "primary",
+        "sortOrder": 20,
+        "confirmationRequired": false,
+        "defaultRoles": ["SUPER", "ADMIN", "AUX"],
+        "notes": "Habilita guardado del formulario con PUT /transport-delivery-receipts/{id}."
+      },
+      {
+        "code": "TRANSPORT_DELIVERY_RECEIPTS_DELETE",
+        "actionKey": "delete",
+        "title": "Eliminar recibo",
+        "icon": "delete",
+        "style": "danger",
+        "sortOrder": 30,
+        "confirmationRequired": true,
+        "defaultRoles": ["SUPER", "ADMIN"],
+        "notes": "Elimina CO-30 con DELETE /transport-delivery-receipts/{id}."
       }
     ],
     "notes": "Listado y detalle/edicion de recibos de entrega CO-30 generados desde solicitudes de transporte."

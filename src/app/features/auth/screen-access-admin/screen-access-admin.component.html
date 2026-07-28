@@ -55,12 +55,17 @@
       }
 
       <h3 class="section-label section-label--spaced">Acciones</h3>
-      <div class="screen-list">
+      <mat-accordion class="screen-accordion">
         @for (screen of screens; track screen.code) {
-        @if (getActionsForScreen(screen.code).length) {
-        <div class="screen-action-group">
-          <div class="screen-row__title">{{ screen.title }}</div>
-          <div class="screen-row__meta">{{ screen.code }}</div>
+        @if (hasActionsForScreen(screen.code)) {
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>{{ screen.title }}</mat-panel-title>
+            <mat-panel-description>
+              {{ getActionsForScreen(screen.code).length }} accion(es)
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+
           <div class="screen-action-group__items">
             @for (action of getActionsForScreen(screen.code); track action.code) {
             <mat-checkbox class="screen-row screen-row--compact" [checked]="roleActionCodes.has(action.code)"
@@ -70,10 +75,10 @@
             </mat-checkbox>
             }
           </div>
-        </div>
+        </mat-expansion-panel>
         }
         }
-      </div>
+      </mat-accordion>
 
       @if (canManageRoleActions()) {
       <div class="mt-4 flex justify-end">
@@ -148,28 +153,43 @@
       }
 
       <h3 class="section-label section-label--spaced">Acciones</h3>
-      <div class="screen-list">
-        @for (action of userActions; track action.code) {
-        <div class="screen-row screen-row--select">
-          <div class="min-w-0">
-            <div class="screen-row__title">{{ action.title }}</div>
-            <div class="screen-row__meta">
-              {{ action.code }} · {{ action.screenCode }} · base:
-              {{ action.roleGranted ? 'permitida' : 'sin acceso' }}
+      <mat-accordion class="screen-accordion">
+        @for (screen of userScreens; track screen.code) {
+        @if (hasUserActionsForScreen(screen.code)) {
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>{{ screen.title }}</mat-panel-title>
+            <mat-panel-description>
+              {{ getUserActionsForScreen(screen.code).length }} accion(es)
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+
+          <div class="screen-action-group__items">
+            @for (action of getUserActionsForScreen(screen.code); track action.code) {
+            <div class="screen-row screen-row--select">
+              <div class="min-w-0">
+                <div class="screen-row__title">{{ action.title }}</div>
+                <div class="screen-row__meta">
+                  {{ action.code }} · base:
+                  {{ action.roleGranted ? 'permitida' : 'sin acceso' }}
+                </div>
+              </div>
+              <mat-form-field appearance="outline" class="screen-row__select">
+                <mat-label>Ajuste</mat-label>
+                <mat-select [value]="userActionOverrides.get(action.code) ?? null"
+                  (selectionChange)="setUserActionOverride(action.code, $event.value)">
+                  <mat-option [value]="null">Sin ajuste</mat-option>
+                  <mat-option value="ALLOW">Permitir</mat-option>
+                  <mat-option value="DENY">Denegar</mat-option>
+                </mat-select>
+              </mat-form-field>
             </div>
+            }
           </div>
-          <mat-form-field appearance="outline" class="screen-row__select">
-            <mat-label>Ajuste</mat-label>
-            <mat-select [value]="userActionOverrides.get(action.code) ?? null"
-              (selectionChange)="setUserActionOverride(action.code, $event.value)">
-              <mat-option [value]="null">Sin ajuste</mat-option>
-              <mat-option value="ALLOW">Permitir</mat-option>
-              <mat-option value="DENY">Denegar</mat-option>
-            </mat-select>
-          </mat-form-field>
-        </div>
+        </mat-expansion-panel>
         }
-      </div>
+        }
+      </mat-accordion>
 
       @if (canManageUserActionOverrides()) {
       <div class="mt-4 flex justify-end">

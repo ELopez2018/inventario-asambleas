@@ -37,4 +37,8 @@ export class TransportDeliveryReceiptService {
   update(id: number, body: UpdateTransportDeliveryReceiptRequest) {
     return this.http.put<TransportDeliveryReceiptResponse>(`${BASE}/${id}`, body);
   }
+
+  delete(id: number) {
+    return this.http.delete<void>(`${BASE}/${id}`);
+  }
 }

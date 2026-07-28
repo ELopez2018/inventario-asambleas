@@ -59,6 +59,24 @@
   margin-top: 1.25rem;
 }
 
+.screen-accordion {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.screen-accordion mat-expansion-panel {
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  box-shadow: none;
+  background: #f8fafc;
+}
+
+.screen-accordion mat-panel-description {
+  justify-content: flex-end;
+  color: #64748b;
+  font-size: 0.75rem;
+}
+
 .screen-action-group {
   min-width: 0;
   border: 1px solid #e2e8f0;

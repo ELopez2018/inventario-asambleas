@@ -129,7 +129,7 @@
     "showInMenu": true,
     "requiresAuth": true,
     "defaultRoles": ["SUPER", "ADMIN", "AUX"],
-    "notes": "Listado y detalle/edicion de recibos de entrega CO-30 generados desde solicitudes de transporte."
+    "notes": "Listado y detalle/edicion de recibos de entrega CO-30 generados desde solicitudes de transporte. Guardado controlado por accion update y eliminacion por accion delete."
   },
   {
     "code": "ADMIN_CREDENTIALS",

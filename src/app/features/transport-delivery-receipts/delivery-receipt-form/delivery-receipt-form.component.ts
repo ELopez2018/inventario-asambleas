@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, computed, inject } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -12,6 +12,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { finalize } from 'rxjs';
+import { AuthService } from '../../../core/services/auth.service';
 import { TransportDeliveryReceiptPdfService } from '../../../core/services/transport-delivery-receipt-pdf.service';
 import { TransportDeliveryReceiptService } from '../../../core/services/transport-delivery-receipt.service';
 import { TransportDeliveryReceiptResponse } from '../../../models/transport-delivery-receipt.model';
@@ -49,6 +50,7 @@ export class DeliveryReceiptFormComponent implements OnInit {
   private readonly receiptService = inject(TransportDeliveryReceiptService);
   private readonly receiptPdfService = inject(TransportDeliveryReceiptPdfService);
   private readonly dialog = inject(MatDialog);
+  private readonly auth = inject(AuthService);
 
   readonly receiptId = Number(this.route.snapshot.paramMap.get('id')) || null;
   readonly transportRequestId =
@@ -60,6 +62,9 @@ export class DeliveryReceiptFormComponent implements OnInit {
     'requestNumber',
     'quantity',
   ];
+  readonly canUpdateReceipts = computed(() =>
+    this.auth.canAccessAction('TRANSPORT_DELIVERY_RECEIPTS', 'update'),
+  );
 
   readonly form = this.fb.group({
     ownerName: ['', [Validators.maxLength(255)]],
@@ -162,6 +167,10 @@ export class DeliveryReceiptFormComponent implements OnInit {
   }
 
   submit(): void {
+    if (!this.canUpdateReceipts()) {
+      return;
+    }
+
     if (!this.receipt || this.form.invalid || this.saving) {
       this.form.markAllAsTouched();
       return;

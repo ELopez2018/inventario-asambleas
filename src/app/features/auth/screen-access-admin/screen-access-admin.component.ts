@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatExpansionModule } from '@angular/material/expansion';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -26,6 +27,7 @@ import { UserResponse } from '../../../models/user.model';
     CommonModule,
     MatButtonModule,
     MatCheckboxModule,
+    MatExpansionModule,
     MatFormFieldModule,
     MatIconModule,
     MatProgressSpinnerModule,
@@ -313,6 +315,18 @@ export class ScreenAccessAdminComponent implements OnInit {
 
   getActionsForScreen(screenCode: string): AppScreenActionResponse[] {
     return this.actions.filter((action) => action.screenCode === screenCode);
+  }
+
+  getUserActionsForScreen(screenCode: string): EffectiveScreenActionAccessResponse[] {
+    return this.userActions.filter((action) => action.screenCode === screenCode);
+  }
+
+  hasActionsForScreen(screenCode: string): boolean {
+    return this.getActionsForScreen(screenCode).length > 0;
+  }
+
+  hasUserActionsForScreen(screenCode: string): boolean {
+    return this.getUserActionsForScreen(screenCode).length > 0;
   }
 
   private flattenActions(
