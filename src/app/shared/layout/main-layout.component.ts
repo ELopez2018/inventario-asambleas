@@ -47,7 +47,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   private readonly userService = inject(UserService);
   readonly currentUser = this.auth.getCurrentUser();
   readonly appVersion = APP_VERSION;
-  readonly displayName = signal(this.currentUser?.username || 'Usuario');
+  readonly displayName = signal(this.auth.getCurrentUserDisplayName());
   readonly isCompact = toSignal(
     this.breakpointObserver
       .observe(COMPACT_LAYOUT_QUERY)
@@ -132,6 +132,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
         const fullName = `${user.firstName} ${user.lastName}`.trim();
 
         if (fullName) {
+          this.auth.updateCurrentUserName(user.firstName, user.lastName);
           this.displayName.set(fullName);
         }
       },

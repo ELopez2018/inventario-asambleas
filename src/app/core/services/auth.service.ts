@@ -62,6 +62,8 @@ export class AuthService {
     return {
       userId: Number(rawUser.userId || 0),
       username: String(rawUser.username || ''),
+      firstName: String(rawUser.firstName || '').trim(),
+      lastName: String(rawUser.lastName || '').trim(),
       passwordChangeRequired: Boolean(rawUser.passwordChangeRequired),
       requiredAction: rawUser.requiredAction === 'CHANGE_PASSWORD' ? 'CHANGE_PASSWORD' : null,
       roles: this.sanitizeRoles(rawUser.roles),
@@ -88,6 +90,8 @@ export class AuthService {
         const currentUser = this.sanitizeCurrentUser({
           userId: res.userId,
           username: res.username,
+          firstName: res.firstName ?? '',
+          lastName: res.lastName ?? '',
           passwordChangeRequired: res.passwordChangeRequired,
           requiredAction: res.requiredAction,
           roles: res.roles,
@@ -266,6 +270,32 @@ export class AuthService {
       this.clearSession();
       return null;
     }
+  }
+
+  getCurrentUserDisplayName(): string {
+    const currentUser = this.getCurrentUser();
+    const fullName = [currentUser?.firstName, currentUser?.lastName]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+
+    return fullName || 'Usuario';
+  }
+
+  updateCurrentUserName(firstName: string, lastName: string): void {
+    const currentUser = this.getCurrentUser();
+
+    if (!currentUser) {
+      return;
+    }
+
+    const nextUser = this.sanitizeCurrentUser({
+      ...currentUser,
+      firstName,
+      lastName,
+    });
+
+    localStorage.setItem(USER_KEY, JSON.stringify(nextUser satisfies CurrentUser));
   }
 
   hasRole(role: RoleCode): boolean {

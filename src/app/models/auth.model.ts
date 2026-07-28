@@ -8,6 +8,8 @@ export interface LoginRequest {
 export interface LoginResponse {
   userId: number;
   username: string;
+  firstName?: string | null;
+  lastName?: string | null;
   accessToken: string;
   tokenType: string;
   expiresIn: number;
@@ -22,6 +24,8 @@ export interface LoginResponse {
 export interface CurrentUser {
   userId: number;
   username: string;
+  firstName: string;
+  lastName: string;
   passwordChangeRequired: boolean;
   requiredAction: 'CHANGE_PASSWORD' | null;
   roles: RoleCode[];
