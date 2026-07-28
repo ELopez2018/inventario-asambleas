@@ -5,94 +5,90 @@
       <p class="app-page-subtitle">Fechas relacionadas con la asamblea y el inventario.</p>
     </div>
     <div class="app-page-actions">
+      @if (canCreateEvents()) {
       <a mat-flat-button color="primary" routerLink="/events/new">
         <mat-icon>add</mat-icon>
         Nuevo
       </a>
+      }
     </div>
   </div>
 
   <div class="app-data-surface">
     @if (loading) {
-      <div class="flex items-center justify-center p-10">
-        <mat-spinner diameter="36" />
-      </div>
+    <div class="flex items-center justify-center p-10">
+      <mat-spinner diameter="36" />
+    </div>
     } @else if (errorMessage) {
-      <div class="p-6 text-sm text-red-700">{{ errorMessage }}</div>
+    <div class="p-6 text-sm text-red-700">{{ errorMessage }}</div>
     } @else if (!events.length) {
-      <div class="p-6 text-sm text-slate-600">No hay eventos registrados.</div>
+    <div class="p-6 text-sm text-slate-600">No hay eventos registrados.</div>
     } @else {
-      <div class="app-table-scroll">
-        <table mat-table [dataSource]="events" class="responsive-table">
-          <ng-container matColumnDef="description">
-            <th mat-header-cell *matHeaderCellDef>Descripcion</th>
-            <td mat-cell *matCellDef="let event">
-              <span class="responsive-cell-label" aria-hidden="true">Descripcion</span>
-              {{ event.description }}
-            </td>
-          </ng-container>
+    <div class="app-table-scroll">
+      <table mat-table [dataSource]="events" class="responsive-table">
+        <ng-container matColumnDef="description">
+          <th mat-header-cell *matHeaderCellDef>Descripcion</th>
+          <td mat-cell *matCellDef="let event">
+            <span class="responsive-cell-label" aria-hidden="true">Descripcion</span>
+            {{ event.description }}
+          </td>
+        </ng-container>
 
-          <ng-container matColumnDef="active">
-            <th mat-header-cell *matHeaderCellDef>Activo</th>
-            <td mat-cell *matCellDef="let event">
-              <span class="responsive-cell-label" aria-hidden="true">Activo</span>
-              @if (event.active) {
-                <span class="event-status event-status--active">Activo</span>
-              } @else {
-                <span class="event-status">Inactivo</span>
-              }
-            </td>
-          </ng-container>
+        <ng-container matColumnDef="active">
+          <th mat-header-cell *matHeaderCellDef>Activo</th>
+          <td mat-cell *matCellDef="let event">
+            <span class="responsive-cell-label" aria-hidden="true">Activo</span>
+            @if (event.active) {
+            <span class="event-status event-status--active">Activo</span>
+            } @else {
+            <span class="event-status">Inactivo</span>
+            }
+          </td>
+        </ng-container>
 
-          <ng-container matColumnDef="startDate">
-            <th mat-header-cell *matHeaderCellDef>Inicio</th>
-            <td mat-cell *matCellDef="let event">
-              <span class="responsive-cell-label" aria-hidden="true">Inicio</span>
-              {{ event.startDate ? (event.startDate | date: 'short') : '-' }}
-            </td>
-          </ng-container>
+        <ng-container matColumnDef="startDate">
+          <th mat-header-cell *matHeaderCellDef>Inicio</th>
+          <td mat-cell *matCellDef="let event">
+            <span class="responsive-cell-label" aria-hidden="true">Inicio</span>
+            {{ event.startDate ? (event.startDate | date: 'short') : '-' }}
+          </td>
+        </ng-container>
 
-          <ng-container matColumnDef="endDate">
-            <th mat-header-cell *matHeaderCellDef>Fin</th>
-            <td mat-cell *matCellDef="let event">
-              <span class="responsive-cell-label" aria-hidden="true">Fin</span>
-              {{ event.endDate ? (event.endDate | date: 'short') : '-' }}
-            </td>
-          </ng-container>
+        <ng-container matColumnDef="endDate">
+          <th mat-header-cell *matHeaderCellDef>Fin</th>
+          <td mat-cell *matCellDef="let event">
+            <span class="responsive-cell-label" aria-hidden="true">Fin</span>
+            {{ event.endDate ? (event.endDate | date: 'short') : '-' }}
+          </td>
+        </ng-container>
 
-          <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef class="w-28 text-right">Acciones</th>
-            <td mat-cell *matCellDef="let event" class="text-right">
-              <span class="responsive-cell-label" aria-hidden="true">Acciones</span>
-              <a mat-icon-button [routerLink]="['/events', event.id, 'edit']" matTooltip="Editar">
-                <mat-icon>edit</mat-icon>
-              </a>
-              @if (canActivateEvents()) {
-                <button
-                  mat-icon-button
-                  type="button"
-                  matTooltip="Establecer como activo"
-                  [disabled]="event.active || activatingEventId === event.id"
-                  (click)="activateEvent(event)"
-                >
-                  <mat-icon>event_available</mat-icon>
-                </button>
-              }
-              <button
-                mat-icon-button
-                type="button"
-                matTooltip="Eliminar"
-                (click)="deleteEvent(event)"
-              >
-                <mat-icon>delete</mat-icon>
-              </button>
-            </td>
-          </ng-container>
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="w-28 text-right">Acciones</th>
+          <td mat-cell *matCellDef="let event" class="text-right">
+            <span class="responsive-cell-label" aria-hidden="true">Acciones</span>
+            @if (canEditEvents()) {
+            <a mat-icon-button [routerLink]="['/events', event.id, 'edit']" matTooltip="Editar">
+              <mat-icon>edit</mat-icon>
+            </a>
+            }
+            @if (canActivateEvents()) {
+            <button mat-icon-button type="button" matTooltip="Establecer como activo"
+              [disabled]="event.active || activatingEventId === event.id" (click)="activateEvent(event)">
+              <mat-icon>event_available</mat-icon>
+            </button>
+            }
+            @if (canDeleteEvents()) {
+            <button mat-icon-button type="button" matTooltip="Eliminar" (click)="deleteEvent(event)">
+              <mat-icon>delete</mat-icon>
+            </button>
+            }
+          </td>
+        </ng-container>
 
-          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-        </table>
-      </div>
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+    </div>
     }
   </div>
 </section>

@@ -69,6 +69,29 @@
   color: #475569;
 }
 
+.request-status,
+.request-stock {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.5rem;
+  padding: 0 0.5rem;
+  border-radius: 999px;
+  background: #dbeafe;
+  color: #1e40af;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.request-stock {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.request-stock--released {
+  background: #f1f5f9;
+  color: #475569;
+}
+
 .request-actions {
   display: inline-flex;
   align-items: center;
@@ -86,6 +109,10 @@
 
 .request-actions__button--pdf {
   color: #047857;
+}
+
+.request-actions__button--receipt {
+  color: #0f766e;
 }
 
 .request-actions__button--danger {

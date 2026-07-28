@@ -32,6 +32,9 @@ export class EventListComponent implements OnInit {
   private readonly auth = inject(AuthService);
 
   readonly displayedColumns = ['description', 'active', 'startDate', 'endDate', 'actions'];
+  readonly canCreateEvents = computed(() => this.auth.canAccessAction('EVENTS', 'create'));
+  readonly canEditEvents = computed(() => this.auth.canAccessAction('EVENTS', 'edit'));
+  readonly canDeleteEvents = computed(() => this.auth.canAccessAction('EVENTS', 'delete'));
   readonly canActivateEvents = computed(() => this.auth.hasAnyRole(['SUPER', 'ADMIN']));
   events: EventResponse[] = [];
   loading = false;

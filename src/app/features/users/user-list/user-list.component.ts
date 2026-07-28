@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -7,6 +7,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { finalize } from 'rxjs';
+import { AuthService } from '../../../core/services/auth.service';
 import { UserService } from '../../../core/services/user.service';
 import { UserResponse } from '../../../models/user.model';
 
@@ -26,8 +27,12 @@ import { UserResponse } from '../../../models/user.model';
 })
 export class UserListComponent implements OnInit {
   private readonly userService = inject(UserService);
+  private readonly auth = inject(AuthService);
 
   readonly displayedColumns = ['name', 'email', 'phone', 'actions'];
+  readonly canCreateUsers = computed(() => this.auth.canAccessAction('USERS', 'create'));
+  readonly canEditUsers = computed(() => this.auth.canAccessAction('USERS', 'edit'));
+  readonly canDeleteUsers = computed(() => this.auth.canAccessAction('USERS', 'delete'));
   users: UserResponse[] = [];
   loading = false;
   errorMessage = '';

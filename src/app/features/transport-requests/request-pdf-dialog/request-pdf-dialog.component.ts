@@ -8,6 +8,8 @@ import { MatIconModule } from '@angular/material/icon';
 export interface RequestPdfDialogData {
   pdfUrl: string;
   requestNumber: string;
+  title?: string;
+  subtitle?: string;
 }
 
 @Component({

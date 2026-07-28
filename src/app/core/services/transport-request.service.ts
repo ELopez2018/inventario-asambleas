@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { API_BASE_URL } from '../api.config';
+import { TransportDeliveryReceiptResponse } from '../../models/transport-delivery-receipt.model';
 import {
   CreateTransportRequestRequest,
   TransportRequestAutocompleteOptionsResponse,
@@ -41,6 +42,12 @@ export class TransportRequestService {
 
   update(id: number, body: UpdateTransportRequestRequest) {
     return this.http.put<TransportRequestResponse>(`${BASE}/${id}`, body);
+  }
+
+  createDeliveryReceipt(id: number, observations?: string | null) {
+    return this.http.post<TransportDeliveryReceiptResponse>(`${BASE}/${id}/delivery-receipt`, {
+      observations: observations ?? null,
+    });
   }
 
   delete(id: number) {

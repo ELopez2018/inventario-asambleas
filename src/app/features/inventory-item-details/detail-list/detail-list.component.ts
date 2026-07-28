@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -7,11 +7,16 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { finalize, forkJoin } from 'rxjs';
+import { AuthService } from '../../../core/services/auth.service';
 import { InventoryItemDetailService } from '../../../core/services/inventory-item-detail.service';
 import { InventoryItemService } from '../../../core/services/inventory-item.service';
 import { InventoryItemDetailResponse } from '../../../models/inventory-item-detail.model';
 import { InventoryItemResponse } from '../../../models/inventory-item.model';
-import { INVENTORY_STATES, INVENTORY_STORES, INVENTORY_UNIT_TYPES } from '../../../shared/catalogs.constants';
+import {
+  INVENTORY_STATES,
+  INVENTORY_STORES,
+  INVENTORY_UNIT_TYPES,
+} from '../../../shared/catalogs.constants';
 
 @Component({
   selector: 'app-detail-list',
@@ -30,6 +35,7 @@ import { INVENTORY_STATES, INVENTORY_STORES, INVENTORY_UNIT_TYPES } from '../../
 export class DetailListComponent implements OnInit {
   private readonly detailService = inject(InventoryItemDetailService);
   private readonly itemService = inject(InventoryItemService);
+  private readonly auth = inject(AuthService);
 
   readonly displayedColumns = [
     'code',
@@ -41,9 +47,24 @@ export class DetailListComponent implements OnInit {
     'serial',
     'actions',
   ];
-  private readonly storeLabelMap = new Map(INVENTORY_STORES.map((store) => [store.id, store.label]));
-  private readonly stateLabelMap = new Map(INVENTORY_STATES.map((state) => [state.id, state.label]));
-  private readonly unitTypeLabelMap = new Map(INVENTORY_UNIT_TYPES.map((type) => [type.id, type.label]));
+  readonly canCreateDetails = computed(() =>
+    this.auth.canAccessAction('INVENTORY_ITEM_DETAILS', 'create'),
+  );
+  readonly canEditDetails = computed(() =>
+    this.auth.canAccessAction('INVENTORY_ITEM_DETAILS', 'edit'),
+  );
+  readonly canDeleteDetails = computed(() =>
+    this.auth.canAccessAction('INVENTORY_ITEM_DETAILS', 'delete'),
+  );
+  private readonly storeLabelMap = new Map(
+    INVENTORY_STORES.map((store) => [store.id, store.label]),
+  );
+  private readonly stateLabelMap = new Map(
+    INVENTORY_STATES.map((state) => [state.id, state.label]),
+  );
+  private readonly unitTypeLabelMap = new Map(
+    INVENTORY_UNIT_TYPES.map((type) => [type.id, type.label]),
+  );
 
   details: InventoryItemDetailResponse[] = [];
   items: InventoryItemResponse[] = [];
@@ -59,7 +80,11 @@ export class DetailListComponent implements OnInit {
   }
 
   getStoreLabel(detail: InventoryItemDetailResponse) {
-    return detail.storeName?.trim() || this.storeLabelMap.get(detail.storeId) || `Bodega #${detail.storeId}`;
+    return (
+      detail.storeName?.trim() ||
+      this.storeLabelMap.get(detail.storeId) ||
+      `Bodega #${detail.storeId}`
+    );
   }
 
   getStateLabel(detail: InventoryItemDetailResponse) {

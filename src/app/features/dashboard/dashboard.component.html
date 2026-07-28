@@ -9,49 +9,41 @@
       <p>Acceda rapidamente a los modulos habilitados para la gestion de la asamblea.</p>
     </div>
 
-    @if (canAccessTransportRequests()) {
-      <a
-        mat-flat-button
-        routerLink="/transport-requests/new"
-        class="dashboard-hero__action"
-        aria-label="Crear solicitud de transporte"
-      >
-        <mat-icon>local_shipping</mat-icon>
-        Solicitud de transporte
-      </a>
+    @if (canCreateMovementShortcut()) {
+    <a mat-flat-button routerLink="/inventory-transactions/new" class="dashboard-hero__action"
+      aria-label="Registrar movimiento">
+      <mat-icon>add</mat-icon>
+      Registrar movimiento
+    </a>
     }
   </div>
 
   @if (modules().length === 0) {
-    <div class="dashboard-empty">
-      <mat-icon aria-hidden="true">lock</mat-icon>
-      <span>No tiene pantallas habilitadas para navegar.</span>
-    </div>
+  <div class="dashboard-empty">
+    <mat-icon aria-hidden="true">lock</mat-icon>
+    <span>No tiene pantallas habilitadas para navegar.</span>
+  </div>
   } @else {
-    <div class="dashboard-section-heading">
-      <div>
-        <h2>Modulos disponibles</h2>
-        <p>{{ modules().length }} accesos habilitados</p>
-      </div>
+  <div class="dashboard-section-heading">
+    <div>
+      <h2>Modulos disponibles</h2>
+      <p>{{ modules().length }} accesos habilitados</p>
     </div>
+  </div>
 
-    <div class="dashboard-grid">
-      @for (item of modules(); track item.path) {
-        <a
-          [routerLink]="item.path"
-          class="dashboard-module"
-          [attr.data-accent]="item.accent"
-        >
-          <span class="dashboard-module__icon">
-            <mat-icon>{{ item.icon }}</mat-icon>
-          </span>
-          <span class="dashboard-module__body">
-            <strong>{{ item.title }}</strong>
-            <span>{{ item.caption }}</span>
-          </span>
-          <mat-icon class="dashboard-module__arrow" aria-hidden="true">arrow_forward</mat-icon>
-        </a>
-      }
-    </div>
+  <div class="dashboard-grid">
+    @for (item of modules(); track item.path) {
+    <a [routerLink]="item.path" class="dashboard-module" [attr.data-accent]="item.accent">
+      <span class="dashboard-module__icon">
+        <mat-icon>{{ item.icon }}</mat-icon>
+      </span>
+      <span class="dashboard-module__body">
+        <strong>{{ item.title }}</strong>
+        <span>{{ item.caption }}</span>
+      </span>
+      <mat-icon class="dashboard-module__arrow" aria-hidden="true">arrow_forward</mat-icon>
+    </a>
+    }
+  </div>
   }
 </section>

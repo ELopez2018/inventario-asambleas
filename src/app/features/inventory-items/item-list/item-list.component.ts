@@ -16,12 +16,14 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { finalize, forkJoin, startWith } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { InventoryItemService } from '../../../core/services/inventory-item.service';
+import { RealtimeService } from '../../../core/services/realtime.service';
 import { UserService } from '../../../core/services/user.service';
 import {
   InventoryItemResponse,
@@ -60,6 +62,8 @@ export class ItemListComponent implements OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly auth = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly realtime = inject(RealtimeService);
+  private readonly snackBar = inject(MatSnackBar);
 
   readonly displayedColumns = [
     'description',
@@ -171,6 +175,15 @@ export class ItemListComponent implements OnInit {
     this.itemFilter.valueChanges
       .pipe(startWith(this.itemFilter.value), takeUntilDestroyed(this.destroyRef))
       .subscribe((value) => this.applyItemFilter(value));
+
+    this.realtime.inventoryStockEvents$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.snackBar.open('Existencias actualizadas por movimiento de stock.', 'Cerrar', {
+          duration: 4000,
+        });
+        this.loadItems();
+      });
 
     this.loadItems();
   }

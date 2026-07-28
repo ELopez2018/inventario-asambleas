@@ -19,6 +19,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatStepper, MatStepperModule } from '@angular/material/stepper';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { finalize } from 'rxjs';
@@ -31,7 +32,9 @@ import { UserService } from '../../../core/services/user.service';
 import { InventoryItemResponse } from '../../../models/inventory-item.model';
 import {
   CreateTransportRequestRequest,
+  TRANSPORT_REQUEST_RELEASE_STOCK_STATUSES,
   TransportRequestItemRequest,
+  TransportRequestStatus,
 } from '../../../models/transport-request.model';
 import { NativeDateTimePickerDirective } from '../../../shared/native-date-time-picker.directive';
 import { RequestPdfDialogComponent } from '../request-pdf-dialog/request-pdf-dialog.component';
@@ -128,9 +131,22 @@ export class RequestFormComponent implements OnInit {
   private readonly userService = inject(UserService);
   private readonly requestPdfService = inject(TransportRequestPdfService);
   private readonly dialog = inject(MatDialog);
+  private readonly snackBar = inject(MatSnackBar);
   private readonly quantityValidator = decimalPrecisionValidator(16, 2);
   private readonly lineTotalValidator = decimalPrecisionValidator(10, 2);
   readonly newItemOption = NEW_ITEM_OPTION;
+  readonly statuses: TransportRequestStatus[] = [
+    'SOLICITADA',
+    'APROBADA',
+    'EN_TRANSITO',
+    'ENTREGADA',
+    'ANULADA',
+    'DEVUELTA',
+    'REGRESADA',
+    'CANCELADA',
+    'RECHAZADA',
+    'CERRADA',
+  ];
   readonly displayDescriptionSource = (value: unknown): string =>
     value === NEW_ITEM_OPTION ? 'Articulo nuevo' : String(value ?? '');
 
@@ -138,6 +154,7 @@ export class RequestFormComponent implements OnInit {
 
   readonly form = this.fb.group({
     requestDate: ['', [Validators.required]],
+    status: ['SOLICITADA' as TransportRequestStatus, [Validators.required]],
     requestedFrom: ['', [Validators.required, Validators.maxLength(255)]],
     requestedTo: [DEFAULT_REQUESTED_TO, [Validators.required, Validators.maxLength(255)]],
     targetDepartment: ['', [Validators.maxLength(255)]],
@@ -241,6 +258,10 @@ export class RequestFormComponent implements OnInit {
 
   isNewItemDescription(index: number): boolean {
     return this.itemsArray.at(index).get('descriptionSource')?.value === NEW_ITEM_OPTION;
+  }
+
+  releasesStock(): boolean {
+    return TRANSPORT_REQUEST_RELEASE_STOCK_STATUSES.includes(this.form.controls.status.value);
   }
 
   onDescriptionOptionSelected(event: MatAutocompleteSelectedEvent, index: number): void {
@@ -385,6 +406,7 @@ export class RequestFormComponent implements OnInit {
 
     const controls = [
       this.form.controls.requestDate,
+      this.form.controls.status,
       this.form.controls.requestedFrom,
       this.form.controls.requestedTo,
       this.form.controls.targetDepartment,
@@ -438,6 +460,7 @@ export class RequestFormComponent implements OnInit {
         next: (request) => {
           this.form.patchValue({
             requestDate: request.requestDate,
+            status: request.status,
             requestedFrom: request.requestedFrom,
             requestedTo: request.requestedTo,
             targetDepartment: request.targetDepartment ?? '',
@@ -510,6 +533,7 @@ export class RequestFormComponent implements OnInit {
 
     const body: CreateTransportRequestRequest = {
       requestDate: raw.requestDate,
+      status: raw.status,
       requestedFrom: raw.requestedFrom.trim(),
       requestedTo: raw.requestedTo.trim(),
       targetDepartment: toNullableText(raw.targetDepartment),
@@ -531,7 +555,16 @@ export class RequestFormComponent implements OnInit {
       : this.requestService.create(body);
 
     request.pipe(finalize(() => (this.saving = false))).subscribe({
-      next: () => void this.router.navigate(['/transport-requests']),
+      next: (response) => {
+        this.snackBar.open(
+          response.stockReserved
+            ? 'Solicitud guardada. El inventario queda reservado.'
+            : 'Solicitud guardada. Los items quedan liberados.',
+          'Cerrar',
+          { duration: 5000 },
+        );
+        void this.router.navigate(['/transport-requests']);
+      },
       error: () => (this.errorMessage = 'No se pudo guardar la solicitud.'),
     });
   }

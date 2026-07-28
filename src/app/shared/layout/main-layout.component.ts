@@ -19,6 +19,19 @@ import { InternalChatFloatingPanelComponent } from '../../features/internal-chat
 
 // Covers tablets in both orientations, including the 1080px landscape viewport of iPad 9.
 const COMPACT_LAYOUT_QUERY = '(max-width: 1100px)';
+const SCREEN_ROUTE_BY_CODE: Record<string, string> = {
+  DASHBOARD: '/dashboard',
+  USERS: '/users',
+  EVENTS: '/events',
+  INVENTORY_ITEMS: '/inventory-items',
+  INVENTORY_TRANSACTIONS: '/inventory-transactions',
+  INVENTORY_ITEM_DETAILS: '/inventory-item-details',
+  INVENTORY_ITEM_DETAIL_PHOTOS: '/inventory-item-detail-photos',
+  TRANSPORT_REQUESTS: '/transport-requests',
+  TRANSPORT_DELIVERY_RECEIPTS: '/transport-delivery-receipts',
+  ADMIN_CREDENTIALS: '/admin/credentials',
+  SCREEN_ACCESS_ADMIN: '/admin/screen-access',
+};
 
 @Component({
   selector: 'app-main-layout',
@@ -59,14 +72,18 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     this.auth
       .allowedScreens()
       .filter((screen) => screen.showInMenu)
-      .map((screen) => ({
-        code: screen.code,
-        path: this.normalizeRoute(screen.route),
-        label: this.resolveScreenLabel(screen.code, screen.title),
-        icon: screen.icon || 'chevron_right',
-        accent: this.resolveScreenAccent(screen.code),
-        exact: screen.route === '/dashboard' || screen.route === 'dashboard',
-      })),
+      .map((screen) => {
+        const path = this.resolveScreenPath(screen.code, screen.route, screen.title);
+
+        return {
+          code: screen.code,
+          path,
+          label: this.resolveScreenLabel(screen.code, screen.title),
+          icon: screen.icon || 'chevron_right',
+          accent: this.resolveScreenAccent(screen.code),
+          exact: path === '/dashboard',
+        };
+      }),
   );
 
   ngOnInit(): void {
@@ -109,7 +126,36 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   }
 
   private normalizeRoute(route: string): string {
-    return route.startsWith('/') ? route : `/${route}`;
+    const trimmed = route.trim();
+
+    if (!trimmed) {
+      return '/dashboard';
+    }
+
+    const normalized = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+    return normalized.replace(/\/+/g, '/').toLowerCase();
+  }
+
+  private resolveScreenPath(code: string, route: string, title: string): string {
+    const canonicalPath = SCREEN_ROUTE_BY_CODE[code];
+
+    if (canonicalPath) {
+      return canonicalPath;
+    }
+
+    const normalizedRoute = this.normalizeRoute(route);
+
+    if (Object.values(SCREEN_ROUTE_BY_CODE).some((path) => normalizedRoute.startsWith(path))) {
+      return normalizedRoute;
+    }
+
+    const normalizedTitle = title.trim().toLowerCase();
+
+    if (normalizedTitle.includes('recib') && normalizedTitle.includes('oper')) {
+      return '/transport-requests';
+    }
+
+    return normalizedRoute;
   }
 
   private resolveScreenLabel(code: string, title: string): string {
@@ -150,6 +196,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
       INVENTORY_ITEM_DETAILS: 'sky',
       INVENTORY_ITEM_DETAIL_PHOTOS: 'rose',
       TRANSPORT_REQUESTS: 'blue',
+      TRANSPORT_DELIVERY_RECEIPTS: 'teal',
       ADMIN_CREDENTIALS: 'fuchsia',
       SCREEN_ACCESS_ADMIN: 'indigo',
     };

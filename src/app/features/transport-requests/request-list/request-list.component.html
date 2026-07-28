@@ -5,10 +5,12 @@
       <p class="app-page-subtitle">Gestione solicitudes con su lista de items.</p>
     </div>
     <div class="app-page-actions">
+      @if (canCreateRequests()) {
       <a mat-flat-button color="primary" routerLink="/transport-requests/new">
         <mat-icon>add</mat-icon>
         Nueva
       </a>
+      }
     </div>
   </div>
 
@@ -29,6 +31,24 @@
           <td mat-cell *matCellDef="let request">
             <span class="responsive-cell-label" aria-hidden="true">Nro solicitud</span>
             {{ request.requestNumber }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Estado</th>
+          <td mat-cell *matCellDef="let request">
+            <span class="responsive-cell-label" aria-hidden="true">Estado</span>
+            <span class="request-status">{{ request.status }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="stockReserved">
+          <th mat-header-cell *matHeaderCellDef>Inventario</th>
+          <td mat-cell *matCellDef="let request">
+            <span class="responsive-cell-label" aria-hidden="true">Inventario</span>
+            <span class="request-stock" [class.request-stock--released]="!request.stockReserved">
+              {{ request.stockReserved ? 'Reservado' : 'Liberado' }}
+            </span>
           </td>
         </ng-container>
 
@@ -61,6 +81,7 @@
           <td mat-cell *matCellDef="let request">
             <span class="responsive-cell-label" aria-hidden="true">Items</span>
             <div class="flex flex-col items-start gap-2">
+              @if (canViewRequestItems()) {
               <button mat-stroked-button type="button" (click)="toggleItems(request.id)"
                 [matTooltip]="isExpanded(request.id) ? 'Ocultar detalle' : 'Ver detalle por linea'">
                 <mat-icon>{{ isExpanded(request.id) ? 'expand_less' : 'expand_more' }}</mat-icon>
@@ -89,6 +110,7 @@
                 </div>
               </div>
               }
+              }
             </div>
           </td>
         </ng-container>
@@ -98,33 +120,30 @@
           <td mat-cell *matCellDef="let request" class="text-right">
             <span class="responsive-cell-label" aria-hidden="true">Acciones</span>
             <div class="request-actions">
-              <button
-                mat-icon-button
-                class="request-actions__button request-actions__button--pdf"
-                type="button"
-                matTooltip="Visualizar formulario CO-31"
-                [disabled]="previewingRequestId === request.id"
-                (click)="previewRequestPdf(request)"
-              >
+              <button mat-icon-button class="request-actions__button request-actions__button--pdf" type="button"
+                matTooltip="Visualizar formulario CO-31" [disabled]="previewingRequestId === request.id"
+                (click)="previewRequestPdf(request)">
                 <mat-icon>picture_as_pdf</mat-icon>
               </button>
-              <a
-                mat-icon-button
-                class="request-actions__button"
-                [routerLink]="['/transport-requests', request.id, 'edit']"
-                matTooltip="Editar"
-              >
+              @if (canGenerateReceipt()) {
+              <button mat-icon-button class="request-actions__button request-actions__button--receipt" type="button"
+                matTooltip="Generar recibo CO-30" [disabled]="generatingReceiptRequestId === request.id"
+                (click)="generateDeliveryReceipt(request)">
+                <mat-icon>assignment</mat-icon>
+              </button>
+              }
+              @if (canEditRequests()) {
+              <a mat-icon-button class="request-actions__button"
+                [routerLink]="['/transport-requests', request.id, 'edit']" matTooltip="Editar">
                 <mat-icon>edit</mat-icon>
               </a>
-              <button
-                mat-icon-button
-                class="request-actions__button request-actions__button--danger"
-                type="button"
-                matTooltip="Eliminar"
-                (click)="deleteRequest(request)"
-              >
+              }
+              @if (canDeleteRequests()) {
+              <button mat-icon-button class="request-actions__button request-actions__button--danger" type="button"
+                matTooltip="Eliminar" (click)="deleteRequest(request)">
                 <mat-icon>delete</mat-icon>
               </button>
+              }
             </div>
           </td>
         </ng-container>

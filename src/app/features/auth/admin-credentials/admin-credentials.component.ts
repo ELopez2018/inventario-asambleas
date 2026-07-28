@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, computed, inject } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -58,6 +58,16 @@ export class AdminCredentialsComponent implements OnInit {
     userId: [0, [Validators.required, Validators.min(1)]],
     roles: this.fb.control<RoleCode[]>(['USER'], [Validators.required]),
   });
+  readonly canCreateCredential = computed(() =>
+    this.auth.canAccessAction('ADMIN_CREDENTIALS', 'create'),
+  );
+  readonly canSetPassword = computed(() =>
+    this.auth.canAccessAction('ADMIN_CREDENTIALS', 'setPassword'),
+  );
+  readonly canForcePasswordChange = computed(() =>
+    this.auth.canAccessAction('ADMIN_CREDENTIALS', 'forcePasswordChange'),
+  );
+  readonly canSetRoles = computed(() => this.auth.canAccessAction('ADMIN_CREDENTIALS', 'setRoles'));
 
   users: UserResponse[] = [];
   rolesCatalog: RoleResponse[] = [];
@@ -110,6 +120,10 @@ export class AdminCredentialsComponent implements OnInit {
   }
 
   createCredential(): void {
+    if (!this.canCreateCredential()) {
+      return;
+    }
+
     if (this.createForm.invalid || this.saving) {
       this.createForm.markAllAsTouched();
       return;
@@ -140,6 +154,10 @@ export class AdminCredentialsComponent implements OnInit {
   }
 
   setUserPassword(): void {
+    if (!this.canSetPassword()) {
+      return;
+    }
+
     if (this.resetPasswordForm.invalid || this.saving) {
       this.resetPasswordForm.markAllAsTouched();
       return;
@@ -171,6 +189,10 @@ export class AdminCredentialsComponent implements OnInit {
   }
 
   setPasswordChangeRequired(): void {
+    if (!this.canForcePasswordChange()) {
+      return;
+    }
+
     if (this.changeRequiredForm.invalid || this.saving) {
       this.changeRequiredForm.markAllAsTouched();
       return;
@@ -200,6 +222,10 @@ export class AdminCredentialsComponent implements OnInit {
   }
 
   setUserRoles(): void {
+    if (!this.canSetRoles()) {
+      return;
+    }
+
     if (this.rolesForm.invalid || this.saving) {
       this.rolesForm.markAllAsTouched();
       return;

@@ -5,107 +5,104 @@
       <p class="app-page-subtitle">Unidades identificadas por articulo y bodega.</p>
     </div>
     <div class="app-page-actions">
+      @if (canCreateDetails()) {
       <a mat-flat-button color="primary" routerLink="/inventory-item-details/new">
         <mat-icon>add</mat-icon>
         Nuevo
       </a>
+      }
     </div>
   </div>
 
   <div class="app-data-surface">
     @if (loading) {
-      <div class="flex items-center justify-center p-10">
-        <mat-spinner diameter="36" />
-      </div>
+    <div class="flex items-center justify-center p-10">
+      <mat-spinner diameter="36" />
+    </div>
     } @else if (errorMessage) {
-      <div class="p-6 text-sm text-red-700">{{ errorMessage }}</div>
+    <div class="p-6 text-sm text-red-700">{{ errorMessage }}</div>
     } @else if (!details.length) {
-      <div class="p-6 text-sm text-slate-600">No hay detalles registrados.</div>
+    <div class="p-6 text-sm text-slate-600">No hay detalles registrados.</div>
     } @else {
-      <div class="app-table-scroll">
-        <table mat-table [dataSource]="details" class="responsive-table responsive-table--wide">
-          <ng-container matColumnDef="code">
-            <th mat-header-cell *matHeaderCellDef>Codigo</th>
-            <td mat-cell *matCellDef="let detail">
-              <span class="responsive-cell-label" aria-hidden="true">Codigo</span>
-              {{ detail.code }}
-            </td>
-          </ng-container>
+    <div class="app-table-scroll">
+      <table mat-table [dataSource]="details" class="responsive-table responsive-table--wide">
+        <ng-container matColumnDef="code">
+          <th mat-header-cell *matHeaderCellDef>Codigo</th>
+          <td mat-cell *matCellDef="let detail">
+            <span class="responsive-cell-label" aria-hidden="true">Codigo</span>
+            {{ detail.code }}
+          </td>
+        </ng-container>
 
-          <ng-container matColumnDef="itemId">
-            <th mat-header-cell *matHeaderCellDef>Articulo</th>
-            <td mat-cell *matCellDef="let detail">
-              <span class="responsive-cell-label" aria-hidden="true">Articulo</span>
-              {{ getItemLabel(detail.itemId) }}
-            </td>
-          </ng-container>
+        <ng-container matColumnDef="itemId">
+          <th mat-header-cell *matHeaderCellDef>Articulo</th>
+          <td mat-cell *matCellDef="let detail">
+            <span class="responsive-cell-label" aria-hidden="true">Articulo</span>
+            {{ getItemLabel(detail.itemId) }}
+          </td>
+        </ng-container>
 
-          <ng-container matColumnDef="storeId">
-            <th mat-header-cell *matHeaderCellDef>Bodega</th>
-            <td mat-cell *matCellDef="let detail">
-              <span class="responsive-cell-label" aria-hidden="true">Bodega</span>
-              {{ getStoreLabel(detail) }}
-            </td>
-          </ng-container>
+        <ng-container matColumnDef="storeId">
+          <th mat-header-cell *matHeaderCellDef>Bodega</th>
+          <td mat-cell *matCellDef="let detail">
+            <span class="responsive-cell-label" aria-hidden="true">Bodega</span>
+            {{ getStoreLabel(detail) }}
+          </td>
+        </ng-container>
 
-          <ng-container matColumnDef="physicalStateId">
-            <th mat-header-cell *matHeaderCellDef>Estado fisico</th>
-            <td mat-cell *matCellDef="let detail">
-              <span class="responsive-cell-label" aria-hidden="true">Estado fisico</span>
-              {{ getStateLabel(detail) }}
-            </td>
-          </ng-container>
+        <ng-container matColumnDef="physicalStateId">
+          <th mat-header-cell *matHeaderCellDef>Estado fisico</th>
+          <td mat-cell *matCellDef="let detail">
+            <span class="responsive-cell-label" aria-hidden="true">Estado fisico</span>
+            {{ getStateLabel(detail) }}
+          </td>
+        </ng-container>
 
-          <ng-container matColumnDef="itemStatus">
-            <th mat-header-cell *matHeaderCellDef>Estado item</th>
-            <td mat-cell *matCellDef="let detail">
-              <span class="responsive-cell-label" aria-hidden="true">Estado item</span>
-              {{ detail.itemStatus }}
-            </td>
-          </ng-container>
+        <ng-container matColumnDef="itemStatus">
+          <th mat-header-cell *matHeaderCellDef>Estado item</th>
+          <td mat-cell *matCellDef="let detail">
+            <span class="responsive-cell-label" aria-hidden="true">Estado item</span>
+            {{ detail.itemStatus }}
+          </td>
+        </ng-container>
 
-          <ng-container matColumnDef="unitTypeId">
-            <th mat-header-cell *matHeaderCellDef>Unidad</th>
-            <td mat-cell *matCellDef="let detail">
-              <span class="responsive-cell-label" aria-hidden="true">Unidad</span>
-              {{ getUnitTypeLabel(detail) }}
-            </td>
-          </ng-container>
+        <ng-container matColumnDef="unitTypeId">
+          <th mat-header-cell *matHeaderCellDef>Unidad</th>
+          <td mat-cell *matCellDef="let detail">
+            <span class="responsive-cell-label" aria-hidden="true">Unidad</span>
+            {{ getUnitTypeLabel(detail) }}
+          </td>
+        </ng-container>
 
-          <ng-container matColumnDef="serial">
-            <th mat-header-cell *matHeaderCellDef>Serial</th>
-            <td mat-cell *matCellDef="let detail">
-              <span class="responsive-cell-label" aria-hidden="true">Serial</span>
-              {{ detail.serial || '-' }}
-            </td>
-          </ng-container>
+        <ng-container matColumnDef="serial">
+          <th mat-header-cell *matHeaderCellDef>Serial</th>
+          <td mat-cell *matCellDef="let detail">
+            <span class="responsive-cell-label" aria-hidden="true">Serial</span>
+            {{ detail.serial || '-' }}
+          </td>
+        </ng-container>
 
-          <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef class="w-28 text-right">Acciones</th>
-            <td mat-cell *matCellDef="let detail" class="text-right">
-              <span class="responsive-cell-label" aria-hidden="true">Acciones</span>
-              <a
-                mat-icon-button
-                [routerLink]="['/inventory-item-details', detail.id, 'edit']"
-                matTooltip="Editar"
-              >
-                <mat-icon>edit</mat-icon>
-              </a>
-              <button
-                mat-icon-button
-                type="button"
-                matTooltip="Eliminar"
-                (click)="deleteDetail(detail)"
-              >
-                <mat-icon>delete</mat-icon>
-              </button>
-            </td>
-          </ng-container>
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="w-28 text-right">Acciones</th>
+          <td mat-cell *matCellDef="let detail" class="text-right">
+            <span class="responsive-cell-label" aria-hidden="true">Acciones</span>
+            @if (canEditDetails()) {
+            <a mat-icon-button [routerLink]="['/inventory-item-details', detail.id, 'edit']" matTooltip="Editar">
+              <mat-icon>edit</mat-icon>
+            </a>
+            }
+            @if (canDeleteDetails()) {
+            <button mat-icon-button type="button" matTooltip="Eliminar" (click)="deleteDetail(detail)">
+              <mat-icon>delete</mat-icon>
+            </button>
+            }
+          </td>
+        </ng-container>
 
-          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-        </table>
-      </div>
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+    </div>
     }
   </div>
 </section>

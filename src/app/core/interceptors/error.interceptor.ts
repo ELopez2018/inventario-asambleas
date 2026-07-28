@@ -19,6 +19,11 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         err.error?.requiredAction === 'CHANGE_PASSWORD' ||
         err.error?.errorCode === 'INV-AUTH-PASSWORD-CHANGE-REQUIRED';
       const activeEventConflict = err.error?.errorCode === 'INV-EVENT-ACTIVE-409';
+      const transportRequestProblem = [
+        'INV-TRANSPORT-REQUEST-STOCK-001',
+        'INV-TRANSPORT-REQUEST-STORE-001',
+        'INV-TRANSPORT-REQUEST-ITEM-001',
+      ].includes(err.error?.errorCode);
 
       if (err.status === 401 && !isLoginRequest) {
         auth.clearSession();
@@ -33,6 +38,12 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
           { duration: 6000 },
         );
         eventContext.loadActiveEvent();
+      } else if (err.status === 400 && transportRequestProblem) {
+        snackBar.open(
+          err.error?.userMessage || err.error?.detail || 'La solicitud de transporte no es valida.',
+          'Cerrar',
+          { duration: 7000 },
+        );
       } else if (err.status === 0) {
         snackBar.open('Sin conexion con el servidor.', 'Cerrar', { duration: 4000 });
       } else if (err.status === 403) {

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, computed, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -37,6 +37,18 @@ import { UserResponse } from '../../../models/user.model';
 export class ScreenAccessAdminComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly userService = inject(UserService);
+  readonly canManageRoleScreens = computed(() =>
+    this.auth.canAccessAction('SCREEN_ACCESS_ADMIN', 'manageRoleScreens'),
+  );
+  readonly canManageRoleActions = computed(() =>
+    this.auth.canAccessAction('SCREEN_ACCESS_ADMIN', 'manageRoleActions'),
+  );
+  readonly canManageUserOverrides = computed(() =>
+    this.auth.canAccessAction('SCREEN_ACCESS_ADMIN', 'manageUserOverrides'),
+  );
+  readonly canManageUserActionOverrides = computed(() =>
+    this.auth.canAccessAction('SCREEN_ACCESS_ADMIN', 'manageUserActionOverrides'),
+  );
 
   roles: RoleResponse[] = [];
   users: UserResponse[] = [];
@@ -128,6 +140,10 @@ export class ScreenAccessAdminComponent implements OnInit {
   }
 
   saveRoleScreens(): void {
+    if (!this.canManageRoleScreens()) {
+      return;
+    }
+
     if (!this.selectedRole || this.savingRole) {
       return;
     }
@@ -149,6 +165,10 @@ export class ScreenAccessAdminComponent implements OnInit {
   }
 
   saveRoleActions(): void {
+    if (!this.canManageRoleActions()) {
+      return;
+    }
+
     if (!this.selectedRole || this.savingRoleActions) {
       return;
     }
@@ -220,6 +240,10 @@ export class ScreenAccessAdminComponent implements OnInit {
   }
 
   saveUserOverrides(): void {
+    if (!this.canManageUserOverrides()) {
+      return;
+    }
+
     if (!this.selectedUserId || this.savingUser) {
       return;
     }
@@ -253,6 +277,10 @@ export class ScreenAccessAdminComponent implements OnInit {
   }
 
   saveUserActionOverrides(): void {
+    if (!this.canManageUserActionOverrides()) {
+      return;
+    }
+
     if (!this.selectedUserId || this.savingUserActions) {
       return;
     }
@@ -287,7 +315,9 @@ export class ScreenAccessAdminComponent implements OnInit {
     return this.actions.filter((action) => action.screenCode === screenCode);
   }
 
-  private flattenActions(screens: EffectiveScreenAccessResponse[]): EffectiveScreenActionAccessResponse[] {
+  private flattenActions(
+    screens: EffectiveScreenAccessResponse[],
+  ): EffectiveScreenActionAccessResponse[] {
     return screens
       .flatMap((screen) => screen.actions ?? [])
       .sort(

@@ -4,6 +4,20 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '../../core/services/auth.service';
 
+const SCREEN_ROUTE_BY_CODE: Record<string, string> = {
+  DASHBOARD: '/dashboard',
+  USERS: '/users',
+  EVENTS: '/events',
+  INVENTORY_ITEMS: '/inventory-items',
+  INVENTORY_TRANSACTIONS: '/inventory-transactions',
+  INVENTORY_ITEM_DETAILS: '/inventory-item-details',
+  INVENTORY_ITEM_DETAIL_PHOTOS: '/inventory-item-detail-photos',
+  TRANSPORT_REQUESTS: '/transport-requests',
+  TRANSPORT_DELIVERY_RECEIPTS: '/transport-delivery-receipts',
+  ADMIN_CREDENTIALS: '/admin/credentials',
+  SCREEN_ACCESS_ADMIN: '/admin/screen-access',
+};
+
 @Component({
   selector: 'app-dashboard',
   imports: [RouterLink, MatButtonModule, MatIconModule],
@@ -20,6 +34,7 @@ export class DashboardComponent {
     ['INVENTORY_ITEM_DETAILS', 'Unidades por articulo y bodega'],
     ['INVENTORY_ITEM_DETAIL_PHOTOS', 'Fotos con validacion GPS'],
     ['TRANSPORT_REQUESTS', 'Solicitudes y elementos a transportar'],
+    ['TRANSPORT_DELIVERY_RECEIPTS', 'Recibos CO-30 registrados'],
     ['ADMIN_CREDENTIALS', 'Credenciales y roles del sistema'],
     ['SCREEN_ACCESS_ADMIN', 'Permisos por rol y usuario'],
   ]);
@@ -31,6 +46,7 @@ export class DashboardComponent {
     ['INVENTORY_ITEM_DETAILS', 'cyan'],
     ['INVENTORY_ITEM_DETAIL_PHOTOS', 'rose'],
     ['TRANSPORT_REQUESTS', 'blue'],
+    ['TRANSPORT_DELIVERY_RECEIPTS', 'teal'],
     ['ADMIN_CREDENTIALS', 'indigo'],
     ['SCREEN_ACCESS_ADMIN', 'fuchsia'],
   ]);
@@ -40,7 +56,7 @@ export class DashboardComponent {
       .allowedScreens()
       .filter((screen) => screen.code !== 'DASHBOARD' && screen.showInMenu)
       .map((screen) => ({
-        path: screen.route.startsWith('/') ? screen.route : `/${screen.route}`,
+        path: this.resolveScreenPath(screen.code, screen.route, screen.title),
         icon: screen.icon || 'chevron_right',
         title: screen.code === 'INVENTORY_ITEMS' ? 'Inventarios' : screen.title,
         caption: this.captions.get(screen.code) ?? screen.section,
@@ -48,7 +64,40 @@ export class DashboardComponent {
       })),
   );
 
-  readonly canAccessTransportRequests = computed(() =>
-    this.auth.canAccessScreen('TRANSPORT_REQUESTS'),
+  readonly canCreateMovementShortcut = computed(() =>
+    this.auth.canAccessAction('DASHBOARD', 'createMovement'),
   );
+
+  private normalizeRoute(route: string): string {
+    const trimmed = route.trim();
+
+    if (!trimmed) {
+      return '/dashboard';
+    }
+
+    const normalized = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+    return normalized.replace(/\/+/g, '/').toLowerCase();
+  }
+
+  private resolveScreenPath(code: string, route: string, title: string): string {
+    const canonicalPath = SCREEN_ROUTE_BY_CODE[code];
+
+    if (canonicalPath) {
+      return canonicalPath;
+    }
+
+    const normalizedRoute = this.normalizeRoute(route);
+
+    if (Object.values(SCREEN_ROUTE_BY_CODE).some((path) => normalizedRoute.startsWith(path))) {
+      return normalizedRoute;
+    }
+
+    const normalizedTitle = title.trim().toLowerCase();
+
+    if (normalizedTitle.includes('recib') && normalizedTitle.includes('oper')) {
+      return '/transport-requests';
+    }
+
+    return normalizedRoute;
+  }
 }

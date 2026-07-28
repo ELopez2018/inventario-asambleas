@@ -1,3 +1,24 @@
+export type TransportRequestStatus =
+  | 'SOLICITADA'
+  | 'APROBADA'
+  | 'EN_TRANSITO'
+  | 'ENTREGADA'
+  | 'ANULADA'
+  | 'DEVUELTA'
+  | 'REGRESADA'
+  | 'CANCELADA'
+  | 'RECHAZADA'
+  | 'CERRADA';
+
+export const TRANSPORT_REQUEST_RELEASE_STOCK_STATUSES: TransportRequestStatus[] = [
+  'ANULADA',
+  'DEVUELTA',
+  'REGRESADA',
+  'CANCELADA',
+  'RECHAZADA',
+  'CERRADA',
+];
+
 export interface TransportRequestItemRequest {
   quantity: number;
   description: string;
@@ -7,6 +28,7 @@ export interface TransportRequestItemRequest {
 
 export interface CreateTransportRequestRequest {
   requestDate: string;
+  status?: TransportRequestStatus | null;
   requestedFrom: string;
   requestedTo: string;
   targetDepartment?: string | null;
@@ -47,6 +69,8 @@ export interface TransportRequestAutocompleteOptionsResponse {
 export interface TransportRequestResponse {
   id: number;
   requestNumber: string;
+  status: TransportRequestStatus;
+  stockReserved: boolean;
   requestDate: string;
   requestedFrom: string;
   requestedTo: string;

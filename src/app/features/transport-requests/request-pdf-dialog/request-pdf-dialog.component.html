@@ -1,8 +1,8 @@
 <div class="request-pdf-dialog">
   <header class="request-pdf-dialog__header">
     <div>
-      <h2 mat-dialog-title>Formulario CO-31</h2>
-      <p>Solicitud {{ data.requestNumber }}</p>
+      <h2 mat-dialog-title>{{ data.title || 'Formulario CO-31' }}</h2>
+      <p>{{ data.subtitle || 'Solicitud ' + data.requestNumber }}</p>
     </div>
     <button mat-icon-button type="button" aria-label="Cerrar" (click)="close()">
       <mat-icon>close</mat-icon>
@@ -10,7 +10,11 @@
   </header>
 
   <mat-dialog-content class="request-pdf-dialog__content">
-    <iframe class="request-pdf-dialog__frame" [src]="safePdfUrl" title="Formulario CO-31"></iframe>
+    <iframe
+      class="request-pdf-dialog__frame"
+      [src]="safePdfUrl"
+      [title]="data.title || 'Formulario CO-31'"
+    ></iframe>
   </mat-dialog-content>
 
   <mat-dialog-actions align="end">

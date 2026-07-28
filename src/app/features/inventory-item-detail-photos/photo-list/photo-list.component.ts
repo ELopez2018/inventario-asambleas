@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import {
   AfterViewChecked,
   Component,
+  computed,
   ElementRef,
   OnDestroy,
   OnInit,
@@ -20,6 +21,7 @@ import { MatStepperModule } from '@angular/material/stepper';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { finalize, forkJoin } from 'rxjs';
+import { AuthService } from '../../../core/services/auth.service';
 import { EventContextService } from '../../../core/services/event-context.service';
 import { InventoryItemDetailPhotoConfigService } from '../../../core/services/inventory-item-detail-photo-config.service';
 import { InventoryItemDetailPhotoService } from '../../../core/services/inventory-item-detail-photo.service';
@@ -62,6 +64,7 @@ function toApiLocalDateTime(value: string): string | undefined {
 export class PhotoListComponent implements OnInit {
   private readonly fb = inject(NonNullableFormBuilder);
   readonly eventContext = inject(EventContextService);
+  private readonly auth = inject(AuthService);
   private readonly detailService = inject(InventoryItemDetailService);
   private readonly photoConfigService = inject(InventoryItemDetailPhotoConfigService);
   private readonly photoService = inject(InventoryItemDetailPhotoService);
@@ -75,6 +78,24 @@ export class PhotoListComponent implements OnInit {
     'capturedAt',
     'actions',
   ];
+  readonly canSaveConfig = computed(() =>
+    this.auth.canAccessAction('INVENTORY_ITEM_DETAIL_PHOTOS', 'saveConfig'),
+  );
+  readonly canVerifyGps = computed(() =>
+    this.auth.canAccessAction('INVENTORY_ITEM_DETAIL_PHOTOS', 'verifyGps'),
+  );
+  readonly canUploadPhotosAction = computed(() =>
+    this.auth.canAccessAction('INVENTORY_ITEM_DETAIL_PHOTOS', 'upload'),
+  );
+  readonly canSearchPhotos = computed(() =>
+    this.auth.canAccessAction('INVENTORY_ITEM_DETAIL_PHOTOS', 'search'),
+  );
+  readonly canViewPhoto = computed(() =>
+    this.auth.canAccessAction('INVENTORY_ITEM_DETAIL_PHOTOS', 'view'),
+  );
+  readonly canDeletePhotoAction = computed(() =>
+    this.auth.canAccessAction('INVENTORY_ITEM_DETAIL_PHOTOS', 'delete'),
+  );
 
   readonly scopeForm = this.fb.group({
     eventId: [0, [Validators.required, Validators.min(1)]],
@@ -249,6 +270,10 @@ export class PhotoListComponent implements OnInit {
   }
 
   verifyGps(): void {
+    if (!this.canVerifyGps()) {
+      return;
+    }
+
     if (!navigator.geolocation) {
       this.handleGpsFailure('Este navegador no soporta geolocalizacion.');
       return;
@@ -398,6 +423,10 @@ export class PhotoListComponent implements OnInit {
   }
 
   loadPhotos() {
+    if (!this.canSearchPhotos()) {
+      return;
+    }
+
     let selectedEventId: number;
 
     try {
@@ -431,6 +460,10 @@ export class PhotoListComponent implements OnInit {
   }
 
   saveConfig() {
+    if (!this.canSaveConfig()) {
+      return;
+    }
+
     let selectedEventId: number;
 
     try {
@@ -488,6 +521,10 @@ export class PhotoListComponent implements OnInit {
   }
 
   uploadPhotos() {
+    if (!this.canUploadPhotosAction()) {
+      return;
+    }
+
     let selectedEventId: number;
 
     try {
@@ -548,6 +585,10 @@ export class PhotoListComponent implements OnInit {
   }
 
   viewPhoto(photoId: number) {
+    if (!this.canViewPhoto()) {
+      return;
+    }
+
     this.photoService.getContent(photoId).subscribe({
       next: (blob) => {
         const url = URL.createObjectURL(blob);
@@ -559,6 +600,10 @@ export class PhotoListComponent implements OnInit {
   }
 
   deletePhoto(photo: InventoryItemDetailPhotoResponse) {
+    if (!this.canDeletePhotoAction()) {
+      return;
+    }
+
     if (!confirm(`Eliminar la foto ${photo.fileName}?`)) {
       return;
     }

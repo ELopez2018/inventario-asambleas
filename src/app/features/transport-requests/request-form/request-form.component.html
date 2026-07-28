@@ -70,6 +70,27 @@
           </mat-form-field>
 
           <mat-form-field appearance="outline">
+            <mat-label>Estado</mat-label>
+            <mat-select formControlName="status">
+              @for (status of statuses; track status) {
+                <mat-option [value]="status">{{ status }}</mat-option>
+              }
+            </mat-select>
+            @if (form.controls.status.hasError('required')) {
+            <mat-error>Seleccione el estado.</mat-error>
+            }
+          </mat-form-field>
+
+          @if (releasesStock()) {
+          <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            <div class="flex items-start gap-2">
+              <mat-icon class="text-base">warning</mat-icon>
+              <span>Este estado libera los items reservados en inventario.</span>
+            </div>
+          </div>
+          }
+
+          <mat-form-field appearance="outline">
             <mat-label>Departamento que hace la solicitud</mat-label>
             <input
               matInput
@@ -386,6 +407,10 @@
               <div>
                 <dt>Numero de formulario</dt>
                 <dd>{{ requestNumberLabel || 'Pendiente por asignar' }}</dd>
+              </div>
+              <div>
+                <dt>Estado</dt>
+                <dd>{{ form.controls.status.value }}</dd>
               </div>
               <div>
                 <dt>Evento</dt>

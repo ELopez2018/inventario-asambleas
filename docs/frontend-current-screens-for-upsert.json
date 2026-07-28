@@ -69,7 +69,7 @@
     "showInMenu": true,
     "requiresAuth": true,
     "defaultRoles": ["SUPER", "ADMIN", "AUX", "USER"],
-    "notes": "Mismo permiso para /inventory-items/new y /inventory-items/:id/edit. Incluye exportacion Excel. La union de items se oculta en frontend si no hay rol SUPER."
+    "notes": "Mismo permiso para /inventory-items/new y /inventory-items/:id/edit. Incluye exportacion Excel. Crear/exportar/editar/unir/eliminar se controla por acciones (create/export/edit/merge/delete)."
   },
   {
     "code": "INVENTORY_TRANSACTIONS",
@@ -120,16 +120,28 @@
     "notes": "Mismo permiso para /transport-requests/new y /transport-requests/:id/edit. USER no deberia ver esta pantalla por defecto."
   },
   {
-    "code": "ADMIN_CREDENTIALS",
-    "title": "Admin credenciales",
-    "route": "/admin/credentials",
-    "icon": "admin_panel_settings",
-    "section": "SEGURIDAD",
+    "code": "TRANSPORT_DELIVERY_RECEIPTS",
+    "title": "Recibos CO-30",
+    "route": "/transport-delivery-receipts",
+    "icon": "assignment",
+    "section": "OPERACION",
     "sortOrder": 90,
     "showInMenu": true,
     "requiresAuth": true,
+    "defaultRoles": ["SUPER", "ADMIN", "AUX"],
+    "notes": "Listado y detalle/edicion de recibos de entrega CO-30 generados desde solicitudes de transporte."
+  },
+  {
+    "code": "ADMIN_CREDENTIALS",
+    "title": "Credenciales",
+    "route": "/admin/credentials",
+    "icon": "admin_panel_settings",
+    "section": "SEGURIDAD",
+    "sortOrder": 100,
+    "showInMenu": true,
+    "requiresAuth": true,
     "defaultRoles": ["SUPER"],
-    "notes": "Ruta protegida hoy por superRoleGuard. Solo SUPER puede crear credenciales, asignar roles, resetear contrasenas y forzar cambio."
+    "notes": "Ruta protegida por screenAccessGuard para ADMIN_CREDENTIALS; adicionalmente el componente valida rol SUPER para operar credenciales."
   },
   {
     "code": "SCREEN_ACCESS_ADMIN",
@@ -137,10 +149,10 @@
     "route": "/admin/screen-access",
     "icon": "rule",
     "section": "SEGURIDAD",
-    "sortOrder": 100,
+    "sortOrder": 110,
     "showInMenu": true,
     "requiresAuth": true,
     "defaultRoles": ["SUPER", "ADMIN"],
-    "notes": "Administracion delegable de pantallas por rol y overrides por usuario. Tambien puede asignarse puntualmente por override ALLOW."
+    "notes": "Administracion delegable de pantallas por rol y overrides por usuario. Las acciones consumidas por el frontend son: manageRoleScreens, manageRoleActions, manageUserOverrides y manageUserActionOverrides."
   }
 ]

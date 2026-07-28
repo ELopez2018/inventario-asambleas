@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -7,6 +7,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { finalize } from 'rxjs';
+import { AuthService } from '../../../core/services/auth.service';
 import { InventoryTransactionService } from '../../../core/services/inventory-transaction.service';
 import { InventoryTransactionResponse } from '../../../models/inventory-transaction.model';
 import { STORE_OPTIONS } from '../../../shared/store-options';
@@ -27,6 +28,7 @@ import { STORE_OPTIONS } from '../../../shared/store-options';
 })
 export class TransactionListComponent implements OnInit {
   private readonly transactionService = inject(InventoryTransactionService);
+  private readonly auth = inject(AuthService);
 
   readonly displayedColumns = [
     'movementDate',
@@ -39,6 +41,15 @@ export class TransactionListComponent implements OnInit {
     'destination',
     'actions',
   ];
+  readonly canCreateTransactions = computed(() =>
+    this.auth.canAccessAction('INVENTORY_TRANSACTIONS', 'create'),
+  );
+  readonly canEditTransactions = computed(() =>
+    this.auth.canAccessAction('INVENTORY_TRANSACTIONS', 'edit'),
+  );
+  readonly canDeleteTransactions = computed(() =>
+    this.auth.canAccessAction('INVENTORY_TRANSACTIONS', 'delete'),
+  );
   private readonly storeLabelMap = new Map(STORE_OPTIONS.map((store) => [store.id, store.label]));
   transactions: InventoryTransactionResponse[] = [];
   loading = false;

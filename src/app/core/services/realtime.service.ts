@@ -20,11 +20,13 @@ export class RealtimeService {
   private authFailureHandled = false;
 
   private readonly chatMessagesSubject = new Subject<ChatMessageResponse>();
+  private readonly inventoryStockEventsSubject = new Subject<unknown>();
   private readonly connectedUsersSubject = new BehaviorSubject<ConnectedChatUsersResponse | null>(
     null,
   );
 
   readonly chatMessages$ = this.chatMessagesSubject.asObservable();
+  readonly inventoryStockEvents$ = this.inventoryStockEventsSubject.asObservable();
   readonly connectedUsers$ = this.connectedUsersSubject.asObservable();
 
   connect(): void {
@@ -60,6 +62,10 @@ export class RealtimeService {
             if (parsed) {
               this.connectedUsersSubject.next(parsed);
             }
+          });
+          this.safeSubscribe('/topic/inventory-stock', (message) => {
+            const parsed = this.tryParse<unknown>(message.body);
+            this.inventoryStockEventsSubject.next(parsed ?? message.body);
           });
           this.safeSubscribe('/app/chat.users', (message) => {
             const parsed = this.tryParse<ConnectedChatUsersResponse>(message.body);

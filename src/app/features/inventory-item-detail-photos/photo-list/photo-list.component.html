@@ -103,6 +103,7 @@
 
           <div class="step-actions md:col-span-2">
             <button mat-button matStepperPrevious type="button">Atras</button>
+            @if (canSaveConfig()) {
             <button mat-stroked-button color="primary" type="submit" [disabled]="savingConfig">
               @if (savingConfig) {
               Guardando...
@@ -110,6 +111,7 @@
               Guardar configuracion
               }
             </button>
+            }
             <button mat-flat-button color="primary" matStepperNext [disabled]="configForm.invalid">
               Continuar
             </button>
@@ -121,6 +123,7 @@
         <form [formGroup]="gpsGateForm" class="py-4">
           <div class="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
             <div class="flex flex-wrap items-center gap-2">
+              @if (canVerifyGps()) {
               <button mat-stroked-button type="button" (click)="verifyGps()" [disabled]="locatingGps">
                 <mat-icon>gps_fixed</mat-icon>
                 @if (locatingGps) {
@@ -129,6 +132,7 @@
                 Verificar GPS
                 }
               </button>
+              }
               <span class="text-sm font-medium" [class.text-emerald-700]="gpsVerified"
                 [class.text-amber-700]="!gpsVerified">
                 @if (gpsVerified) {
@@ -178,19 +182,10 @@
 
           <mat-form-field appearance="outline">
             <mat-label>Capturada en</mat-label>
-            <input
-              #capturedAtPicker="nativeDateTimePicker"
-              matInput
-              type="datetime-local"
-              formControlName="capturedAt"
-            />
-            <button
-              mat-icon-button
-              matSuffix
-              type="button"
-              aria-label="Elegir fecha y hora de captura"
-              (click)="capturedAtPicker.openPicker()"
-            >
+            <input #capturedAtPicker="nativeDateTimePicker" matInput type="datetime-local"
+              formControlName="capturedAt" />
+            <button mat-icon-button matSuffix type="button" aria-label="Elegir fecha y hora de captura"
+              (click)="capturedAtPicker.openPicker()">
               <mat-icon>event</mat-icon>
             </button>
           </mat-form-field>
@@ -210,6 +205,7 @@
 
           <div class="step-actions md:col-span-2">
             <button mat-button matStepperPrevious type="button">Atras</button>
+            @if (canUploadPhotosAction()) {
             <button mat-stroked-button color="primary" type="submit" [disabled]="!canUpload">
               <mat-icon>cloud_upload</mat-icon>
               @if (uploadingPhotos) {
@@ -218,6 +214,7 @@
               Subir fotos
               }
             </button>
+            }
             <button mat-flat-button color="primary" matStepperNext [disabled]="!filesGateCompleted">
               Continuar
             </button>
@@ -229,10 +226,12 @@
         <div class="py-4">
           <div class="mb-3 flex items-center justify-between gap-3">
             <h2 class="text-base font-semibold text-slate-800">Listado de fotos</h2>
+            @if (canSearchPhotos()) {
             <button mat-stroked-button type="button" (click)="loadPhotos()" [disabled]="loadingPhotos">
               <mat-icon>search</mat-icon>
               Consultar alcance
             </button>
+            }
           </div>
 
           @if (loadingPhotos) {
@@ -290,12 +289,16 @@
                 <th mat-header-cell *matHeaderCellDef class="w-28 text-right">Acciones</th>
                 <td mat-cell *matCellDef="let photo" class="text-right">
                   <span class="responsive-cell-label" aria-hidden="true">Acciones</span>
+                  @if (canViewPhoto()) {
                   <button mat-icon-button type="button" matTooltip="Ver foto" (click)="viewPhoto(photo.id)">
                     <mat-icon>visibility</mat-icon>
                   </button>
+                  }
+                  @if (canDeletePhotoAction()) {
                   <button mat-icon-button type="button" matTooltip="Eliminar" (click)="deletePhoto(photo)">
                     <mat-icon>delete</mat-icon>
                   </button>
+                  }
                 </td>
               </ng-container>
 

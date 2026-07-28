@@ -467,12 +467,23 @@
         "notes": "Acceso a /transport-requests/:id/edit."
       },
       {
+        "code": "TRANSPORT_REQUESTS_GENERATE_DELIVERY_RECEIPT",
+        "actionKey": "generateDeliveryReceipt",
+        "title": "Generar recibo de entrega",
+        "icon": "assignment",
+        "style": "secondary",
+        "sortOrder": 40,
+        "confirmationRequired": false,
+        "defaultRoles": ["SUPER", "ADMIN", "AUX"],
+        "notes": "POST /transport-requests/{id}/delivery-receipt y navega al recibo CO-30."
+      },
+      {
         "code": "TRANSPORT_REQUESTS_DELETE",
         "actionKey": "delete",
         "title": "Eliminar solicitud",
         "icon": "delete",
         "style": "danger",
-        "sortOrder": 40,
+        "sortOrder": 50,
         "confirmationRequired": true,
         "defaultRoles": ["SUPER", "ADMIN"],
         "notes": "Operacion destructiva."
@@ -481,12 +492,37 @@
     "notes": "Cubre listado y formulario de solicitudes de transporte."
   },
   {
+    "code": "TRANSPORT_DELIVERY_RECEIPTS",
+    "title": "Recibos CO-30",
+    "route": "/transport-delivery-receipts",
+    "icon": "assignment",
+    "section": "OPERACION",
+    "sortOrder": 90,
+    "showInMenu": true,
+    "requiresAuth": true,
+    "defaultRoles": ["SUPER", "ADMIN", "AUX"],
+    "actions": [
+      {
+        "code": "TRANSPORT_DELIVERY_RECEIPTS_EDIT",
+        "actionKey": "edit",
+        "title": "Abrir/editar recibo",
+        "icon": "edit",
+        "style": "icon",
+        "sortOrder": 10,
+        "confirmationRequired": false,
+        "defaultRoles": ["SUPER", "ADMIN", "AUX"],
+        "notes": "Acceso a /transport-delivery-receipts/:id/edit y guardado con PUT /transport-delivery-receipts/{id}."
+      }
+    ],
+    "notes": "Listado y detalle/edicion de recibos de entrega CO-30 generados desde solicitudes de transporte."
+  },
+  {
     "code": "ADMIN_CREDENTIALS",
     "title": "Credenciales",
     "route": "/admin/credentials",
     "icon": "admin_panel_settings",
     "section": "SEGURIDAD",
-    "sortOrder": 90,
+    "sortOrder": 100,
     "showInMenu": true,
     "requiresAuth": true,
     "defaultRoles": ["SUPER"],
@@ -536,7 +572,7 @@
         "notes": "Solo SUPER."
       }
     ],
-    "notes": "Ruta actualmente protegida por superRoleGuard. El menu debe ocultarse salvo SUPER o autorizacion equivalente backend."
+    "notes": "Ruta protegida por screenAccessGuard para ADMIN_CREDENTIALS; adicionalmente el componente valida rol SUPER para operar credenciales."
   },
   {
     "code": "SCREEN_ACCESS_ADMIN",
@@ -544,7 +580,7 @@
     "route": "/admin/screen-access",
     "icon": "rule",
     "section": "SEGURIDAD",
-    "sortOrder": 100,
+    "sortOrder": 110,
     "showInMenu": true,
     "requiresAuth": true,
     "defaultRoles": ["SUPER", "ADMIN"],
@@ -573,7 +609,7 @@
       },
       {
         "code": "SCREEN_ACCESS_ADMIN_MANAGE_USER_SCREENS",
-        "actionKey": "manageUserScreens",
+        "actionKey": "manageUserOverrides",
         "title": "Guardar pantallas por usuario",
         "icon": "person",
         "style": "primary",
@@ -584,7 +620,7 @@
       },
       {
         "code": "SCREEN_ACCESS_ADMIN_MANAGE_USER_ACTIONS",
-        "actionKey": "manageUserActions",
+        "actionKey": "manageUserActionOverrides",
         "title": "Guardar acciones por usuario",
         "icon": "person",
         "style": "primary",

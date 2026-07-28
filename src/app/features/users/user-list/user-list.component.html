@@ -5,71 +5,72 @@
       <p class="app-page-subtitle">Contactos disponibles para responsables y movimientos.</p>
     </div>
     <div class="app-page-actions">
+      @if (canCreateUsers()) {
       <a mat-flat-button color="primary" routerLink="/users/new">
         <mat-icon>add</mat-icon>
         Nuevo
       </a>
+      }
     </div>
   </div>
 
   <div class="app-data-surface">
     @if (loading) {
-      <div class="flex items-center justify-center p-10">
-        <mat-spinner diameter="36" />
-      </div>
+    <div class="flex items-center justify-center p-10">
+      <mat-spinner diameter="36" />
+    </div>
     } @else if (errorMessage) {
-      <div class="p-6 text-sm text-red-700">{{ errorMessage }}</div>
+    <div class="p-6 text-sm text-red-700">{{ errorMessage }}</div>
     } @else if (!users.length) {
-      <div class="p-6 text-sm text-slate-600">No hay usuarios registrados.</div>
+    <div class="p-6 text-sm text-slate-600">No hay usuarios registrados.</div>
     } @else {
-      <div class="app-table-scroll">
-        <table mat-table [dataSource]="users" class="responsive-table">
-          <ng-container matColumnDef="name">
-            <th mat-header-cell *matHeaderCellDef>Nombre</th>
-            <td mat-cell *matCellDef="let user">
-              <span class="responsive-cell-label" aria-hidden="true">Nombre</span>
-              {{ user.firstName }} {{ user.lastName }}
-            </td>
-          </ng-container>
+    <div class="app-table-scroll">
+      <table mat-table [dataSource]="users" class="responsive-table">
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Nombre</th>
+          <td mat-cell *matCellDef="let user">
+            <span class="responsive-cell-label" aria-hidden="true">Nombre</span>
+            {{ user.firstName }} {{ user.lastName }}
+          </td>
+        </ng-container>
 
-          <ng-container matColumnDef="email">
-            <th mat-header-cell *matHeaderCellDef>Email</th>
-            <td mat-cell *matCellDef="let user">
-              <span class="responsive-cell-label" aria-hidden="true">Email</span>
-              {{ user.email }}
-            </td>
-          </ng-container>
+        <ng-container matColumnDef="email">
+          <th mat-header-cell *matHeaderCellDef>Email</th>
+          <td mat-cell *matCellDef="let user">
+            <span class="responsive-cell-label" aria-hidden="true">Email</span>
+            {{ user.email }}
+          </td>
+        </ng-container>
 
-          <ng-container matColumnDef="phone">
-            <th mat-header-cell *matHeaderCellDef>Telefono</th>
-            <td mat-cell *matCellDef="let user">
-              <span class="responsive-cell-label" aria-hidden="true">Telefono</span>
-              {{ user.phone || '-' }}
-            </td>
-          </ng-container>
+        <ng-container matColumnDef="phone">
+          <th mat-header-cell *matHeaderCellDef>Telefono</th>
+          <td mat-cell *matCellDef="let user">
+            <span class="responsive-cell-label" aria-hidden="true">Telefono</span>
+            {{ user.phone || '-' }}
+          </td>
+        </ng-container>
 
-          <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef class="w-28 text-right">Acciones</th>
-            <td mat-cell *matCellDef="let user" class="text-right">
-              <span class="responsive-cell-label" aria-hidden="true">Acciones</span>
-              <a mat-icon-button [routerLink]="['/users', user.id, 'edit']" matTooltip="Editar">
-                <mat-icon>edit</mat-icon>
-              </a>
-              <button
-                mat-icon-button
-                type="button"
-                matTooltip="Eliminar"
-                (click)="deleteUser(user)"
-              >
-                <mat-icon>delete</mat-icon>
-              </button>
-            </td>
-          </ng-container>
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="w-28 text-right">Acciones</th>
+          <td mat-cell *matCellDef="let user" class="text-right">
+            <span class="responsive-cell-label" aria-hidden="true">Acciones</span>
+            @if (canEditUsers()) {
+            <a mat-icon-button [routerLink]="['/users', user.id, 'edit']" matTooltip="Editar">
+              <mat-icon>edit</mat-icon>
+            </a>
+            }
+            @if (canDeleteUsers()) {
+            <button mat-icon-button type="button" matTooltip="Eliminar" (click)="deleteUser(user)">
+              <mat-icon>delete</mat-icon>
+            </button>
+            }
+          </td>
+        </ng-container>
 
-          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-        </table>
-      </div>
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+    </div>
     }
   </div>
 </section>

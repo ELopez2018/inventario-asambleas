@@ -197,6 +197,33 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'transport-requests/:transportRequestId/delivery-receipt',
+        canActivate: [screenAccessGuard],
+        data: { screenCode: 'TRANSPORT_DELIVERY_RECEIPTS' },
+        loadComponent: () =>
+          import(
+            './features/transport-delivery-receipts/delivery-receipt-form/delivery-receipt-form.component'
+          ).then((m) => m.DeliveryReceiptFormComponent),
+      },
+      {
+        path: 'transport-delivery-receipts',
+        canActivate: [screenAccessGuard],
+        data: { screenCode: 'TRANSPORT_DELIVERY_RECEIPTS' },
+        loadComponent: () =>
+          import(
+            './features/transport-delivery-receipts/delivery-receipt-list/delivery-receipt-list.component'
+          ).then((m) => m.DeliveryReceiptListComponent),
+      },
+      {
+        path: 'transport-delivery-receipts/:id/edit',
+        canActivate: [screenAccessGuard],
+        data: { screenCode: 'TRANSPORT_DELIVERY_RECEIPTS' },
+        loadComponent: () =>
+          import(
+            './features/transport-delivery-receipts/delivery-receipt-form/delivery-receipt-form.component'
+          ).then((m) => m.DeliveryReceiptFormComponent),
+      },
+      {
         path: 'admin/credentials',
         canActivate: [screenAccessGuard],
         data: { screenCode: 'ADMIN_CREDENTIALS' },

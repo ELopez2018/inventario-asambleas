@@ -1,0 +1,206 @@
+<section class="app-page app-page--form">
+  <div class="mb-5">
+    <a routerLink="/transport-delivery-receipts" class="app-back-link">
+      <mat-icon class="text-base">arrow_back</mat-icon>
+      Recibos CO-30
+    </a>
+    <div class="mt-2 flex flex-wrap items-center justify-between gap-3">
+      <h1 class="app-page-title">Recibo de entrega CO-30</h1>
+      @if (receipt) {
+        <button mat-stroked-button type="button" [disabled]="previewing" (click)="previewReceiptPdf()">
+          <mat-icon>picture_as_pdf</mat-icon>
+          Previsualizar CO-30
+        </button>
+      }
+    </div>
+  </div>
+
+  <div class="app-form-card">
+    @if (loading) {
+      <div class="flex justify-center p-8">
+        <mat-spinner diameter="36" />
+      </div>
+    } @else if (missingReceipt) {
+      <div class="rounded border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
+        Esta solicitud todavia no tiene recibo de entrega.
+      </div>
+      <div class="mt-4">
+        <button mat-flat-button color="primary" type="button" [disabled]="generating" (click)="generateReceipt()">
+          @if (generating) {
+            <mat-spinner diameter="18" class="mr-2 inline-block" />
+          }
+          <mat-icon>assignment</mat-icon>
+          Generar recibo
+        </button>
+      </div>
+    } @else if (receipt) {
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <section class="receipt-header">
+          <div>
+            <div class="receipt-label">Fecha</div>
+            <div class="receipt-value">{{ receipt.receiptDate | date: 'mediumDate' }}</div>
+          </div>
+          <div>
+            <div class="receipt-label">Numero</div>
+            <div class="receipt-value">{{ receipt.receiptNumber }}</div>
+          </div>
+          <div>
+            <div class="receipt-label">Solicitud</div>
+            <div class="receipt-value">{{ receipt.transportRequestNumber }}</div>
+          </div>
+          <div>
+            <div class="receipt-label">Recibido por</div>
+            <div class="receipt-value">{{ receipt.receivedBy || '-' }}</div>
+          </div>
+        </section>
+
+        @if (!receipt.receivedBy) {
+          <div class="mt-4 rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+            Complete el campo Autorizado por en la solicitud antes de imprimir o usar este recibo.
+          </div>
+        }
+
+        <div class="app-form-grid mt-5">
+          <mat-form-field appearance="outline">
+            <mat-label>Propietario</mat-label>
+            <input matInput formControlName="ownerName" maxlength="255" />
+            @if (form.controls.ownerName.hasError('maxlength')) {
+              <mat-error>Maximo 255 caracteres.</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Telefono</mat-label>
+            <input matInput formControlName="ownerPhone" maxlength="30" />
+            @if (form.controls.ownerPhone.hasError('maxlength')) {
+              <mat-error>Maximo 30 caracteres.</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="md:col-span-2">
+            <mat-label>Domicilio</mat-label>
+            <input matInput formControlName="ownerAddress" maxlength="500" />
+            @if (form.controls.ownerAddress.hasError('maxlength')) {
+              <mat-error>Maximo 500 caracteres.</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="md:col-span-2">
+            <mat-label>Observaciones</mat-label>
+            <textarea matInput rows="3" formControlName="observations" maxlength="5000"></textarea>
+            @if (form.controls.observations.hasError('maxlength')) {
+              <mat-error>Maximo 5000 caracteres.</mat-error>
+            }
+          </mat-form-field>
+        </div>
+
+        <section class="mt-5">
+          <h2 class="mb-3 text-base font-semibold text-slate-800">Articulos entregados</h2>
+          <div class="app-table-scroll">
+            <table mat-table [dataSource]="receipt.items" class="responsive-table responsive-table--wide">
+              <ng-container matColumnDef="articleNumber">
+                <th mat-header-cell *matHeaderCellDef>Num. articulo</th>
+                <td mat-cell *matCellDef="let item">
+                  <span class="responsive-cell-label" aria-hidden="true">Num. articulo</span>
+                  {{ item.articleNumber }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="description">
+                <th mat-header-cell *matHeaderCellDef>Descripcion</th>
+                <td mat-cell *matCellDef="let item">
+                  <span class="responsive-cell-label" aria-hidden="true">Descripcion</span>
+                  {{ item.description }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="assignedTo">
+                <th mat-header-cell *matHeaderCellDef>Asignado a</th>
+                <td mat-cell *matCellDef="let item">
+                  <span class="responsive-cell-label" aria-hidden="true">Asignado a</span>
+                  {{ item.assignedTo || '-' }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="requestNumber">
+                <th mat-header-cell *matHeaderCellDef>Num. pedido</th>
+                <td mat-cell *matCellDef="let item">
+                  <span class="responsive-cell-label" aria-hidden="true">Num. pedido</span>
+                  {{ item.requestNumber }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="quantity">
+                <th mat-header-cell *matHeaderCellDef>Cantidad</th>
+                <td mat-cell *matCellDef="let item">
+                  <span class="responsive-cell-label" aria-hidden="true">Cantidad</span>
+                  {{ item.quantity }}
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+            </table>
+          </div>
+        </section>
+
+        <section class="mt-5 rounded-lg border border-slate-200 p-4">
+          <h2 class="mb-3 text-base font-semibold text-slate-800">Devolucion</h2>
+          <div class="app-form-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Entreguese a</mat-label>
+              <input matInput formControlName="returnDeliveredTo" maxlength="255" />
+              @if (form.controls.returnDeliveredTo.hasError('maxlength')) {
+                <mat-error>Maximo 255 caracteres.</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Fecha devolucion</mat-label>
+              <input
+                #returnDatePicker="nativeDateTimePicker"
+                matInput
+                type="date"
+                formControlName="returnDate"
+              />
+              <button
+                mat-icon-button
+                matSuffix
+                type="button"
+                aria-label="Elegir fecha de devolucion"
+                (click)="returnDatePicker.openPicker()"
+              >
+                <mat-icon>event</mat-icon>
+              </button>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Recibido por</mat-label>
+              <input matInput formControlName="returnReceivedBy" maxlength="255" />
+              @if (form.controls.returnReceivedBy.hasError('maxlength')) {
+                <mat-error>Maximo 255 caracteres.</mat-error>
+              }
+            </mat-form-field>
+          </div>
+        </section>
+
+        <div class="app-form-actions mt-5">
+          <a mat-button routerLink="/transport-delivery-receipts">Cancelar</a>
+          <button mat-flat-button color="primary" type="submit" [disabled]="saving || form.invalid">
+            @if (saving) {
+              <mat-spinner diameter="18" class="mr-2 inline-block" />
+            }
+            <mat-icon>save</mat-icon>
+            Guardar recibo
+          </button>
+        </div>
+      </form>
+    }
+
+    @if (errorMessage) {
+      <div class="mt-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        {{ errorMessage }}
+      </div>
+    }
+  </div>
+</section>
