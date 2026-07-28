@@ -1,0 +1,96 @@
+<button
+  type="button"
+  mat-fab
+  class="chat-fab"
+  [matBadge]="unread() || null"
+  matBadgeColor="warn"
+  matTooltip="Chat interno"
+  (click)="toggle()"
+>
+  <mat-icon>{{ open() ? 'close' : 'chat' }}</mat-icon>
+</button>
+
+@if (open()) {
+  <section class="chat-panel" aria-label="Chat interno">
+    <header class="chat-panel__header">
+      <div class="chat-panel__title">
+        <mat-icon aria-hidden="true">forum</mat-icon>
+        <div>
+          <div>Chat interno</div>
+          <span>Conversacion: {{ title() }}</span>
+        </div>
+      </div>
+      <button type="button" mat-icon-button matTooltip="Cerrar chat" (click)="toggle()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </header>
+
+    <div class="chat-recipients" aria-label="Conversaciones">
+      <button
+        type="button"
+        class="chat-recipient"
+        [class.chat-recipient--active]="!chat.selectedRecipient()"
+        (click)="selectAll()"
+      >
+        <mat-icon aria-hidden="true">groups</mat-icon>
+        Todos
+      </button>
+      @for (user of users(); track user.userId) {
+        <button
+          type="button"
+          class="chat-recipient"
+          [class.chat-recipient--active]="isSelectedUser(user)"
+          (click)="selectUser(user)"
+        >
+          <mat-icon aria-hidden="true">person</mat-icon>
+          <span>{{ user.username }}</span>
+          @if (user.sessionCount > 1) {
+            <strong>{{ user.sessionCount }}</strong>
+          }
+        </button>
+      }
+    </div>
+
+    <div class="chat-messages">
+      @for (message of chat.messagesSnapshot(); track message.sentAt + message.senderUserId) {
+        @if (isVisible(message)) {
+          <article class="chat-message" [class.chat-message--mine]="isMine(message)">
+            <div class="chat-message__meta">
+              <span>{{ message.senderUsername }}</span>
+              @if (message.type === 'PRIVATE') {
+                <strong>Privado</strong>
+              }
+            </div>
+            <p>{{ message.content }}</p>
+          </article>
+        }
+      } @empty {
+        <div class="chat-empty">
+          <mat-icon aria-hidden="true">chat_bubble</mat-icon>
+          <span>No hay mensajes todavia.</span>
+        </div>
+      }
+    </div>
+
+    <form class="chat-composer" (ngSubmit)="send()">
+      <textarea
+        name="message"
+        rows="2"
+        maxlength="1000"
+        [ngModel]="draft()"
+        (ngModelChange)="draft.set($event)"
+        (keydown)="onComposerKeydown($event)"
+        placeholder="Escribe un mensaje"
+      ></textarea>
+      <button
+        type="submit"
+        mat-mini-fab
+        class="chat-send"
+        matTooltip="Enviar mensaje"
+        [disabled]="!draft().trim()"
+      >
+        <mat-icon>send</mat-icon>
+      </button>
+    </form>
+  </section>
+}

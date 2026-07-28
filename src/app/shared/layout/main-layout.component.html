@@ -63,7 +63,7 @@
           <div class="user-name">{{ displayName() }}</div>
           <div class="user-role">Sesion activa</div>
         </div>
-        <button mat-icon-button type="button" aria-label="Cerrar sesion" (click)="auth.logout()">
+        <button mat-icon-button type="button" aria-label="Cerrar sesion" (click)="logout()">
           <mat-icon>logout</mat-icon>
         </button>
       </div>
@@ -118,7 +118,7 @@
         type="button"
         class="toolbar-icon-button lg:hidden"
         aria-label="Cerrar sesion"
-        (click)="auth.logout()"
+        (click)="logout()"
       >
         <mat-icon>logout</mat-icon>
       </button>
@@ -127,5 +127,6 @@
     <main class="app-main-content min-h-0 min-w-0 flex-1 overflow-auto p-3 sm:p-4 lg:p-6">
       <router-outlet />
     </main>
+    <app-internal-chat-floating-panel />
   </mat-sidenav-content>
 </mat-sidenav-container>

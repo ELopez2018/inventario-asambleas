@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -13,7 +13,9 @@ import { APP_VERSION } from '../../core/app-version';
 import { AppIdentityService } from '../../core/services/app-identity.service';
 import { AuthService } from '../../core/services/auth.service';
 import { EventContextService } from '../../core/services/event-context.service';
+import { RealtimeService } from '../../core/services/realtime.service';
 import { UserService } from '../../core/services/user.service';
+import { InternalChatFloatingPanelComponent } from '../../features/internal-chat/internal-chat-floating-panel/internal-chat-floating-panel.component';
 
 // Covers tablets in both orientations, including the 1080px landscape viewport of iPad 9.
 const COMPACT_LAYOUT_QUERY = '(max-width: 1100px)';
@@ -30,16 +32,18 @@ const COMPACT_LAYOUT_QUERY = '(max-width: 1100px)';
     MatListModule,
     MatSidenavModule,
     MatToolbarModule,
+    InternalChatFloatingPanelComponent,
   ],
   templateUrl: './main-layout.component.html',
   styleUrl: './main-layout.component.css',
 })
-export class MainLayoutComponent implements OnInit {
+export class MainLayoutComponent implements OnInit, OnDestroy {
   private readonly breakpointObserver = inject(BreakpointObserver);
 
   readonly auth = inject(AuthService);
   readonly appIdentity = inject(AppIdentityService);
   readonly eventContext = inject(EventContextService);
+  private readonly realtime = inject(RealtimeService);
   private readonly userService = inject(UserService);
   readonly currentUser = this.auth.getCurrentUser();
   readonly appVersion = APP_VERSION;
@@ -69,13 +73,39 @@ export class MainLayoutComponent implements OnInit {
     this.auth.ensureMyScreensLoaded().subscribe({ error: () => undefined });
     this.eventContext.setActiveEvent(this.currentUser?.activeEvent ?? null);
     this.eventContext.loadActiveEvent();
+    // Diferir la conexion en tiempo real para no bloquear el arranque del layout
+    // si el socket falla (evita que el <router-outlet> quede sin montar).
+    queueMicrotask(() => {
+      try {
+        this.realtime.connect();
+      } catch (error) {
+        console.warn('[layout] no se pudo iniciar el canal en tiempo real', error);
+      }
+    });
     this.loadCurrentUserName();
+  }
+
+  ngOnDestroy(): void {
+    try {
+      this.realtime.disconnect();
+    } catch (error) {
+      console.warn('[layout] no se pudo cerrar el canal en tiempo real', error);
+    }
   }
 
   closeNavigation(sidenav: MatSidenav): void {
     if (this.isCompact()) {
       void sidenav.close();
     }
+  }
+
+  logout(): void {
+    try {
+      this.realtime.disconnect();
+    } catch (error) {
+      console.warn('[layout] no se pudo cerrar el canal en tiempo real', error);
+    }
+    this.auth.logout();
   }
 
   private normalizeRoute(route: string): string {
