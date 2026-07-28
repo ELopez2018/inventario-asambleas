@@ -1,7 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, computed, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import {
   MAT_DIALOG_DATA,
@@ -11,12 +13,13 @@ import {
 } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { finalize, forkJoin } from 'rxjs';
+import { finalize, forkJoin, startWith } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { InventoryItemService } from '../../../core/services/inventory-item.service';
 import { UserService } from '../../../core/services/user.service';
@@ -36,10 +39,13 @@ interface MergeItemsDialogData {
   selector: 'app-item-list',
   imports: [
     CommonModule,
+    ReactiveFormsModule,
     RouterLink,
+    MatAutocompleteModule,
     MatButtonModule,
     MatDialogModule,
     MatIconModule,
+    MatInputModule,
     MatProgressSpinnerModule,
     MatTabsModule,
     MatTableModule,
@@ -53,6 +59,7 @@ export class ItemListComponent implements OnInit {
   private readonly userService = inject(UserService);
   private readonly dialog = inject(MatDialog);
   private readonly auth = inject(AuthService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly displayedColumns = [
     'description',
@@ -76,7 +83,10 @@ export class ItemListComponent implements OnInit {
   readonly canEditItems = computed(() => this.auth.canAccessAction('INVENTORY_ITEMS', 'edit'));
   readonly canDeleteItems = computed(() => this.auth.canAccessAction('INVENTORY_ITEMS', 'delete'));
   readonly canMergeItems = computed(() => this.auth.canAccessAction('INVENTORY_ITEMS', 'merge'));
+  readonly itemFilter = new FormControl('', { nonNullable: true });
   items: InventoryItemResponse[] = [];
+  filteredItems: InventoryItemResponse[] = [];
+  autocompleteOptions: string[] = [];
   users: UserResponse[] = [];
   storeTabs: { id: number; label: string }[] = [];
   loading = false;
@@ -116,7 +126,9 @@ export class ItemListComponent implements OnInit {
   }
 
   getItemsByStore(storeId: number) {
-    return this.items.filter((item) => item.storeStocks.some((stock) => stock.storeId === storeId));
+    return this.filteredItems.filter((item) =>
+      item.storeStocks.some((stock) => stock.storeId === storeId),
+    );
   }
 
   buildStoreTabs(items: InventoryItemResponse[]) {
@@ -138,6 +150,10 @@ export class ItemListComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.itemFilter.valueChanges
+      .pipe(startWith(this.itemFilter.value), takeUntilDestroyed(this.destroyRef))
+      .subscribe((value) => this.applyItemFilter(value));
+
     this.loadItems();
   }
 
@@ -155,9 +171,66 @@ export class ItemListComponent implements OnInit {
           this.items = items;
           this.users = users;
           this.buildStoreTabs(items);
+          this.applyItemFilter(this.itemFilter.value);
         },
         error: () => (this.errorMessage = 'No se pudieron cargar los articulos.'),
       });
+  }
+
+  clearItemFilter() {
+    this.itemFilter.setValue('');
+  }
+
+  private applyItemFilter(value: string) {
+    const query = this.normalizeFilterText(value);
+
+    this.autocompleteOptions = this.buildAutocompleteOptions(query);
+
+    if (!query) {
+      this.filteredItems = this.items;
+      return;
+    }
+
+    this.filteredItems = this.items.filter((item) =>
+      this.getFilterText(item).includes(query),
+    );
+  }
+
+  private buildAutocompleteOptions(query: string) {
+    const options = this.items
+      .map((item) => item.description.trim())
+      .filter(Boolean)
+      .filter((description, index, self) => self.indexOf(description) === index)
+      .filter((description) =>
+        query ? this.normalizeFilterText(description).includes(query) : true,
+      )
+      .sort((a, b) => a.localeCompare(b));
+
+    return options.slice(0, 12);
+  }
+
+  private getFilterText(item: InventoryItemResponse) {
+    const stores = item.storeStocks
+      .map((stock) => `${this.getStoreDisplayName(stock)} ${stock.quantity}`)
+      .join(' ');
+
+    return this.normalizeFilterText(
+      [
+        item.description,
+        this.getOwnerName(item.ownerUserId),
+        this.getStateLabel(item),
+        stores,
+        this.getTotalStock(item).toString(),
+      ].join(' '),
+    );
+  }
+
+  private normalizeFilterText(value: string) {
+    return value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .toLowerCase();
   }
 
   downloadInventoryExcel() {

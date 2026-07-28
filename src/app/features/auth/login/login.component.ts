@@ -8,6 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { of, switchMap, map } from 'rxjs';
+import { AppIdentityService } from '../../../core/services/app-identity.service';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
@@ -28,6 +29,7 @@ export class LoginComponent {
   private readonly fb = inject(FormBuilder).nonNullable;
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  readonly appIdentity = inject(AppIdentityService);
 
   readonly form = this.fb.group({
     username: ['', Validators.required],

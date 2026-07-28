@@ -40,10 +40,46 @@
     } @else if (!items.length) {
       <div class="p-6 text-sm text-slate-600">No hay articulos registrados.</div>
     } @else {
+      <div class="inventory-filter">
+        <mat-form-field appearance="outline" class="inventory-filter__field">
+          <mat-label>Filtrar inventarios</mat-label>
+          <mat-icon matPrefix>search</mat-icon>
+          <input
+            matInput
+            type="text"
+            [formControl]="itemFilter"
+            [matAutocomplete]="itemFilterAutocomplete"
+            autocomplete="off"
+          />
+          @if (itemFilter.value) {
+            <button
+              mat-icon-button
+              matSuffix
+              type="button"
+              aria-label="Limpiar filtro"
+              (click)="clearItemFilter()"
+            >
+              <mat-icon>close</mat-icon>
+            </button>
+          }
+          <mat-autocomplete #itemFilterAutocomplete="matAutocomplete">
+            @for (option of autocompleteOptions; track option) {
+              <mat-option [value]="option">{{ option }}</mat-option>
+            }
+          </mat-autocomplete>
+        </mat-form-field>
+        <div class="inventory-filter__count">
+          {{ filteredItems.length }} de {{ items.length }}
+        </div>
+      </div>
+
       <mat-tab-group>
         <mat-tab label="Todos los items">
-          <div class="app-table-scroll">
-            <table mat-table [dataSource]="items" class="responsive-table responsive-table--wide">
+          @if (!filteredItems.length) {
+            <div class="p-6 text-sm text-slate-600">No hay inventarios que coincidan.</div>
+          } @else {
+            <div class="app-table-scroll">
+              <table mat-table [dataSource]="filteredItems" class="responsive-table responsive-table--wide">
               <ng-container matColumnDef="description">
                 <th mat-header-cell *matHeaderCellDef>Descripcion</th>
                 <td mat-cell *matCellDef="let item">
@@ -135,7 +171,8 @@
               <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
               <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
             </table>
-          </div>
+            </div>
+          }
         </mat-tab>
 
         @for (tab of storeTabs; track tab.id) {

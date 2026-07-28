@@ -2,52 +2,81 @@
   <mat-sidenav
     #sidenav
     id="app-navigation"
-    class="app-sidenav border-r border-slate-200 bg-slate-950 text-white"
+    class="app-sidenav"
     [mode]="isCompact() ? 'over' : 'side'"
     [opened]="!isCompact()"
     aria-label="Navegacion principal"
   >
-    <div class="flex items-center gap-2 border-b border-white/10 px-5 py-2">
-      <div class="min-w-0 flex-1 py-2">
-        <div class="text-base font-semibold">Inventario AR 2026</div>
-        <div class="text-xs text-slate-300">Asamblea Regional · v{{ appVersion }}</div>
+    <div class="sidenav-inner">
+      <div class="sidenav-brand">
+        <div class="brand-mark" aria-hidden="true">
+          <mat-icon>inventory_2</mat-icon>
+        </div>
+        <div class="min-w-0 flex-1">
+          <div class="brand-title">{{ appIdentity.appName() }}</div>
+          <div class="brand-subtitle">{{ appIdentity.appSubtitle() }}</div>
+        </div>
+        @if (isCompact()) {
+          <button
+            mat-icon-button
+            type="button"
+            class="sidenav-close"
+            aria-label="Cerrar menu de navegacion"
+            (click)="sidenav.close()"
+          >
+            <mat-icon>close</mat-icon>
+          </button>
+        }
       </div>
-      @if (isCompact()) {
-        <button
-          mat-icon-button
-          type="button"
-          class="shrink-0 text-white"
-          aria-label="Cerrar menu de navegacion"
-          (click)="sidenav.close()"
-        >
-          <mat-icon>close</mat-icon>
-        </button>
-      }
-    </div>
 
-    <mat-nav-list class="app-nav-list" aria-label="Secciones de la aplicacion">
-      @for (item of navItems(); track item.code) {
-        <a
-          mat-list-item
-          [routerLink]="item.path"
-          routerLinkActive="active-link"
-          ariaCurrentWhenActive="page"
-          [routerLinkActiveOptions]="{ exact: item.exact }"
-          (click)="closeNavigation(sidenav)"
-        >
-          <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
-          <span matListItemTitle>{{ item.label }}</span>
-        </a>
-      }
-    </mat-nav-list>
+      <div class="sidenav-version">
+        <span>Version</span>
+        <strong>v{{ appVersion }}</strong>
+      </div>
+
+      <div class="nav-section-label">Menu</div>
+
+      <mat-nav-list class="app-nav-list" aria-label="Secciones de la aplicacion">
+        @for (item of navItems(); track item.code) {
+          <a
+            mat-list-item
+            [routerLink]="item.path"
+            routerLinkActive="active-link"
+            ariaCurrentWhenActive="page"
+            [routerLinkActiveOptions]="{ exact: item.exact }"
+            [attr.data-accent]="item.accent"
+            (click)="closeNavigation(sidenav)"
+          >
+            <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+            <span matListItemTitle>{{ item.label }}</span>
+          </a>
+        }
+      </mat-nav-list>
+
+      <div class="sidenav-spacer"></div>
+
+      <div class="sidenav-user">
+        <div class="user-avatar" aria-hidden="true">
+          <mat-icon>person</mat-icon>
+        </div>
+        <div class="min-w-0 flex-1">
+          <div class="user-name">{{ displayName() }}</div>
+          <div class="user-role">Sesion activa</div>
+        </div>
+        <button mat-icon-button type="button" aria-label="Cerrar sesion" (click)="auth.logout()">
+          <mat-icon>logout</mat-icon>
+        </button>
+      </div>
+    </div>
   </mat-sidenav>
 
   <mat-sidenav-content class="app-sidenav-content flex min-h-0 min-w-0 flex-col overflow-hidden">
-    <mat-toolbar color="primary" class="app-toolbar shrink-0">
+    <mat-toolbar class="app-toolbar shrink-0">
       @if (isCompact()) {
         <button
           mat-icon-button
           type="button"
+          class="toolbar-icon-button"
           aria-label="Abrir menu de navegacion"
           aria-controls="app-navigation"
           [attr.aria-expanded]="sidenav.opened"
@@ -56,11 +85,12 @@
           <mat-icon>menu</mat-icon>
         </button>
       }
-      <span class="ml-1 shrink-0 text-base font-medium">Inventario</span>
-      <span class="ml-2 hidden shrink-0 rounded bg-white/15 px-2 py-0.5 text-xs sm:inline">
-        v{{ appVersion }}
-      </span>
-      <div class="app-event-selector ml-3 hidden min-w-0 items-center gap-2 lg:flex">
+      <div class="toolbar-title-block">
+        <div class="toolbar-title">{{ appIdentity.appName() }}</div>
+        <div class="toolbar-subtitle">Panel de gestion</div>
+      </div>
+
+      <div class="app-event-selector hidden min-w-0 items-center gap-2 lg:flex">
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>Evento</mat-label>
           <mat-select
@@ -73,13 +103,14 @@
           </mat-select>
         </mat-form-field>
         @if (eventContext.selectedAddress()) {
-          <span class="event-address truncate text-xs text-white/80">
+          <span class="event-address">
+            <mat-icon aria-hidden="true">location_on</mat-icon>
             {{ eventContext.selectedAddress() }}
           </span>
         }
       </div>
       <span class="flex-1"></span>
-      <div class="app-event-selector app-event-selector--compact mr-2 flex min-w-0 lg:hidden">
+      <div class="app-event-selector app-event-selector--compact flex min-w-0 lg:hidden">
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>Evento</mat-label>
           <mat-select
@@ -92,12 +123,19 @@
           </mat-select>
         </mat-form-field>
       </div>
-      @if (currentUser?.username) {
-        <span class="mr-2 hidden max-w-40 truncate text-sm sm:inline md:max-w-56">
-          {{ currentUser?.username }}
+      @if (displayName()) {
+        <span class="toolbar-user hidden max-w-40 truncate text-sm sm:inline-flex md:max-w-56 lg:hidden">
+          <mat-icon aria-hidden="true">person</mat-icon>
+          {{ displayName() }}
         </span>
       }
-      <button mat-icon-button type="button" aria-label="Cerrar sesion" (click)="auth.logout()">
+      <button
+        mat-icon-button
+        type="button"
+        class="toolbar-icon-button lg:hidden"
+        aria-label="Cerrar sesion"
+        (click)="auth.logout()"
+      >
         <mat-icon>logout</mat-icon>
       </button>
     </mat-toolbar>

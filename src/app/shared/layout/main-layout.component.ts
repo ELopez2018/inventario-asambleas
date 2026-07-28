@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { Component, OnInit, computed, inject } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -12,8 +12,10 @@ import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { map } from 'rxjs';
 import { APP_VERSION } from '../../core/app-version';
+import { AppIdentityService } from '../../core/services/app-identity.service';
 import { AuthService } from '../../core/services/auth.service';
 import { EventContextService } from '../../core/services/event-context.service';
+import { UserService } from '../../core/services/user.service';
 
 // Covers tablets in both orientations, including the 1080px landscape viewport of iPad 9.
 const COMPACT_LAYOUT_QUERY = '(max-width: 1100px)';
@@ -40,9 +42,12 @@ export class MainLayoutComponent implements OnInit {
   private readonly breakpointObserver = inject(BreakpointObserver);
 
   readonly auth = inject(AuthService);
+  readonly appIdentity = inject(AppIdentityService);
   readonly eventContext = inject(EventContextService);
+  private readonly userService = inject(UserService);
   readonly currentUser = this.auth.getCurrentUser();
   readonly appVersion = APP_VERSION;
+  readonly displayName = signal(this.currentUser?.username || 'Usuario');
   readonly isCompact = toSignal(
     this.breakpointObserver
       .observe(COMPACT_LAYOUT_QUERY)
@@ -59,6 +64,7 @@ export class MainLayoutComponent implements OnInit {
         path: this.normalizeRoute(screen.route),
         label: this.resolveScreenLabel(screen.code, screen.title),
         icon: screen.icon || 'chevron_right',
+        accent: this.resolveScreenAccent(screen.code),
         exact: screen.route === '/dashboard' || screen.route === 'dashboard',
       })),
   );
@@ -66,6 +72,7 @@ export class MainLayoutComponent implements OnInit {
   ngOnInit(): void {
     this.auth.ensureMyScreensLoaded().subscribe({ error: () => undefined });
     this.eventContext.loadEvents();
+    this.loadCurrentUserName();
   }
 
   selectEvent(eventId: number): void {
@@ -88,5 +95,41 @@ export class MainLayoutComponent implements OnInit {
     }
 
     return title;
+  }
+
+  private loadCurrentUserName(): void {
+    const userId = this.currentUser?.userId;
+
+    if (!userId) {
+      return;
+    }
+
+    this.userService.getById(userId).subscribe({
+      next: (user) => {
+        const fullName = `${user.firstName} ${user.lastName}`.trim();
+
+        if (fullName) {
+          this.displayName.set(fullName);
+        }
+      },
+      error: () => undefined,
+    });
+  }
+
+  private resolveScreenAccent(code: string): string {
+    const accents: Record<string, string> = {
+      DASHBOARD: 'cyan',
+      USERS: 'violet',
+      EVENTS: 'emerald',
+      INVENTORY_ITEMS: 'amber',
+      INVENTORY_TRANSACTIONS: 'orange',
+      INVENTORY_ITEM_DETAILS: 'sky',
+      INVENTORY_ITEM_DETAIL_PHOTOS: 'rose',
+      TRANSPORT_REQUESTS: 'blue',
+      ADMIN_CREDENTIALS: 'fuchsia',
+      SCREEN_ACCESS_ADMIN: 'indigo',
+    };
+
+    return accents[code] || 'slate';
   }
 }
