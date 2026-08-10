@@ -88,7 +88,8 @@ export class TransportDeliveryReceiptPdfService {
     item: TransportDeliveryReceiptItemResponse | undefined,
   ): void {
     setText(fields.articleNumber, item?.articleNumber);
-    setText(fields.description, item?.description);
+    const description = item != null ? `(${item.quantity}) ${item.description}` : undefined;
+    setText(fields.description, description);
     setText(fields.assignedTo, item?.assignedTo);
     setText(fields.requestNumber, item?.requestNumber);
   }
