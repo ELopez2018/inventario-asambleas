@@ -1,7 +1,15 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, computed, inject } from '@angular/core';
-import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormArray,
+  NonNullableFormBuilder,
+  ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
+  Validators,
+} from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -15,13 +23,51 @@ import { finalize } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { TransportDeliveryReceiptPdfService } from '../../../core/services/transport-delivery-receipt-pdf.service';
 import { TransportDeliveryReceiptService } from '../../../core/services/transport-delivery-receipt.service';
-import { TransportDeliveryReceiptResponse } from '../../../models/transport-delivery-receipt.model';
+import {
+  TransportDeliveryReceiptItemResponse,
+  TransportDeliveryReceiptResponse,
+} from '../../../models/transport-delivery-receipt.model';
 import { NativeDateTimePickerDirective } from '../../../shared/native-date-time-picker.directive';
 import { RequestPdfDialogComponent } from '../../transport-requests/request-pdf-dialog/request-pdf-dialog.component';
 
 function toNullableText(value: string): string | null {
   const trimmed = value.trim();
   return trimmed ? trimmed : null;
+}
+
+interface DeliveryReceiptItemFormRaw {
+  id: number;
+  assignedTo: string;
+  internalReturnQuantity: string | number | null;
+  internalReturnDate: string;
+  conditionNotes: string;
+}
+
+function internalReturnQuantityValidator(quantity: number): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const value = control.value;
+
+    if (value === null || value === undefined || value === '') {
+      return null;
+    }
+
+    const numeric = Number(value);
+
+    if (!Number.isFinite(numeric)) {
+      return { internalReturnQuantity: true };
+    }
+
+    return numeric <= quantity ? null : { internalReturnQuantity: true };
+  };
+}
+
+function resolveBackendUserMessage(err: HttpErrorResponse, fallback: string): string {
+  const problem = err.error as
+    | { userMessage?: string; detail?: string; message?: string; title?: string }
+    | null
+    | undefined;
+
+  return problem?.userMessage ?? problem?.detail ?? problem?.message ?? problem?.title ?? fallback;
 }
 
 @Component({
@@ -61,6 +107,9 @@ export class DeliveryReceiptFormComponent implements OnInit {
     'assignedTo',
     'requestNumber',
     'quantity',
+    'internalReturnQuantity',
+    'internalReturnDate',
+    'conditionNotes',
   ];
   readonly canUpdateReceipts = computed(() =>
     this.auth.canAccessAction('TRANSPORT_DELIVERY_RECEIPTS', 'update'),
@@ -74,6 +123,7 @@ export class DeliveryReceiptFormComponent implements OnInit {
     returnDeliveredTo: ['', [Validators.maxLength(255)]],
     returnDate: [''],
     returnReceivedBy: ['', [Validators.maxLength(255)]],
+    items: this.fb.array([]),
   });
 
   receipt: TransportDeliveryReceiptResponse | null = null;
@@ -86,6 +136,10 @@ export class DeliveryReceiptFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadReceipt();
+  }
+
+  get receiptItems(): FormArray {
+    return this.form.controls.items as FormArray;
   }
 
   loadReceipt(): void {
@@ -144,7 +198,8 @@ export class DeliveryReceiptFormComponent implements OnInit {
     try {
       const previewReceipt = {
         ...this.receipt,
-        ...this.form.getRawValue(),
+        ...this.buildReceiptHeaderPatch(),
+        items: this.buildPreviewItems(),
       };
       const pdfUrl = await this.receiptPdfService.createReceiptPdfUrl(previewReceipt);
       const dialogRef = this.dialog.open(RequestPdfDialogComponent, {
@@ -179,21 +234,32 @@ export class DeliveryReceiptFormComponent implements OnInit {
     this.saving = true;
     this.errorMessage = '';
     const raw = this.form.getRawValue();
+    const rawItems = raw.items as DeliveryReceiptItemFormRaw[];
 
     this.receiptService
       .update(this.receipt.id, {
-        ownerName: toNullableText(raw.ownerName),
-        ownerPhone: toNullableText(raw.ownerPhone),
-        ownerAddress: toNullableText(raw.ownerAddress),
-        observations: toNullableText(raw.observations),
-        returnDeliveredTo: toNullableText(raw.returnDeliveredTo),
-        returnDate: raw.returnDate || null,
-        returnReceivedBy: toNullableText(raw.returnReceivedBy),
+        ...this.buildReceiptHeaderPatch(),
+        items: rawItems.map((item) => ({
+          id: Number(item.id),
+          assignedTo: toNullableText(item.assignedTo),
+          internalReturnQuantity:
+            item.internalReturnQuantity === '' ||
+            item.internalReturnQuantity === null ||
+            item.internalReturnQuantity === undefined
+              ? null
+              : Number(item.internalReturnQuantity),
+          internalReturnDate: item.internalReturnDate || null,
+          conditionNotes: toNullableText(item.conditionNotes),
+        })),
       })
       .pipe(finalize(() => (this.saving = false)))
       .subscribe({
         next: (receipt) => this.setReceipt(receipt),
-        error: () => (this.errorMessage = 'No se pudo guardar el recibo CO-30.'),
+        error: (err: HttpErrorResponse) =>
+          (this.errorMessage = resolveBackendUserMessage(
+            err,
+            'No se pudo guardar el recibo CO-30.',
+          )),
       });
   }
 
@@ -207,6 +273,66 @@ export class DeliveryReceiptFormComponent implements OnInit {
       returnDeliveredTo: receipt.returnDeliveredTo ?? '',
       returnDate: receipt.returnDate ?? '',
       returnReceivedBy: receipt.returnReceivedBy ?? '',
+    });
+    this.receiptItems.clear();
+    for (const item of receipt.items) {
+      this.receiptItems.push(this.createReceiptItemGroup(item));
+    }
+  }
+
+  private createReceiptItemGroup(item: TransportDeliveryReceiptItemResponse) {
+    return this.fb.group({
+      id: [item.id],
+      assignedTo: [item.assignedTo ?? '', [Validators.maxLength(255)]],
+      internalReturnQuantity: [
+        item.internalReturnQuantity ?? '',
+        [Validators.min(0), internalReturnQuantityValidator(item.quantity)],
+      ],
+      internalReturnDate: [item.internalReturnDate ?? ''],
+      conditionNotes: [item.conditionNotes ?? '', [Validators.maxLength(500)]],
+    });
+  }
+
+  private buildReceiptHeaderPatch() {
+    const raw = this.form.getRawValue();
+
+    return {
+      ownerName: toNullableText(raw.ownerName),
+      ownerPhone: toNullableText(raw.ownerPhone),
+      ownerAddress: toNullableText(raw.ownerAddress),
+      observations: toNullableText(raw.observations),
+      returnDeliveredTo: toNullableText(raw.returnDeliveredTo),
+      returnDate: raw.returnDate || null,
+      returnReceivedBy: toNullableText(raw.returnReceivedBy),
+    };
+  }
+
+  private buildPreviewItems(): TransportDeliveryReceiptItemResponse[] {
+    if (!this.receipt) {
+      return [];
+    }
+
+    const itemEdits = this.form.getRawValue().items as DeliveryReceiptItemFormRaw[];
+
+    return this.receipt.items.map((item, index) => {
+      const edit = itemEdits[index];
+
+      if (!edit) {
+        return item;
+      }
+
+      return {
+        ...item,
+        assignedTo: toNullableText(edit.assignedTo),
+        internalReturnQuantity:
+          edit.internalReturnQuantity === '' ||
+          edit.internalReturnQuantity === null ||
+          edit.internalReturnQuantity === undefined
+            ? null
+            : Number(edit.internalReturnQuantity),
+        internalReturnDate: edit.internalReturnDate || null,
+        conditionNotes: toNullableText(edit.conditionNotes),
+      };
     });
   }
 }

@@ -7,6 +7,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatTabsModule } from '@angular/material/tabs';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { finalize } from 'rxjs';
@@ -18,6 +19,8 @@ import { TransportRequestService } from '../../../core/services/transport-reques
 import { TransportRequestResponse } from '../../../models/transport-request.model';
 import { RequestPdfDialogComponent } from '../request-pdf-dialog/request-pdf-dialog.component';
 
+type RequestArchiveTab = 'pending' | 'attended' | 'all';
+
 @Component({
   selector: 'app-request-list',
   imports: [
@@ -27,6 +30,7 @@ import { RequestPdfDialogComponent } from '../request-pdf-dialog/request-pdf-dia
     MatDialogModule,
     MatIconModule,
     MatProgressSpinnerModule,
+    MatTabsModule,
     MatTableModule,
     MatTooltipModule,
   ],
@@ -47,12 +51,18 @@ export class RequestListComponent implements OnInit {
   readonly displayedColumns = [
     'requestNumber',
     'status',
-    'stockReserved',
     'requestDate',
-    'requestedFrom',
-    'requestedTo',
+    'desiredDelivery',
+    'targetDepartment',
+    'targetPlace',
+    'allocationSummary',
     'items',
     'actions',
+  ];
+  readonly archiveTabs: { value: RequestArchiveTab; label: string }[] = [
+    { value: 'pending', label: 'Pendientes' },
+    { value: 'attended', label: 'Atendidas' },
+    { value: 'all', label: 'Todas' },
   ];
   readonly canCreateRequests = computed(() =>
     this.auth.canAccessAction('TRANSPORT_REQUESTS', 'create'),
@@ -71,6 +81,7 @@ export class RequestListComponent implements OnInit {
   );
 
   requests: TransportRequestResponse[] = [];
+  activeArchive: RequestArchiveTab = 'pending';
   eventDescriptionsById = new Map<number, string>();
   expandedRequestId: number | null = null;
   previewingRequestId: number | null = null;
@@ -84,6 +95,13 @@ export class RequestListComponent implements OnInit {
 
   isExpanded(requestId: number): boolean {
     return this.expandedRequestId === requestId;
+  }
+
+  selectedArchiveIndex(): number {
+    return Math.max(
+      this.archiveTabs.findIndex((tab) => tab.value === this.activeArchive),
+      0,
+    );
   }
 
   ngOnInit(): void {
@@ -114,12 +132,11 @@ export class RequestListComponent implements OnInit {
     this.loading = true;
     this.errorMessage = '';
 
-    this.requestService
-      .getAll()
+    this.getActiveArchiveRequest()
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({
         next: (requests) => {
-          this.requests = requests;
+          this.requests = this.sortRequests(requests);
 
           if (
             this.expandedRequestId &&
@@ -130,6 +147,78 @@ export class RequestListComponent implements OnInit {
         },
         error: () => (this.errorMessage = 'No se pudieron cargar las solicitudes.'),
       });
+  }
+
+  changeArchiveTab(index: number): void {
+    this.activeArchive = this.archiveTabs[index]?.value ?? 'pending';
+    this.expandedRequestId = null;
+    this.loadRequests();
+  }
+
+  getDesiredDeliveryLabel(request: TransportRequestResponse): string {
+    const date = request.desiredDate ?? '-';
+    const time = request.desiredTime ? request.desiredTime.slice(0, 5) : '';
+
+    return time ? `${date} ${time}` : date;
+  }
+
+  getAllocationSummary(request: TransportRequestResponse): string {
+    const allocations = request.items.flatMap((item) => item.allocations ?? []);
+    const storeNames = new Set(
+      allocations
+        .map((allocation) => allocation.sourceStoreName?.trim())
+        .filter((storeName): storeName is string => Boolean(storeName)),
+    );
+    const missingTotal = allocations
+      .filter((allocation) => allocation.status === 'SIN_EXISTENCIA')
+      .reduce((sum, allocation) => sum + allocation.requestedQuantity, 0);
+    const newItems = allocations.filter((allocation) => allocation.status === 'ITEM_NUEVO').length;
+    const parts = [
+      storeNames.size ? `${storeNames.size} bodega${storeNames.size === 1 ? '' : 's'}` : '',
+      missingTotal > 0 ? `faltan ${missingTotal}` : '',
+      newItems > 0
+        ? `${newItems} item${newItems === 1 ? '' : 's'} nuevo${newItems === 1 ? '' : 's'}`
+        : '',
+    ].filter(Boolean);
+
+    return parts.length ? parts.join(' · ') : 'Automatico pendiente';
+  }
+
+  getAllocationStatusLabel(status: string): string {
+    const labels: Record<string, string> = {
+      PLANIFICADA: 'Planificada',
+      PARCIAL: 'Parcial',
+      SIN_EXISTENCIA: 'Sin existencia',
+      ITEM_NUEVO: 'Item nuevo',
+      RECOGIDA: 'Recogida',
+      ENTREGADA: 'Entregada',
+      DEVUELTA: 'Devuelta',
+    };
+
+    return labels[status] ?? status;
+  }
+
+  private getActiveArchiveRequest() {
+    switch (this.activeArchive) {
+      case 'pending':
+        return this.requestService.getPending();
+      case 'attended':
+        return this.requestService.getAttended();
+      case 'all':
+        return this.requestService.getAll();
+    }
+  }
+
+  private sortRequests(requests: TransportRequestResponse[]): TransportRequestResponse[] {
+    if (this.activeArchive !== 'pending') {
+      return requests;
+    }
+
+    return [...requests].sort((a, b) => {
+      const aDate = `${a.desiredDate ?? '9999-12-31'} ${a.desiredTime ?? '23:59:59'}`;
+      const bDate = `${b.desiredDate ?? '9999-12-31'} ${b.desiredTime ?? '23:59:59'}`;
+      return aDate.localeCompare(bDate);
+    });
   }
 
   deleteRequest(request: TransportRequestResponse): void {

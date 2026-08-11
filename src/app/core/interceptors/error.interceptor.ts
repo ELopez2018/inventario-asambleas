@@ -23,6 +23,11 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         'INV-TRANSPORT-REQUEST-STOCK-001',
         'INV-TRANSPORT-REQUEST-STORE-001',
         'INV-TRANSPORT-REQUEST-ITEM-001',
+        'INV-TRANSPORT-REQUEST-ALLOCATION-001',
+        'INV-TRANSPORT-REQUEST-ALLOCATION-002',
+        'INV-TRANSPORT-REQUEST-ALLOCATION-STORE-001',
+        'INV-TRANSPORT-RECEIPT-RETURN-001',
+        'INV-STOCK-001',
       ].includes(err.error?.errorCode);
 
       if (err.status === 401 && !isLoginRequest) {

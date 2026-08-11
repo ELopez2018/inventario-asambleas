@@ -18,14 +18,15 @@ import { finalize, forkJoin } from 'rxjs';
 import { EventContextService } from '../../../core/services/event-context.service';
 import { InventoryItemService } from '../../../core/services/inventory-item.service';
 import { InventoryTransactionService } from '../../../core/services/inventory-transaction.service';
+import { StoreService } from '../../../core/services/store.service';
 import { UserService } from '../../../core/services/user.service';
 import { InventoryItemResponse } from '../../../models/inventory-item.model';
 import {
   CreateInventoryTransactionRequest,
   MovementType,
 } from '../../../models/inventory-transaction.model';
+import { StoreResponse } from '../../../models/store.model';
 import { UserResponse } from '../../../models/user.model';
-import { INVENTORY_STORES } from '../../../shared/catalogs.constants';
 import { NativeDateTimePickerDirective } from '../../../shared/native-date-time-picker.directive';
 
 function toLocalDateTime(value: string): string {
@@ -76,10 +77,10 @@ export class TransactionFormComponent implements OnInit {
   readonly eventContext = inject(EventContextService);
   private readonly itemService = inject(InventoryItemService);
   private readonly transactionService = inject(InventoryTransactionService);
+  private readonly storeService = inject(StoreService);
   private readonly userService = inject(UserService);
 
   readonly transactionId = Number(this.route.snapshot.paramMap.get('id')) || null;
-  readonly storeOptions = INVENTORY_STORES;
   readonly movementTypes: { value: MovementType; label: string }[] = [
     { value: 'INCOME', label: 'Ingreso' },
     { value: 'RETURN', label: 'Retorno' },
@@ -106,6 +107,7 @@ export class TransactionFormComponent implements OnInit {
   );
 
   items: InventoryItemResponse[] = [];
+  storeOptions: StoreResponse[] = [];
   users: UserResponse[] = [];
   loading = false;
   saving = false;
@@ -121,13 +123,15 @@ export class TransactionFormComponent implements OnInit {
     if (this.transactionId) {
       forkJoin({
         items: this.itemService.getAll(),
+        stores: this.storeService.getAll(),
         users: this.userService.getAll(),
         transaction: this.transactionService.getById(this.transactionId),
       })
         .pipe(finalize(() => (this.loading = false)))
         .subscribe({
-          next: ({ items, users, transaction }) => {
+          next: ({ items, stores, users, transaction }) => {
             this.items = items;
+            this.storeOptions = stores;
             this.users = users;
             this.form.patchValue({
               itemId: transaction.itemId,
@@ -152,12 +156,14 @@ export class TransactionFormComponent implements OnInit {
 
     forkJoin({
       items: this.itemService.getAll(),
+      stores: this.storeService.getAll(),
       users: this.userService.getAll(),
     })
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({
-        next: ({ items, users }) => {
+        next: ({ items, stores, users }) => {
           this.items = items;
+          this.storeOptions = stores;
           this.users = users;
         },
         error: () => (this.errorMessage = 'No se pudo cargar la informacion del movimiento.'),

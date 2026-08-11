@@ -6,11 +6,11 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { finalize } from 'rxjs';
+import { finalize, forkJoin } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { InventoryTransactionService } from '../../../core/services/inventory-transaction.service';
+import { StoreService } from '../../../core/services/store.service';
 import { InventoryTransactionResponse } from '../../../models/inventory-transaction.model';
-import { STORE_OPTIONS } from '../../../shared/store-options';
 
 @Component({
   selector: 'app-transaction-list',
@@ -28,6 +28,7 @@ import { STORE_OPTIONS } from '../../../shared/store-options';
 })
 export class TransactionListComponent implements OnInit {
   private readonly transactionService = inject(InventoryTransactionService);
+  private readonly storeService = inject(StoreService);
   private readonly auth = inject(AuthService);
 
   readonly displayedColumns = [
@@ -50,7 +51,7 @@ export class TransactionListComponent implements OnInit {
   readonly canDeleteTransactions = computed(() =>
     this.auth.canAccessAction('INVENTORY_TRANSACTIONS', 'delete'),
   );
-  private readonly storeLabelMap = new Map(STORE_OPTIONS.map((store) => [store.id, store.label]));
+  private storeLabelMap = new Map<number, string>();
   transactions: InventoryTransactionResponse[] = [];
   loading = false;
   errorMessage = '';
@@ -71,11 +72,16 @@ export class TransactionListComponent implements OnInit {
     this.loading = true;
     this.errorMessage = '';
 
-    this.transactionService
-      .getAll()
+    forkJoin({
+      transactions: this.transactionService.getAll(),
+      stores: this.storeService.getAll(),
+    })
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({
-        next: (transactions) => (this.transactions = transactions),
+        next: ({ transactions, stores }) => {
+          this.transactions = transactions;
+          this.storeLabelMap = new Map(stores.map((store) => [store.id, store.description]));
+        },
         error: () => (this.errorMessage = 'No se pudieron cargar los movimientos.'),
       });
   }

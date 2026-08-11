@@ -30,7 +30,7 @@ import {
   InventoryItemStoreStock,
 } from '../../../models/inventory-item.model';
 import { UserResponse } from '../../../models/user.model';
-import { INVENTORY_STATES, INVENTORY_STORES } from '../../../shared/catalogs.constants';
+import { INVENTORY_STATES } from '../../../shared/catalogs.constants';
 
 interface MergeItemsDialogData {
   targetItem: InventoryItemResponse;
@@ -80,7 +80,6 @@ export class ItemListComponent implements OnInit {
     'stateId',
     'actions',
   ];
-  private readonly storeLabelMap = new Map(INVENTORY_STORES.map((store) => [store.id, store.code]));
   private readonly stateLabelMap = new Map(INVENTORY_STATES.map((state) => [state.id, state.code]));
   readonly canCreateItems = computed(() => this.auth.canAccessAction('INVENTORY_ITEMS', 'create'));
   readonly canExportItems = computed(() => this.auth.canAccessAction('INVENTORY_ITEMS', 'export'));
@@ -98,7 +97,7 @@ export class ItemListComponent implements OnInit {
   errorMessage = '';
 
   getStoreLabel(storeId: number) {
-    return this.storeLabelMap.get(storeId) ?? `Almacen #${storeId}`;
+    return `Almacen #${storeId}`;
   }
 
   getStoreDisplayName(stock: InventoryItemStoreStock) {

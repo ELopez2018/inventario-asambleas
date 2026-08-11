@@ -50,7 +50,9 @@
           <mat-select formControlName="sourceStoreId">
             <mat-option [value]="0">No aplica</mat-option>
             @for (store of storeOptions; track store.id) {
-              <mat-option [value]="store.id">{{ store.label }}</mat-option>
+              <mat-option [value]="store.id" [disabled]="!store.available">
+                {{ store.description }}
+              </mat-option>
             }
           </mat-select>
           @if (form.controls.sourceStoreId.hasError('min')) {
@@ -63,7 +65,9 @@
           <mat-select formControlName="destinationStoreId">
             <mat-option [value]="0">No aplica</mat-option>
             @for (store of storeOptions; track store.id) {
-              <mat-option [value]="store.id">{{ store.label }}</mat-option>
+              <mat-option [value]="store.id" [disabled]="!store.available">
+                {{ store.description }}
+              </mat-option>
             }
           </mat-select>
           @if (form.controls.destinationStoreId.hasError('min')) {

@@ -10,6 +10,15 @@ export interface UpdateTransportDeliveryReceiptRequest {
   returnDeliveredTo?: string | null;
   returnDate?: string | null;
   returnReceivedBy?: string | null;
+  items?: UpdateTransportDeliveryReceiptItemRequest[];
+}
+
+export interface UpdateTransportDeliveryReceiptItemRequest {
+  id: number;
+  assignedTo?: string | null;
+  internalReturnQuantity?: number | null;
+  internalReturnDate?: string | null;
+  conditionNotes?: string | null;
 }
 
 export interface TransportDeliveryReceiptItemResponse {
@@ -21,6 +30,9 @@ export interface TransportDeliveryReceiptItemResponse {
   assignedTo: string | null;
   requestNumber: string;
   quantity: number;
+  internalReturnQuantity: number | null;
+  internalReturnDate: string | null;
+  conditionNotes: string | null;
 }
 
 export interface TransportDeliveryReceiptResponse {

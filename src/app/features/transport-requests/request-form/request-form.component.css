@@ -33,6 +33,14 @@
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.4);
 }
 
+.allocation-panel {
+  box-shadow: none;
+}
+
+.allocation-panel :is(.mat-expansion-panel-header-title, .mat-expansion-panel-header-description) {
+  min-width: 0;
+}
+
 .review-grid {
   display: grid;
   gap: 0.75rem;

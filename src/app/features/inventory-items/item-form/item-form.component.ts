@@ -17,13 +17,15 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { finalize, forkJoin } from 'rxjs';
 import { InventoryItemService } from '../../../core/services/inventory-item.service';
+import { StoreService } from '../../../core/services/store.service';
 import { UserService } from '../../../core/services/user.service';
 import {
   CreateInventoryItemRequest,
   InventoryItemStoreStock,
 } from '../../../models/inventory-item.model';
+import { StoreResponse } from '../../../models/store.model';
 import { UserResponse } from '../../../models/user.model';
-import { INVENTORY_STATES, INVENTORY_STORES } from '../../../shared/catalogs.constants';
+import { INVENTORY_STATES } from '../../../shared/catalogs.constants';
 
 function atLeastOneStoreStockValidator(control: AbstractControl): ValidationErrors | null {
   if (!(control instanceof FormArray)) {
@@ -66,10 +68,10 @@ export class ItemFormComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly itemService = inject(InventoryItemService);
+  private readonly storeService = inject(StoreService);
   private readonly userService = inject(UserService);
 
   readonly itemId = Number(this.route.snapshot.paramMap.get('id')) || null;
-  readonly storeOptions = INVENTORY_STORES;
   readonly stateOptions = INVENTORY_STATES;
   readonly form = this.fb.group({
     description: ['', [Validators.required, Validators.maxLength(255)]],
@@ -81,6 +83,7 @@ export class ItemFormComponent implements OnInit {
   });
 
   users: UserResponse[] = [];
+  storeOptions: StoreResponse[] = [];
   loading = false;
   saving = false;
   errorMessage = '';
@@ -95,12 +98,14 @@ export class ItemFormComponent implements OnInit {
     if (this.itemId) {
       forkJoin({
         users: this.userService.getAll(),
+        stores: this.storeService.getAll(),
         item: this.itemService.getById(this.itemId),
       })
         .pipe(finalize(() => (this.loading = false)))
         .subscribe({
-          next: ({ users, item }) => {
+          next: ({ users, stores, item }) => {
             this.users = users;
+            this.storeOptions = stores;
             this.form.patchValue({
               description: item.description,
               ownerUserId: item.ownerUserId,
@@ -115,17 +120,22 @@ export class ItemFormComponent implements OnInit {
 
     forkJoin({
       users: this.userService.getAll(),
+      stores: this.storeService.getAll(),
     })
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({
-        next: ({ users }) => (this.users = users),
+        next: ({ users, stores }) => {
+          this.users = users;
+          this.storeOptions = stores;
+          this.setStoreStocks([]);
+        },
         error: () => (this.errorMessage = 'No se pudo cargar la informacion del articulo.'),
       });
   }
 
   createStoreStockGroup(stock?: Pick<InventoryItemStoreStock, 'storeId' | 'quantity'>) {
     return this.fb.group({
-      storeId: [stock?.storeId ?? 1, [Validators.required, Validators.min(1)]],
+      storeId: [stock?.storeId ?? this.defaultStoreId(), [Validators.required, Validators.min(1)]],
       quantity: [stock?.quantity ?? 0, [Validators.required, Validators.min(0)]],
     });
   }
@@ -133,10 +143,14 @@ export class ItemFormComponent implements OnInit {
   setStoreStocks(stocks: InventoryItemStoreStock[]) {
     const rows: Pick<InventoryItemStoreStock, 'storeId' | 'quantity'>[] = stocks.length
       ? stocks
-      : [{ storeId: 1, quantity: 0 }];
+      : [{ storeId: this.defaultStoreId(), quantity: 0 }];
     this.storeStocks.clear();
     rows.forEach((stock) => this.storeStocks.push(this.createStoreStockGroup(stock)));
     this.storeStocks.updateValueAndValidity();
+  }
+
+  private defaultStoreId(): number {
+    return this.storeOptions.find((store) => store.available)?.id ?? this.storeOptions[0]?.id ?? 0;
   }
 
   addStoreStock() {

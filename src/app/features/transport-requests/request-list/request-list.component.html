@@ -15,6 +15,16 @@
   </div>
 
   <div class="app-data-surface">
+    <mat-tab-group
+      class="request-archive-tabs"
+      [selectedIndex]="selectedArchiveIndex()"
+      (selectedIndexChange)="changeArchiveTab($event)"
+    >
+      @for (tab of archiveTabs; track tab.value) {
+      <mat-tab [label]="tab.label"></mat-tab>
+      }
+    </mat-tab-group>
+
     @if (loading) {
     <div class="flex items-center justify-center p-10">
       <mat-spinner diameter="36" />
@@ -42,16 +52,6 @@
           </td>
         </ng-container>
 
-        <ng-container matColumnDef="stockReserved">
-          <th mat-header-cell *matHeaderCellDef>Inventario</th>
-          <td mat-cell *matCellDef="let request">
-            <span class="responsive-cell-label" aria-hidden="true">Inventario</span>
-            <span class="request-stock" [class.request-stock--released]="!request.stockReserved">
-              {{ request.stockReserved ? 'Reservado' : 'Liberado' }}
-            </span>
-          </td>
-        </ng-container>
-
         <ng-container matColumnDef="requestDate">
           <th mat-header-cell *matHeaderCellDef>Fecha</th>
           <td mat-cell *matCellDef="let request">
@@ -60,19 +60,35 @@
           </td>
         </ng-container>
 
-        <ng-container matColumnDef="requestedFrom">
-          <th mat-header-cell *matHeaderCellDef>Solicita desde</th>
+        <ng-container matColumnDef="desiredDelivery">
+          <th mat-header-cell *matHeaderCellDef>Deseada</th>
           <td mat-cell *matCellDef="let request">
-            <span class="responsive-cell-label" aria-hidden="true">Solicita desde</span>
-            {{ request.requestedFrom }}
+            <span class="responsive-cell-label" aria-hidden="true">Deseada</span>
+            {{ getDesiredDeliveryLabel(request) }}
           </td>
         </ng-container>
 
-        <ng-container matColumnDef="requestedTo">
-          <th mat-header-cell *matHeaderCellDef>Solicita hacia</th>
+        <ng-container matColumnDef="targetDepartment">
+          <th mat-header-cell *matHeaderCellDef>Departamento destino</th>
           <td mat-cell *matCellDef="let request">
-            <span class="responsive-cell-label" aria-hidden="true">Solicita hacia</span>
-            {{ request.requestedTo }}
+            <span class="responsive-cell-label" aria-hidden="true">Departamento destino</span>
+            {{ request.targetDepartment || '-' }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="targetPlace">
+          <th mat-header-cell *matHeaderCellDef>Lugar destino</th>
+          <td mat-cell *matCellDef="let request">
+            <span class="responsive-cell-label" aria-hidden="true">Lugar destino</span>
+            {{ request.targetPlace || '-' }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="allocationSummary">
+          <th mat-header-cell *matHeaderCellDef>Surtido</th>
+          <td mat-cell *matCellDef="let request">
+            <span class="responsive-cell-label" aria-hidden="true">Surtido</span>
+            {{ getAllocationSummary(request) }}
           </td>
         </ng-container>
 
@@ -100,10 +116,24 @@
                       @if (item.newItem) {
                       <span class="request-items-panel__badge">Nuevo</span>
                       }
+                      <span class="request-items-panel__badge request-items-panel__badge--type">
+                        {{ item.articleControlType }}
+                      </span>
                     </span>
                     <span class="request-items-panel__qty">Cant: {{ item.quantity }}</span>
                     @if (item.sizeAndWeight) {
                     <span class="request-items-panel__meta">{{ item.sizeAndWeight }}</span>
+                    }
+                    @if ((item.allocations ?? []).length) {
+                    <div class="request-items-panel__allocations">
+                      @for (allocation of item.allocations ?? []; track allocation.id) {
+                      <span>
+                        {{ allocation.sourceStoreName || 'Sin bodega' }}:
+                        {{ allocation.allocatedQuantity }}
+                        ({{ getAllocationStatusLabel(allocation.status) }})
+                      </span>
+                      }
+                    </div>
                     }
                   </div>
                   }

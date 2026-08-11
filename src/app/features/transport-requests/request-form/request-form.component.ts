@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, effect, inject } from '@angular/core';
 import {
   AbstractControl,
@@ -26,11 +27,14 @@ import { finalize } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { EventContextService } from '../../../core/services/event-context.service';
 import { InventoryItemService } from '../../../core/services/inventory-item.service';
+import { StoreService } from '../../../core/services/store.service';
 import { TransportRequestService } from '../../../core/services/transport-request.service';
 import { TransportRequestPdfService } from '../../../core/services/transport-request-pdf.service';
 import { UserService } from '../../../core/services/user.service';
 import { InventoryItemResponse } from '../../../models/inventory-item.model';
+import { StoreResponse } from '../../../models/store.model';
 import {
+  ArticleControlType,
   CreateTransportRequestRequest,
   TRANSPORT_REQUEST_RELEASE_STOCK_STATUSES,
   TransportRequestItemRequest,
@@ -41,6 +45,20 @@ import { RequestPdfDialogComponent } from '../request-pdf-dialog/request-pdf-dia
 
 const DEFAULT_REQUESTED_TO = 'Transporte y Materiales';
 const NEW_ITEM_OPTION = '__NEW_ITEM__';
+
+interface TransportRequestItemFormRaw {
+  quantity: number;
+  description: string;
+  sizeAndWeight: string;
+  lineTotal: string | number;
+  articleControlType: ArticleControlType;
+  allocations: TransportRequestAllocationFormRaw[];
+}
+
+interface TransportRequestAllocationFormRaw {
+  sourceStoreId: number;
+  allocatedQuantity: number;
+}
 
 function toNullableText(value: string): string | null {
   const trimmed = value.trim();
@@ -98,6 +116,46 @@ function decimalPrecisionValidator(
   };
 }
 
+function itemAllocationValidator(control: AbstractControl): ValidationErrors | null {
+  const quantity = Number(control.get('quantity')?.value || 0);
+  const allocationsControl = control.get('allocations');
+
+  if (!(allocationsControl instanceof FormArray) || allocationsControl.length === 0) {
+    return null;
+  }
+
+  let allocatedTotal = 0;
+  const storeIds = new Set<number>();
+
+  for (const allocationControl of allocationsControl.controls) {
+    const sourceStoreId = Number(allocationControl.get('sourceStoreId')?.value || 0);
+    const allocatedQuantity = Number(allocationControl.get('allocatedQuantity')?.value || 0);
+
+    if (sourceStoreId > 0) {
+      if (storeIds.has(sourceStoreId)) {
+        return { duplicateAllocationStore: true };
+      }
+
+      storeIds.add(sourceStoreId);
+    }
+
+    if (Number.isFinite(allocatedQuantity)) {
+      allocatedTotal += allocatedQuantity;
+    }
+  }
+
+  return allocatedTotal > quantity ? { allocationOverflow: true } : null;
+}
+
+function resolveBackendUserMessage(err: HttpErrorResponse, fallback: string): string {
+  const problem = err.error as
+    | { userMessage?: string; detail?: string; message?: string; title?: string }
+    | null
+    | undefined;
+
+  return problem?.userMessage ?? problem?.detail ?? problem?.message ?? problem?.title ?? fallback;
+}
+
 @Component({
   selector: 'app-request-form',
   imports: [
@@ -128,6 +186,7 @@ export class RequestFormComponent implements OnInit {
   private readonly auth = inject(AuthService);
   readonly eventContext = inject(EventContextService);
   private readonly inventoryItemService = inject(InventoryItemService);
+  private readonly storeService = inject(StoreService);
   private readonly userService = inject(UserService);
   private readonly requestPdfService = inject(TransportRequestPdfService);
   private readonly dialog = inject(MatDialog);
@@ -146,6 +205,11 @@ export class RequestFormComponent implements OnInit {
     'CANCELADA',
     'RECHAZADA',
     'CERRADA',
+  ];
+  readonly articleControlTypes: { value: ArticleControlType; label: string }[] = [
+    { value: 'INDIVIDUAL', label: 'Individual' },
+    { value: 'LOTE', label: 'Lote' },
+    { value: 'KIT', label: 'Kit' },
   ];
   readonly displayDescriptionSource = (value: unknown): string =>
     value === NEW_ITEM_OPTION ? 'Articulo nuevo' : String(value ?? '');
@@ -189,6 +253,8 @@ export class RequestFormComponent implements OnInit {
   });
 
   inventoryItems: InventoryItemResponse[] = [];
+  stores: StoreResponse[] = [];
+  private backendRequestedFromOptions: string[] = [];
   requestedFromOptions: string[] = [];
   targetDepartmentOptions: string[] = [];
   requestNumberLabel = '';
@@ -199,6 +265,7 @@ export class RequestFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadInventoryItems();
+    this.loadStores();
     this.loadAutocompleteOptions();
     this.loadReceivedByDefault();
     this.form.controls.eventId.setValue(this.eventContext.activeEventId() ?? 0);
@@ -216,13 +283,84 @@ export class RequestFormComponent implements OnInit {
   }
 
   private createItemGroup() {
+    return this.fb.group(
+      {
+        quantity: [1, [Validators.required, Validators.min(0.01), this.quantityValidator]],
+        descriptionSource: ['', [Validators.required, Validators.maxLength(255)]],
+        description: ['', [Validators.required, Validators.maxLength(255)]],
+        articleControlType: ['INDIVIDUAL' as ArticleControlType, [Validators.required]],
+        sizeAndWeight: ['', [Validators.maxLength(255)]],
+        lineTotal: ['', [this.lineTotalValidator]],
+        allocations: this.fb.array([]),
+      },
+      { validators: itemAllocationValidator },
+    );
+  }
+
+  private createAllocationGroup(
+    allocation: { sourceStoreId?: number | null; allocatedQuantity?: number | null } = {},
+  ) {
     return this.fb.group({
-      quantity: [1, [Validators.required, Validators.min(0.01), this.quantityValidator]],
-      descriptionSource: ['', [Validators.required, Validators.maxLength(255)]],
-      description: ['', [Validators.required, Validators.maxLength(255)]],
-      sizeAndWeight: ['', [Validators.maxLength(255)]],
-      lineTotal: ['', [this.lineTotalValidator]],
+      sourceStoreId: [
+        allocation.sourceStoreId ?? this.defaultStoreId(),
+        [Validators.required, Validators.min(1)],
+      ],
+      allocatedQuantity: [
+        allocation.allocatedQuantity ?? 1,
+        [Validators.required, Validators.min(0.01), this.quantityValidator],
+      ],
     });
+  }
+
+  private defaultStoreId(): number {
+    return this.stores.find((store) => store.available)?.id ?? this.stores[0]?.id ?? 0;
+  }
+
+  getItemAllocations(index: number): FormArray {
+    return this.itemsArray.at(index).get('allocations') as FormArray;
+  }
+
+  addAllocation(index: number): void {
+    this.getItemAllocations(index).push(this.createAllocationGroup());
+    this.itemsArray.at(index).updateValueAndValidity();
+    this.itemsStepForm.patchValue({ ready: false });
+  }
+
+  removeAllocation(itemIndex: number, allocationIndex: number): void {
+    this.getItemAllocations(itemIndex).removeAt(allocationIndex);
+    this.itemsArray.at(itemIndex).updateValueAndValidity();
+    this.itemsStepForm.patchValue({ ready: false });
+  }
+
+  clearAllocations(index: number): void {
+    this.getItemAllocations(index).clear();
+    this.itemsArray.at(index).updateValueAndValidity();
+    this.itemsStepForm.patchValue({ ready: false });
+  }
+
+  allocationTotal(index: number): number {
+    return this.getItemAllocations(index).controls.reduce(
+      (sum, allocation) => sum + Number(allocation.get('allocatedQuantity')?.value || 0),
+      0,
+    );
+  }
+
+  allocationMissing(index: number): number {
+    const quantity = Number(this.itemsArray.at(index).get('quantity')?.value || 0);
+    return Math.max(quantity - this.allocationTotal(index), 0);
+  }
+
+  getStoreLabel(storeId: number | null | undefined): string {
+    if (!storeId) {
+      return 'Sin bodega';
+    }
+
+    return this.stores.find((store) => store.id === storeId)?.description ?? `Bodega #${storeId}`;
+  }
+
+  getStoreOptionLabel(store: StoreResponse): string {
+    const priority = Number.isFinite(store.priorityOrder) ? store.priorityOrder : 'sin prioridad';
+    return `${store.description} - prioridad ${priority}`;
   }
 
   getFilteredInventoryItems(value: unknown): InventoryItemResponse[] {
@@ -304,17 +442,42 @@ export class RequestFormComponent implements OnInit {
     });
   }
 
+  private loadStores(): void {
+    this.storeService.getAll().subscribe({
+      next: (stores) => {
+        this.stores = stores;
+        this.syncRequestedFromOptions();
+      },
+      error: () => {
+        this.stores = [];
+        this.syncRequestedFromOptions();
+      },
+    });
+  }
+
   private loadAutocompleteOptions(): void {
     this.requestService.getAutocompleteOptions().subscribe({
       next: (options) => {
-        this.requestedFromOptions = options.requestedFrom ?? [];
+        this.backendRequestedFromOptions = options.requestedFrom ?? [];
+        this.syncRequestedFromOptions();
         this.targetDepartmentOptions = options.targetDepartments ?? [];
       },
       error: () => {
-        this.requestedFromOptions = [];
+        this.backendRequestedFromOptions = [];
+        this.syncRequestedFromOptions();
         this.targetDepartmentOptions = [];
       },
     });
+  }
+
+  private syncRequestedFromOptions(): void {
+    const storeDescriptions = this.stores
+      .filter((store) => store.available)
+      .map((store) => store.description);
+
+    this.requestedFromOptions = Array.from(
+      new Set([...storeDescriptions, ...this.backendRequestedFromOptions].filter(Boolean)),
+    );
   }
 
   private loadReceivedByDefault(): void {
@@ -441,7 +604,8 @@ export class RequestFormComponent implements OnInit {
     this.itemsArray.updateValueAndValidity({ emitEvent: false });
 
     if (this.itemsArray.invalid) {
-      this.errorMessage = 'Revise los items: cantidad y descripcion son obligatorios.';
+      this.errorMessage =
+        'Revise los items: cantidad, descripcion, tipo de control y surtido por bodega.';
       return;
     }
 
@@ -479,21 +643,29 @@ export class RequestFormComponent implements OnInit {
 
           this.itemsArray.clear();
           for (const item of request.items) {
-            this.itemsArray.push(
-              this.fb.group({
-                quantity: [
-                  item.quantity,
-                  [Validators.required, Validators.min(0.01), this.quantityValidator],
-                ],
-                descriptionSource: [
-                  item.description,
-                  [Validators.required, Validators.maxLength(255)],
-                ],
-                description: [item.description, [Validators.required, Validators.maxLength(255)]],
-                sizeAndWeight: [item.sizeAndWeight ?? '', [Validators.maxLength(255)]],
-                lineTotal: [item.lineTotal ?? '', [this.lineTotalValidator]],
-              }),
-            );
+            const itemGroup = this.createItemGroup();
+            itemGroup.patchValue({
+              quantity: item.quantity,
+              descriptionSource: item.description,
+              description: item.description,
+              articleControlType: item.articleControlType ?? 'INDIVIDUAL',
+              sizeAndWeight: item.sizeAndWeight ?? '',
+              lineTotal: item.lineTotal == null ? '' : String(item.lineTotal),
+            });
+
+            const allocations = itemGroup.get('allocations') as FormArray;
+            for (const allocation of item.allocations ?? []) {
+              if (allocation.sourceStoreId && allocation.allocatedQuantity > 0) {
+                allocations.push(
+                  this.createAllocationGroup({
+                    sourceStoreId: allocation.sourceStoreId,
+                    allocatedQuantity: allocation.allocatedQuantity,
+                  }),
+                );
+              }
+            }
+
+            this.itemsArray.push(itemGroup);
           }
 
           if (!request.items.length) {
@@ -524,12 +696,24 @@ export class RequestFormComponent implements OnInit {
     this.errorMessage = '';
     const raw = this.form.getRawValue();
 
-    const items: TransportRequestItemRequest[] = raw.items.map((item) => ({
-      quantity: Number(item.quantity),
-      description: item.description.trim(),
-      sizeAndWeight: toNullableText(item.sizeAndWeight),
-      lineTotal: toOptionalNumber(item.lineTotal),
-    }));
+    const rawItems = raw.items as TransportRequestItemFormRaw[];
+    const items: TransportRequestItemRequest[] = rawItems.map((item) => {
+      const allocations = item.allocations
+        .map((allocation) => ({
+          sourceStoreId: Number(allocation.sourceStoreId),
+          allocatedQuantity: Number(allocation.allocatedQuantity),
+        }))
+        .filter((allocation) => allocation.sourceStoreId > 0 && allocation.allocatedQuantity > 0);
+
+      return {
+        quantity: Number(item.quantity),
+        description: item.description.trim(),
+        sizeAndWeight: toNullableText(item.sizeAndWeight),
+        lineTotal: toOptionalNumber(item.lineTotal),
+        articleControlType: item.articleControlType,
+        ...(allocations.length ? { allocations } : {}),
+      };
+    });
 
     const body: CreateTransportRequestRequest = {
       requestDate: raw.requestDate,
@@ -565,7 +749,8 @@ export class RequestFormComponent implements OnInit {
         );
         void this.router.navigate(['/transport-requests']);
       },
-      error: () => (this.errorMessage = 'No se pudo guardar la solicitud.'),
+      error: (err: HttpErrorResponse) =>
+        (this.errorMessage = resolveBackendUserMessage(err, 'No se pudo guardar la solicitud.')),
     });
   }
 }

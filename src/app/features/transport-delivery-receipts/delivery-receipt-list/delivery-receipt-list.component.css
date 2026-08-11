@@ -1,3 +1,15 @@
 :host {
   display: block;
 }
+
+.receipt-view-tabs {
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.receipt-owner-group {
+  margin-bottom: 0.25rem;
+  color: #0369a1;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}

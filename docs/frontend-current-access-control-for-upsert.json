@@ -180,6 +180,31 @@
     "notes": "Cubre /events, /events/new y /events/:id/edit."
   },
   {
+    "code": "STORES",
+    "title": "Bodegas",
+    "route": "/stores",
+    "icon": "warehouse",
+    "section": "INVENTARIO",
+    "sortOrder": 35,
+    "showInMenu": true,
+    "requiresAuth": true,
+    "defaultRoles": ["SUPER", "ADMIN", "AUX"],
+    "actions": [
+      {
+        "code": "STORES_UPDATE_PRIORITY",
+        "actionKey": "updatePriority",
+        "title": "Actualizar prioridad",
+        "icon": "save",
+        "style": "primary",
+        "sortOrder": 10,
+        "confirmationRequired": false,
+        "defaultRoles": ["SUPER", "ADMIN"],
+        "notes": "PUT /stores/{id}/priority. AUX puede ver la pantalla por defecto, pero no editar prioridad."
+      }
+    ],
+    "notes": "Listado operativo de bodegas. Menor prioridad numerica significa mayor prioridad de surtido automatico."
+  },
+  {
     "code": "INVENTORY_ITEMS",
     "title": "Inventarios",
     "route": "/inventory-items",

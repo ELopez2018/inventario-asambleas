@@ -74,7 +74,9 @@
                   <mat-label>Almacen</mat-label>
                   <mat-select formControlName="storeId">
                     @for (store of storeOptions; track store.id) {
-                      <mat-option [value]="store.id">{{ store.label }}</mat-option>
+                      <mat-option [value]="store.id" [disabled]="!store.available">
+                        {{ store.description }}
+                      </mat-option>
                     }
                   </mat-select>
                   @if (stockGroup.get('storeId')?.hasError('min')) {

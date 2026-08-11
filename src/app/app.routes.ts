@@ -80,6 +80,15 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'stores',
+        canActivate: [screenAccessGuard],
+        data: { screenCode: 'STORES' },
+        loadComponent: () =>
+          import('./features/stores/store-list/store-list.component').then(
+            (m) => m.StoreListComponent,
+          ),
+      },
+      {
         path: 'inventory-items',
         canActivate: [screenAccessGuard],
         data: { screenCode: 'INVENTORY_ITEMS' },

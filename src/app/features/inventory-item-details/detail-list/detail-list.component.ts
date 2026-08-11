@@ -10,11 +10,11 @@ import { finalize, forkJoin } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { InventoryItemDetailService } from '../../../core/services/inventory-item-detail.service';
 import { InventoryItemService } from '../../../core/services/inventory-item.service';
+import { StoreService } from '../../../core/services/store.service';
 import { InventoryItemDetailResponse } from '../../../models/inventory-item-detail.model';
 import { InventoryItemResponse } from '../../../models/inventory-item.model';
 import {
   INVENTORY_STATES,
-  INVENTORY_STORES,
   INVENTORY_UNIT_TYPES,
 } from '../../../shared/catalogs.constants';
 
@@ -35,6 +35,7 @@ import {
 export class DetailListComponent implements OnInit {
   private readonly detailService = inject(InventoryItemDetailService);
   private readonly itemService = inject(InventoryItemService);
+  private readonly storeService = inject(StoreService);
   private readonly auth = inject(AuthService);
 
   readonly displayedColumns = [
@@ -56,9 +57,7 @@ export class DetailListComponent implements OnInit {
   readonly canDeleteDetails = computed(() =>
     this.auth.canAccessAction('INVENTORY_ITEM_DETAILS', 'delete'),
   );
-  private readonly storeLabelMap = new Map(
-    INVENTORY_STORES.map((store) => [store.id, store.label]),
-  );
+  private storeLabelMap = new Map<number, string>();
   private readonly stateLabelMap = new Map(
     INVENTORY_STATES.map((state) => [state.id, state.label]),
   );
@@ -110,12 +109,14 @@ export class DetailListComponent implements OnInit {
     forkJoin({
       details: this.detailService.getAll(),
       items: this.itemService.getAll(),
+      stores: this.storeService.getAll(),
     })
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({
-        next: ({ details, items }) => {
+        next: ({ details, items, stores }) => {
           this.details = details;
           this.items = items;
+          this.storeLabelMap = new Map(stores.map((store) => [store.id, store.description]));
         },
         error: () => (this.errorMessage = 'No se pudo cargar el detalle de inventario.'),
       });

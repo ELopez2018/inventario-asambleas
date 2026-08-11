@@ -26,12 +26,13 @@ import { EventContextService } from '../../../core/services/event-context.servic
 import { InventoryItemDetailPhotoConfigService } from '../../../core/services/inventory-item-detail-photo-config.service';
 import { InventoryItemDetailPhotoService } from '../../../core/services/inventory-item-detail-photo.service';
 import { InventoryItemDetailService } from '../../../core/services/inventory-item-detail.service';
+import { StoreService } from '../../../core/services/store.service';
 import {
   InventoryItemDetailPhotoConfigResponse,
   InventoryItemDetailPhotoResponse,
 } from '../../../models/inventory-item-detail-photo.model';
 import { InventoryItemDetailResponse } from '../../../models/inventory-item-detail.model';
-import { INVENTORY_STORES } from '../../../shared/catalogs.constants';
+import { StoreResponse } from '../../../models/store.model';
 import { NativeDateTimePickerDirective } from '../../../shared/native-date-time-picker.directive';
 
 function toApiLocalDateTime(value: string): string | undefined {
@@ -68,8 +69,8 @@ export class PhotoListComponent implements OnInit {
   private readonly detailService = inject(InventoryItemDetailService);
   private readonly photoConfigService = inject(InventoryItemDetailPhotoConfigService);
   private readonly photoService = inject(InventoryItemDetailPhotoService);
+  private readonly storeService = inject(StoreService);
 
-  readonly storeOptions = INVENTORY_STORES;
   readonly displayedColumns = [
     'fileName',
     'contentType',
@@ -133,6 +134,7 @@ export class PhotoListComponent implements OnInit {
   });
 
   details: InventoryItemDetailResponse[] = [];
+  storeOptions: StoreResponse[] = [];
   configs: InventoryItemDetailPhotoConfigResponse[] = [];
   photos: InventoryItemDetailPhotoResponse[] = [];
   selectedFiles: File[] = [];
@@ -187,7 +189,9 @@ export class PhotoListComponent implements OnInit {
   }
 
   getStoreLabel(storeId: number) {
-    return this.storeOptions.find((store) => store.id === storeId)?.label || `Bodega #${storeId}`;
+    return (
+      this.storeOptions.find((store) => store.id === storeId)?.description || `Bodega #${storeId}`
+    );
   }
 
   getDetailLabel(detailId: number) {
@@ -398,12 +402,14 @@ export class PhotoListComponent implements OnInit {
 
     forkJoin({
       details: this.detailService.getAll(),
+      stores: this.storeService.getAll(),
       configs: this.photoConfigService.getAll(),
     })
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({
-        next: ({ details, configs }) => {
+        next: ({ details, stores, configs }) => {
           this.details = details;
+          this.storeOptions = stores;
           this.configs = configs;
         },
         error: () => (this.errorMessage = 'No se pudo cargar la informacion de fotos.'),

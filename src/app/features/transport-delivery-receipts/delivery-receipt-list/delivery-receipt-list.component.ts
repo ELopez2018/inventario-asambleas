@@ -7,6 +7,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatTabsModule } from '@angular/material/tabs';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { finalize } from 'rxjs';
@@ -25,6 +26,7 @@ import { RequestPdfDialogComponent } from '../../transport-requests/request-pdf-
     MatDialogModule,
     MatIconModule,
     MatProgressSpinnerModule,
+    MatTabsModule,
     MatTableModule,
     MatTooltipModule,
   ],
@@ -46,6 +48,10 @@ export class DeliveryReceiptListComponent implements OnInit {
     'items',
     'actions',
   ];
+  readonly viewTabs: { value: 'number' | 'owner'; label: string }[] = [
+    { value: 'number', label: 'Por numero' },
+    { value: 'owner', label: 'Por propietario' },
+  ];
   readonly canEditReceipts = computed(() =>
     this.auth.canAccessAction('TRANSPORT_DELIVERY_RECEIPTS', 'edit'),
   );
@@ -54,6 +60,7 @@ export class DeliveryReceiptListComponent implements OnInit {
   );
 
   receipts: TransportDeliveryReceiptResponse[] = [];
+  viewMode: 'number' | 'owner' = 'number';
   previewingReceiptId: number | null = null;
   deletingReceiptId: number | null = null;
   loading = false;
@@ -71,9 +78,55 @@ export class DeliveryReceiptListComponent implements OnInit {
       .getAll()
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({
-        next: (receipts) => (this.receipts = receipts),
+        next: (receipts) => (this.receipts = this.sortReceipts(receipts)),
         error: () => (this.errorMessage = 'No se pudieron cargar los recibos CO-30.'),
       });
+  }
+
+  changeViewTab(index: number): void {
+    this.viewMode = this.viewTabs[index]?.value ?? 'number';
+    this.receipts = this.sortReceipts(this.receipts);
+  }
+
+  selectedViewIndex(): number {
+    return Math.max(
+      this.viewTabs.findIndex((tab) => tab.value === this.viewMode),
+      0,
+    );
+  }
+
+  shouldShowOwnerGroup(index: number): boolean {
+    if (this.viewMode !== 'owner') {
+      return false;
+    }
+
+    const owner = this.getOwnerGroupLabel(this.receipts[index]);
+    const previousOwner = index > 0 ? this.getOwnerGroupLabel(this.receipts[index - 1]) : null;
+
+    return owner !== previousOwner;
+  }
+
+  getOwnerGroupLabel(receipt: TransportDeliveryReceiptResponse): string {
+    return receipt.ownerName?.trim() || 'Sin propietario';
+  }
+
+  private sortReceipts(
+    receipts: TransportDeliveryReceiptResponse[],
+  ): TransportDeliveryReceiptResponse[] {
+    return [...receipts].sort((a, b) => {
+      if (this.viewMode === 'owner') {
+        const ownerCompare = this.getOwnerGroupLabel(a).localeCompare(
+          this.getOwnerGroupLabel(b),
+          'es-CO',
+        );
+
+        if (ownerCompare !== 0) {
+          return ownerCompare;
+        }
+      }
+
+      return a.receiptNumber.localeCompare(b.receiptNumber, 'es-CO', { numeric: true });
+    });
   }
 
   async previewReceiptPdf(receipt: TransportDeliveryReceiptResponse): Promise<void> {

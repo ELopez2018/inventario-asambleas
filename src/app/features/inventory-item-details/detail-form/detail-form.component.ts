@@ -11,12 +11,14 @@ import { MatSelectModule } from '@angular/material/select';
 import { finalize, forkJoin } from 'rxjs';
 import { InventoryItemDetailService } from '../../../core/services/inventory-item-detail.service';
 import { InventoryItemService } from '../../../core/services/inventory-item.service';
+import { StoreService } from '../../../core/services/store.service';
 import {
   CreateInventoryItemDetailRequest,
   DetailItemStatus,
 } from '../../../models/inventory-item-detail.model';
 import { InventoryItemResponse } from '../../../models/inventory-item.model';
-import { INVENTORY_STATES, INVENTORY_STORES, INVENTORY_UNIT_TYPES } from '../../../shared/catalogs.constants';
+import { StoreResponse } from '../../../models/store.model';
+import { INVENTORY_STATES, INVENTORY_UNIT_TYPES } from '../../../shared/catalogs.constants';
 
 @Component({
   selector: 'app-detail-form',
@@ -40,9 +42,9 @@ export class DetailFormComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly detailService = inject(InventoryItemDetailService);
   private readonly itemService = inject(InventoryItemService);
+  private readonly storeService = inject(StoreService);
 
   readonly detailId = Number(this.route.snapshot.paramMap.get('id')) || null;
-  readonly storeOptions = INVENTORY_STORES;
   readonly stateOptions = INVENTORY_STATES;
   readonly unitTypeOptions = INVENTORY_UNIT_TYPES;
   readonly itemStatuses: { value: DetailItemStatus; label: string }[] = [
@@ -64,6 +66,7 @@ export class DetailFormComponent implements OnInit {
   });
 
   items: InventoryItemResponse[] = [];
+  storeOptions: StoreResponse[] = [];
   loading = false;
   saving = false;
   errorMessage = '';
@@ -74,12 +77,14 @@ export class DetailFormComponent implements OnInit {
     if (this.detailId) {
       forkJoin({
         items: this.itemService.getAll(),
+        stores: this.storeService.getAll(),
         detail: this.detailService.getById(this.detailId),
       })
         .pipe(finalize(() => (this.loading = false)))
         .subscribe({
-          next: ({ items, detail }) => {
+          next: ({ items, stores, detail }) => {
             this.items = items;
+            this.storeOptions = stores;
             this.form.patchValue({
               itemId: detail.itemId,
               storeId: detail.storeId,
@@ -96,13 +101,23 @@ export class DetailFormComponent implements OnInit {
       return;
     }
 
-    this.itemService
-      .getAll()
+    forkJoin({
+      items: this.itemService.getAll(),
+      stores: this.storeService.getAll(),
+    })
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({
-        next: (items) => (this.items = items),
+        next: ({ items, stores }) => {
+          this.items = items;
+          this.storeOptions = stores;
+          this.form.controls.storeId.setValue(this.defaultStoreId());
+        },
         error: () => (this.errorMessage = 'No se pudo cargar la lista de articulos.'),
       });
+  }
+
+  private defaultStoreId(): number {
+    return this.storeOptions.find((store) => store.available)?.id ?? this.storeOptions[0]?.id ?? 0;
   }
 
   submit() {

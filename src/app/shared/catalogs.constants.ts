@@ -32,13 +32,6 @@ export const INVENTORY_STATES: CatalogOption[] = [
   },
 ];
 
-export const INVENTORY_STORES: CatalogOption[] = [
-  { id: 1, code: 'ARMENIA', label: 'Armenia' },
-  { id: 2, code: 'MANIZALES', label: 'Manizales' },
-  { id: 3, code: 'PEREIRA - BODEGA 1', label: 'Pereira - Bodega 1' },
-  { id: 4, code: 'PEREIRA - BODEGA 2', label: 'Pereira - Bodega 2' },
-];
-
 export const INVENTORY_UNIT_TYPES: CatalogOption[] = [
   { id: 1, code: 'UNIDAD', label: 'Unidad' },
   { id: 2, code: 'CAJA', label: 'Caja' },

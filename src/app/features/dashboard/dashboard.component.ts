@@ -8,6 +8,7 @@ const SCREEN_ROUTE_BY_CODE: Record<string, string> = {
   DASHBOARD: '/dashboard',
   USERS: '/users',
   EVENTS: '/events',
+  STORES: '/stores',
   INVENTORY_ITEMS: '/inventory-items',
   INVENTORY_TRANSACTIONS: '/inventory-transactions',
   INVENTORY_ITEM_DETAILS: '/inventory-item-details',
@@ -29,6 +30,7 @@ export class DashboardComponent {
   private readonly captions = new Map([
     ['USERS', 'Responsables y contactos'],
     ['EVENTS', 'Fechas y observaciones'],
+    ['STORES', 'Prioridad para surtido automatico'],
     ['INVENTORY_ITEMS', 'Existencias y estado'],
     ['INVENTORY_TRANSACTIONS', 'Historial del inventario'],
     ['INVENTORY_ITEM_DETAILS', 'Unidades por articulo y bodega'],
@@ -41,6 +43,7 @@ export class DashboardComponent {
   private readonly accents = new Map([
     ['USERS', 'violet'],
     ['EVENTS', 'emerald'],
+    ['STORES', 'lime'],
     ['INVENTORY_ITEMS', 'amber'],
     ['INVENTORY_TRANSACTIONS', 'orange'],
     ['INVENTORY_ITEM_DETAILS', 'cyan'],

@@ -20,6 +20,14 @@ export class TransportRequestService {
     return this.http.get<TransportRequestResponse[]>(BASE);
   }
 
+  getPending() {
+    return this.http.get<TransportRequestResponse[]>(`${BASE}/pending`);
+  }
+
+  getAttended() {
+    return this.http.get<TransportRequestResponse[]>(`${BASE}/attended`);
+  }
+
   getById(id: number) {
     return this.http.get<TransportRequestResponse>(`${BASE}/${id}`);
   }

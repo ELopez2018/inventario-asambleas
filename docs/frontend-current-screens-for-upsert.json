@@ -60,6 +60,18 @@
     "notes": "Mismo permiso para /events/new y /events/:id/edit."
   },
   {
+    "code": "STORES",
+    "title": "Bodegas",
+    "route": "/stores",
+    "icon": "warehouse",
+    "section": "INVENTARIO",
+    "sortOrder": 35,
+    "showInMenu": true,
+    "requiresAuth": true,
+    "defaultRoles": ["SUPER", "ADMIN", "AUX"],
+    "notes": "Listado operativo de bodegas y prioridad para surtido automatico. Actualizar prioridad se controla por accion updatePriority."
+  },
+  {
     "code": "INVENTORY_ITEMS",
     "title": "Inventarios",
     "route": "/inventory-items",
