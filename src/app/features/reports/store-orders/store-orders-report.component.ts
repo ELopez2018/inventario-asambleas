@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -9,9 +10,11 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { finalize } from 'rxjs';
 import { StoreOrdersReportService } from '../../../core/services/store-orders-report.service';
+import { StoreOrdersReportPdfService } from '../../../core/services/store-orders-report-pdf.service';
 import { StoreService } from '../../../core/services/store.service';
 import { StoreResponse } from '../../../models/store.model';
 import { StoreOrdersReport } from '../../../models/store-orders-report.model';
+import { RequestPdfDialogComponent } from '../../transport-requests/request-pdf-dialog/request-pdf-dialog.component';
 
 function resolveBackendUserMessage(err: HttpErrorResponse, fallback: string): string {
   const problem = err.error as
@@ -27,6 +30,7 @@ function resolveBackendUserMessage(err: HttpErrorResponse, fallback: string): st
   imports: [
     CommonModule,
     MatButtonModule,
+    MatDialogModule,
     MatFormFieldModule,
     MatIconModule,
     MatProgressSpinnerModule,
@@ -39,30 +43,26 @@ function resolveBackendUserMessage(err: HttpErrorResponse, fallback: string): st
 export class StoreOrdersReportComponent implements OnInit {
   private readonly storeService = inject(StoreService);
   private readonly reportService = inject(StoreOrdersReportService);
-  private readonly changeDetector = inject(ChangeDetectorRef);
+  private readonly reportPdfService = inject(StoreOrdersReportPdfService);
+  private readonly dialog = inject(MatDialog);
 
   readonly displayedColumns = ['description', 'quantity', 'co30FormNumber', 'responsible'];
 
   stores: StoreResponse[] = [];
   selectedStoreId: number | null = null;
   report: StoreOrdersReport | null = null;
-  printDate: Date | null = null;
   loadingStores = false;
   loadingReport = false;
+  generatingPdf = false;
   errorMessage = '';
 
   ngOnInit(): void {
     this.loadStores();
   }
 
-  get canPrint(): boolean {
-    return Boolean(this.report?.orders.length);
-  }
-
   onStoreChange(storeId: number | null): void {
     this.selectedStoreId = storeId;
     this.report = null;
-    this.printDate = null;
     this.errorMessage = '';
   }
 
@@ -73,7 +73,6 @@ export class StoreOrdersReportComponent implements OnInit {
 
     const requestedStoreId = this.selectedStoreId;
     this.report = null;
-    this.printDate = null;
     this.errorMessage = '';
     this.loadingReport = true;
 
@@ -97,14 +96,36 @@ export class StoreOrdersReportComponent implements OnInit {
       });
   }
 
-  printReport(): void {
-    if (!this.canPrint) {
+  async previewPdf(): Promise<void> {
+    const report = this.report;
+    const store = this.stores.find((candidate) => candidate.id === this.selectedStoreId);
+
+    if (!report?.orders.length || !store || this.generatingPdf) {
       return;
     }
 
-    this.printDate = new Date();
-    this.changeDetector.detectChanges();
-    window.print();
+    this.generatingPdf = true;
+    this.errorMessage = '';
+
+    try {
+      const pdfUrl = await this.reportPdfService.createPdfUrl(report, store);
+      const dialogRef = this.dialog.open(RequestPdfDialogComponent, {
+        data: {
+          pdfUrl,
+          requestNumber: String(report.storeId),
+          title: 'Reporte de pedidos por almacén',
+          subtitle: `${report.storeName} · ${report.orders.length} pedido${report.orders.length === 1 ? '' : 's'}`,
+        },
+        maxWidth: '96vw',
+        panelClass: 'request-pdf-dialog-panel',
+      });
+
+      dialogRef.afterClosed().subscribe(() => this.reportPdfService.revokePdfUrl(pdfUrl));
+    } catch {
+      this.errorMessage = 'No se pudo abrir el PDF del reporte.';
+    } finally {
+      this.generatingPdf = false;
+    }
   }
 
   private loadStores(): void {

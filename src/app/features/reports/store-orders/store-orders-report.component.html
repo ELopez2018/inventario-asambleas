@@ -5,9 +5,14 @@
       <p class="app-page-subtitle">Pedidos con formulario C-30 generado.</p>
     </div>
     <div class="app-page-actions">
-      <button mat-flat-button color="primary" type="button" [disabled]="!canPrint" (click)="printReport()">
-        <mat-icon>print</mat-icon>
-        Imprimir
+      <button mat-flat-button color="primary" type="button" [disabled]="!report?.orders?.length || generatingPdf"
+        (click)="previewPdf()">
+        @if (generatingPdf) {
+        <mat-spinner diameter="18" />
+        } @else {
+        <mat-icon>picture_as_pdf</mat-icon>
+        }
+        Ver PDF
       </button>
     </div>
   </div>
@@ -53,9 +58,6 @@
     <header class="report-heading">
       <h2 id="report-title">Reporte de pedidos por almacén</h2>
       <p><strong>Almacén:</strong> {{ loadedReport.storeName }}</p>
-      @if (printDate) {
-      <p><strong>Fecha de impresión:</strong> {{ printDate | date: 'medium' }}</p>
-      }
       <p class="report-total"><strong>Total general:</strong> {{ loadedReport.totalQuantity }}</p>
     </header>
 

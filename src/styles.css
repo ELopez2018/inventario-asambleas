@@ -275,34 +275,6 @@ app-root {
   }
 }
 
-@media print {
-  body:has(.store-orders-report) {
-    overflow: visible;
-    background: #fff;
-  }
-
-  body:has(.store-orders-report) .app-sidenav,
-  body:has(.store-orders-report) .app-toolbar,
-  body:has(.store-orders-report) app-internal-chat-floating-panel {
-    display: none !important;
-  }
-
-  body:has(.store-orders-report) .app-shell,
-  body:has(.store-orders-report) .app-sidenav-content,
-  body:has(.store-orders-report) .app-main-content {
-    display: block !important;
-    width: 100% !important;
-    height: auto !important;
-    min-height: 0 !important;
-    overflow: visible !important;
-    padding: 0 !important;
-  }
-
-  body:has(.store-orders-report) .app-shell {
-    max-width: none !important;
-  }
-}
-
 @media (hover: none),
 (pointer: coarse) {
   .mat-mdc-button-base {
