@@ -34,6 +34,9 @@
           @if (form.controls.quantity.hasError('min')) {
             <mat-error>La cantidad debe ser mayor a cero.</mat-error>
           }
+          @if (form.controls.quantity.hasError('decimalPlaces')) {
+            <mat-error>Use máximo dos decimales.</mat-error>
+          }
         </mat-form-field>
 
         <mat-form-field appearance="outline">

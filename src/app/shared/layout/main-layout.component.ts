@@ -24,6 +24,7 @@ const SCREEN_ROUTE_BY_CODE: Record<string, string> = {
   USERS: '/users',
   EVENTS: '/events',
   STORES: '/stores',
+  STORE_ORDERS_REPORT: '/reports/store-orders',
   INVENTORY_ITEMS: '/inventory-items',
   INVENTORY_TRANSACTIONS: '/inventory-transactions',
   INVENTORY_ITEM_DETAILS: '/inventory-item-details',
@@ -164,6 +165,18 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
       return 'Inventarios';
     }
 
+    if (code === 'TRANSPORT_REQUESTS') {
+      return 'Transporte CO-31';
+    }
+
+    if (code === 'TRANSPORT_DELIVERY_RECEIPTS') {
+      return 'Recibos CO-30';
+    }
+
+    if (code === 'STORE_ORDERS_REPORT') {
+      return 'Pedidos por almacén';
+    }
+
     return title;
   }
 
@@ -193,6 +206,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
       USERS: 'violet',
       EVENTS: 'emerald',
       STORES: 'lime',
+      STORE_ORDERS_REPORT: 'teal',
       INVENTORY_ITEMS: 'amber',
       INVENTORY_TRANSACTIONS: 'orange',
       INVENTORY_ITEM_DETAILS: 'sky',

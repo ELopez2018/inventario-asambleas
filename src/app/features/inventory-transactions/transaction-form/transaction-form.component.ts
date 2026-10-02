@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject } from '@angular/core';
 import {
   AbstractControl,
@@ -53,6 +54,25 @@ function transferStoresValidator(control: AbstractControl): ValidationErrors | n
   return null;
 }
 
+function twoDecimalPlacesValidator(control: AbstractControl): ValidationErrors | null {
+  const value = control.value;
+
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+
+  const decimalPart = String(value).trim().split('.')[1] ?? '';
+  return decimalPart.length <= 2 ? null : { decimalPlaces: true };
+}
+
+function resolveBackendUserMessage(err: HttpErrorResponse, fallback: string): string {
+  const problem = err.error as
+    | { userMessage?: string; detail?: string; message?: string; title?: string }
+    | null
+    | undefined;
+  return problem?.userMessage ?? problem?.detail ?? problem?.message ?? problem?.title ?? fallback;
+}
+
 @Component({
   selector: 'app-transaction-form',
   imports: [
@@ -83,6 +103,7 @@ export class TransactionFormComponent implements OnInit {
   readonly transactionId = Number(this.route.snapshot.paramMap.get('id')) || null;
   readonly movementTypes: { value: MovementType; label: string }[] = [
     { value: 'INCOME', label: 'Ingreso' },
+    { value: 'LOAN', label: 'Prestamo' },
     { value: 'RETURN', label: 'Retorno' },
     { value: 'TRANSFER', label: 'Traslado' },
     { value: 'DECOMMISSION', label: 'Baja' },
@@ -91,7 +112,7 @@ export class TransactionFormComponent implements OnInit {
   readonly form = this.fb.group(
     {
       itemId: [0, [Validators.required, Validators.min(1)]],
-      quantity: [1, [Validators.required, Validators.min(0.01)]],
+      quantity: [1, [Validators.required, Validators.min(0.01), twoDecimalPlacesValidator]],
       movementType: this.fb.control<MovementType>('INCOME', Validators.required),
       sourceStoreId: [0],
       destinationStoreId: [0],
@@ -203,6 +224,11 @@ export class TransactionFormComponent implements OnInit {
         receivedBy.setValidators([Validators.required, Validators.min(1)]);
         conditionNotes.setValidators([Validators.required, Validators.maxLength(500)]);
         break;
+      case 'LOAN':
+        destination.setValue(0, { emitEvent: false });
+        destination.disable({ emitEvent: false });
+        source.setValidators([Validators.required, Validators.min(1)]);
+        break;
       case 'EGRESS':
       case 'DECOMMISSION':
         destination.setValue(0, { emitEvent: false });
@@ -266,7 +292,8 @@ export class TransactionFormComponent implements OnInit {
 
     request.pipe(finalize(() => (this.saving = false))).subscribe({
       next: () => void this.router.navigate(['/inventory-transactions']),
-      error: () => (this.errorMessage = 'No se pudo guardar el movimiento.'),
+      error: (err: HttpErrorResponse) =>
+        (this.errorMessage = resolveBackendUserMessage(err, 'No se pudo guardar el movimiento.')),
     });
   }
 }

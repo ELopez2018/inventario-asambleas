@@ -95,8 +95,8 @@ export class StoreListComponent implements OnInit {
 
     const priorityOrder = this.getPriorityDraft(store);
 
-    if (!Number.isFinite(priorityOrder) || priorityOrder <= 0) {
-      this.errorMessage = 'La prioridad debe ser mayor que cero.';
+    if (!Number.isFinite(priorityOrder) || priorityOrder < 0) {
+      this.errorMessage = 'La prioridad no puede ser negativa.';
       return;
     }
 

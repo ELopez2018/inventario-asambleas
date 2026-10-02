@@ -2,6 +2,83 @@
   display: block;
 }
 
+.inventory-summary-table {
+  width: 100%;
+  min-width: max-content;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.8125rem;
+}
+
+.inventory-summary-scroll {
+  max-height: 70vh;
+  overflow: auto;
+}
+
+.inventory-summary-table th,
+.inventory-summary-table td {
+  border-bottom: 1px solid #e2e8f0;
+  border-right: 1px solid #f1f5f9;
+  padding: 0.625rem 0.75rem;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.inventory-summary-table thead th {
+  position: sticky;
+  z-index: 2;
+  top: 0;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.inventory-summary-table thead tr:nth-child(2) th {
+  top: 2.25rem;
+}
+
+.inventory-summary-table__store-heading {
+  border-bottom-color: #cbd5e1 !important;
+  background: #eef2ff !important;
+  color: #3730a3 !important;
+}
+
+.inventory-summary-table .inventory-summary-table__existence {
+  background: #eff6ff;
+  color: #1e3a8a;
+  font-weight: 700;
+}
+
+.inventory-summary-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.inventory-summary-table__description {
+  min-width: 13rem;
+  text-align: left !important;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.inventory-summary-table__total {
+  background: #f8fafc;
+  font-weight: 800;
+}
+
+.inventory-summary-table__actions,
+.inventory-summary-table__actions-heading {
+  position: sticky;
+  right: 0;
+  background: #ffffff;
+}
+
+.inventory-summary-table__actions-heading {
+  background: #f8fafc !important;
+}
+
 .inventory-filter {
   display: flex;
   align-items: center;
@@ -227,6 +304,10 @@
 }
 
 @media (max-width: 1100px) {
+  .inventory-summary-scroll {
+    overflow-x: auto !important;
+  }
+
   :host ::ng-deep .responsive-table .mat-mdc-row:hover {
     background: #ffffff;
   }

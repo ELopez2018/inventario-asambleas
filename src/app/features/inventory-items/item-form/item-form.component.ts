@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject } from '@angular/core';
 import {
   AbstractControl,
@@ -45,6 +46,25 @@ function uniqueStoreValidator(control: AbstractControl): ValidationErrors | null
     .filter((storeId) => storeId > 0);
   const uniqueStoreIds = new Set(storeIds);
   return uniqueStoreIds.size === storeIds.length ? null : { duplicateStore: true };
+}
+
+function twoDecimalPlacesValidator(control: AbstractControl): ValidationErrors | null {
+  const value = control.value;
+
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+
+  const decimalPart = String(value).trim().split('.')[1] ?? '';
+  return decimalPart.length <= 2 ? null : { decimalPlaces: true };
+}
+
+function resolveBackendUserMessage(err: HttpErrorResponse, fallback: string): string {
+  const problem = err.error as
+    | { userMessage?: string; detail?: string; message?: string; title?: string }
+    | null
+    | undefined;
+  return problem?.userMessage ?? problem?.detail ?? problem?.message ?? problem?.title ?? fallback;
 }
 
 @Component({
@@ -111,7 +131,13 @@ export class ItemFormComponent implements OnInit {
               ownerUserId: item.ownerUserId,
               stateId: item.stateId,
             });
-            this.setStoreStocks(item.storeStocks);
+            // El API recibe existencia total por bodega; quantity en la respuesta es disponible.
+            this.setStoreStocks(
+              item.storeStocks.map((stock) => ({
+                storeId: stock.storeId,
+                quantity: stock.existenceQuantity,
+              })),
+            );
           },
           error: () => (this.errorMessage = 'No se pudo cargar la informacion del articulo.'),
         });
@@ -136,11 +162,14 @@ export class ItemFormComponent implements OnInit {
   createStoreStockGroup(stock?: Pick<InventoryItemStoreStock, 'storeId' | 'quantity'>) {
     return this.fb.group({
       storeId: [stock?.storeId ?? this.defaultStoreId(), [Validators.required, Validators.min(1)]],
-      quantity: [stock?.quantity ?? 0, [Validators.required, Validators.min(0)]],
+      quantity: [
+        stock?.quantity ?? 0,
+        [Validators.required, Validators.min(0), twoDecimalPlacesValidator],
+      ],
     });
   }
 
-  setStoreStocks(stocks: InventoryItemStoreStock[]) {
+  setStoreStocks(stocks: Pick<InventoryItemStoreStock, 'storeId' | 'quantity'>[]) {
     const rows: Pick<InventoryItemStoreStock, 'storeId' | 'quantity'>[] = stocks.length
       ? stocks
       : [{ storeId: this.defaultStoreId(), quantity: 0 }];
@@ -192,7 +221,8 @@ export class ItemFormComponent implements OnInit {
 
     request.pipe(finalize(() => (this.saving = false))).subscribe({
       next: () => void this.router.navigate(['/inventory-items']),
-      error: () => (this.errorMessage = 'No se pudo guardar el articulo.'),
+      error: (err: HttpErrorResponse) =>
+        (this.errorMessage = resolveBackendUserMessage(err, 'No se pudo guardar el articulo.')),
     });
   }
 }

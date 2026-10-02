@@ -145,7 +145,7 @@ export class RequestListComponent implements OnInit {
             this.expandedRequestId = null;
           }
         },
-        error: () => (this.errorMessage = 'No se pudieron cargar las solicitudes.'),
+        error: () => (this.errorMessage = 'No se pudieron cargar las solicitudes CO-31.'),
       });
   }
 
@@ -222,7 +222,7 @@ export class RequestListComponent implements OnInit {
   }
 
   deleteRequest(request: TransportRequestResponse): void {
-    const confirmed = confirm(`Eliminar solicitud ${request.requestNumber}?`);
+    const confirmed = confirm(`Eliminar solicitud CO-31 ${request.requestNumber}?`);
 
     if (!confirmed) {
       return;
@@ -230,7 +230,7 @@ export class RequestListComponent implements OnInit {
 
     this.requestService.delete(request.id).subscribe({
       next: () => this.loadRequests(),
-      error: () => (this.errorMessage = 'No se pudo eliminar la solicitud.'),
+      error: () => (this.errorMessage = 'No se pudo eliminar la solicitud CO-31.'),
     });
   }
 

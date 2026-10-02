@@ -1,0 +1,108 @@
+<section class="app-page app-page--medium store-orders-report">
+  <div class="app-page-header no-print">
+    <div class="app-page-heading">
+      <h1 class="app-page-title">Reporte de pedidos por almacén</h1>
+      <p class="app-page-subtitle">Pedidos con formulario C-30 generado.</p>
+    </div>
+    <div class="app-page-actions">
+      <button mat-flat-button color="primary" type="button" [disabled]="!canPrint" (click)="printReport()">
+        <mat-icon>print</mat-icon>
+        Imprimir
+      </button>
+    </div>
+  </div>
+
+  <div class="report-controls no-print">
+    <mat-form-field appearance="outline">
+      <mat-label>Almacén</mat-label>
+      <mat-select [value]="selectedStoreId" [disabled]="loadingStores" (selectionChange)="onStoreChange($event.value)">
+        @for (store of stores; track store.id) {
+        <mat-option [value]="store.id">
+          {{ store.description }}{{ store.available ? '' : ' (No disponible)' }}
+        </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <button mat-flat-button color="primary" type="button"
+      [disabled]="selectedStoreId === null || loadingReport || loadingStores" (click)="loadReport()">
+      @if (loadingReport) {
+      <mat-spinner diameter="18" />
+      } @else {
+      <mat-icon>search</mat-icon>
+      }
+      Consultar
+    </button>
+    @if (loadingStores) {
+    <mat-spinner diameter="24" aria-label="Cargando almacenes" />
+    }
+  </div>
+
+  @if (errorMessage) {
+  <div class="report-message report-message--error" role="alert">{{ errorMessage }}</div>
+  }
+
+  @if (loadingReport) {
+  <div class="report-message report-message--loading no-print" role="status">
+    <mat-spinner diameter="32" />
+    <span>Consultando pedidos...</span>
+  </div>
+  }
+
+  @if (report; as loadedReport) {
+  <section class="report-document" aria-labelledby="report-title">
+    <header class="report-heading">
+      <h2 id="report-title">Reporte de pedidos por almacén</h2>
+      <p><strong>Almacén:</strong> {{ loadedReport.storeName }}</p>
+      @if (printDate) {
+      <p><strong>Fecha de impresión:</strong> {{ printDate | date: 'medium' }}</p>
+      }
+      <p class="report-total"><strong>Total general:</strong> {{ loadedReport.totalQuantity }}</p>
+    </header>
+
+    @if (loadedReport.orders.length) {
+    <div class="app-data-surface">
+      <div class="app-table-scroll">
+        <table mat-table [dataSource]="loadedReport.orders" class="responsive-table">
+          <ng-container matColumnDef="description">
+            <th mat-header-cell *matHeaderCellDef>Descripción</th>
+            <td mat-cell *matCellDef="let order">
+              <span class="responsive-cell-label" aria-hidden="true">Descripción</span>
+              {{ order.description }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="quantity">
+            <th mat-header-cell *matHeaderCellDef>Cantidad</th>
+            <td mat-cell *matCellDef="let order">
+              <span class="responsive-cell-label" aria-hidden="true">Cantidad</span>
+              {{ order.quantity }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="co30FormNumber">
+            <th mat-header-cell *matHeaderCellDef>Formulario C-30</th>
+            <td mat-cell *matCellDef="let order">
+              <span class="responsive-cell-label" aria-hidden="true">Formulario C-30</span>
+              {{ order.co30FormNumber }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="responsible">
+            <th mat-header-cell *matHeaderCellDef>Responsable</th>
+            <td mat-cell *matCellDef="let order">
+              <span class="responsive-cell-label" aria-hidden="true">Responsable</span>
+              {{ order.responsible }}
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        </table>
+      </div>
+    </div>
+    } @else {
+    <div class="report-message report-message--empty">No hay pedidos reportables para este almacén.</div>
+    }
+  </section>
+  }
+</section>

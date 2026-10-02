@@ -35,7 +35,7 @@ export class DashboardComponent {
     ['INVENTORY_TRANSACTIONS', 'Historial del inventario'],
     ['INVENTORY_ITEM_DETAILS', 'Unidades por articulo y bodega'],
     ['INVENTORY_ITEM_DETAIL_PHOTOS', 'Fotos con validacion GPS'],
-    ['TRANSPORT_REQUESTS', 'Solicitudes y elementos a transportar'],
+    ['TRANSPORT_REQUESTS', 'Solicitudes CO-31 y elementos a transportar'],
     ['TRANSPORT_DELIVERY_RECEIPTS', 'Recibos CO-30 registrados'],
     ['ADMIN_CREDENTIALS', 'Credenciales y roles del sistema'],
     ['SCREEN_ACCESS_ADMIN', 'Permisos por rol y usuario'],
@@ -67,8 +67,8 @@ export class DashboardComponent {
       })),
   );
 
-  readonly canCreateMovementShortcut = computed(() =>
-    this.auth.canAccessAction('DASHBOARD', 'createMovement'),
+  readonly canCreateTransportRequestShortcut = computed(() =>
+    this.auth.canAccessAction('TRANSPORT_REQUESTS', 'create'),
   );
 
   private normalizeRoute(route: string): string {

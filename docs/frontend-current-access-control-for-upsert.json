@@ -72,15 +72,15 @@
     "defaultRoles": ["SUPER", "ADMIN", "AUX", "USER"],
     "actions": [
       {
-        "code": "DASHBOARD_CREATE_MOVEMENT",
-        "actionKey": "createMovement",
-        "title": "Registrar movimiento",
+        "code": "DASHBOARD_CREATE_TRANSPORT_REQUEST",
+        "actionKey": "createTransportRequest",
+        "title": "Solicitud de transporte CO-31",
         "icon": "add",
         "style": "primary",
         "sortOrder": 10,
         "confirmationRequired": false,
         "defaultRoles": ["SUPER", "ADMIN", "AUX"],
-        "notes": "Shortcut visible si el usuario tambien puede acceder a INVENTORY_TRANSACTIONS."
+        "notes": "Referencia del acceso directo principal; el frontend lo muestra segun la accion TRANSPORT_REQUESTS_CREATE."
       }
     ],
     "notes": "Pantalla inicial autenticada. La ruta raiz redirige aqui."
@@ -203,6 +203,19 @@
       }
     ],
     "notes": "Listado operativo de bodegas. Menor prioridad numerica significa mayor prioridad de surtido automatico."
+  },
+  {
+    "code": "STORE_ORDERS_REPORT",
+    "title": "Pedidos por almacen",
+    "route": "/reports/store-orders",
+    "icon": "summarize",
+    "section": "REPORTES",
+    "sortOrder": 95,
+    "showInMenu": true,
+    "requiresAuth": true,
+    "defaultRoles": ["SUPER", "ADMIN", "AUX"],
+    "actions": [],
+    "notes": "Reporte JSON de pedidos con formulario CO-30; la impresion usa el dialogo nativo del navegador."
   },
   {
     "code": "INVENTORY_ITEMS",
@@ -461,7 +474,7 @@
       {
         "code": "TRANSPORT_REQUESTS_CREATE",
         "actionKey": "create",
-        "title": "Crear solicitud",
+        "title": "Crear solicitud CO-31",
         "icon": "add",
         "style": "primary",
         "sortOrder": 10,
@@ -478,12 +491,12 @@
         "sortOrder": 20,
         "confirmationRequired": false,
         "defaultRoles": ["SUPER", "ADMIN", "AUX"],
-        "notes": "Expande y colapsa items de una solicitud."
+        "notes": "Expande y colapsa items de una solicitud CO-31."
       },
       {
         "code": "TRANSPORT_REQUESTS_EDIT",
         "actionKey": "edit",
-        "title": "Editar solicitud",
+        "title": "Editar solicitud CO-31",
         "icon": "edit",
         "style": "icon",
         "sortOrder": 30,
@@ -494,7 +507,7 @@
       {
         "code": "TRANSPORT_REQUESTS_GENERATE_DELIVERY_RECEIPT",
         "actionKey": "generateDeliveryReceipt",
-        "title": "Generar recibo de entrega",
+        "title": "Generar recibo CO-30",
         "icon": "assignment",
         "style": "secondary",
         "sortOrder": 40,
@@ -505,7 +518,7 @@
       {
         "code": "TRANSPORT_REQUESTS_DELETE",
         "actionKey": "delete",
-        "title": "Eliminar solicitud",
+        "title": "Eliminar solicitud CO-31",
         "icon": "delete",
         "style": "danger",
         "sortOrder": 50,
@@ -514,7 +527,7 @@
         "notes": "Operacion destructiva."
       }
     ],
-    "notes": "Cubre listado y formulario de solicitudes de transporte."
+    "notes": "Cubre listado y formulario de solicitudes de transporte CO-31."
   },
   {
     "code": "TRANSPORT_DELIVERY_RECEIPTS",
@@ -530,7 +543,7 @@
       {
         "code": "TRANSPORT_DELIVERY_RECEIPTS_EDIT",
         "actionKey": "edit",
-        "title": "Abrir/editar recibo",
+        "title": "Abrir/editar recibo CO-30",
         "icon": "edit",
         "style": "icon",
         "sortOrder": 10,
@@ -541,7 +554,7 @@
       {
         "code": "TRANSPORT_DELIVERY_RECEIPTS_UPDATE",
         "actionKey": "update",
-        "title": "Guardar recibo",
+        "title": "Guardar recibo CO-30",
         "icon": "save",
         "style": "primary",
         "sortOrder": 20,
@@ -552,7 +565,7 @@
       {
         "code": "TRANSPORT_DELIVERY_RECEIPTS_DELETE",
         "actionKey": "delete",
-        "title": "Eliminar recibo",
+        "title": "Eliminar recibo CO-30",
         "icon": "delete",
         "style": "danger",
         "sortOrder": 30,
@@ -561,7 +574,7 @@
         "notes": "Elimina CO-30 con DELETE /transport-delivery-receipts/{id}."
       }
     ],
-    "notes": "Listado y detalle/edicion de recibos de entrega CO-30 generados desde solicitudes de transporte."
+    "notes": "Listado y detalle/edicion de recibos de entrega CO-30 generados desde solicitudes de transporte CO-31."
   },
   {
     "code": "ADMIN_CREDENTIALS",

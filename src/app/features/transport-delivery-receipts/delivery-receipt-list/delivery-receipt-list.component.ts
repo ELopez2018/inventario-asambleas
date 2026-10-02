@@ -144,7 +144,7 @@ export class DeliveryReceiptListComponent implements OnInit {
           pdfUrl,
           requestNumber: receipt.receiptNumber,
           title: 'Formulario CO-30',
-          subtitle: `Recibo ${receipt.receiptNumber} - Solicitud ${receipt.transportRequestNumber}`,
+          subtitle: `Recibo CO-30 ${receipt.receiptNumber} - Solicitud CO-31 ${receipt.transportRequestNumber}`,
         },
         maxWidth: '96vw',
         panelClass: 'request-pdf-dialog-panel',
@@ -182,7 +182,7 @@ export class DeliveryReceiptListComponent implements OnInit {
         },
         error: (err: HttpErrorResponse) => {
           if (err.status === 404) {
-            this.errorMessage = 'El recibo ya no existe o fue eliminado.';
+            this.errorMessage = 'El recibo CO-30 ya no existe o fue eliminado.';
             this.loadReceipts();
             return;
           }

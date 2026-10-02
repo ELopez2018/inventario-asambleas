@@ -7,6 +7,15 @@ import {
 
 const TEMPLATE_URL = '/forms/CO-31_S.pdf';
 const MAX_VISIBLE_ITEMS = 5;
+const CONTINUATION_ROWS_PER_PAGE = 18;
+const CONTINUATION_TABLE = {
+  left: 46,
+  right: 548,
+  top: 380,
+  bottom: 38,
+  rowHeight: 19,
+  columns: [103, 356, 469, 548],
+};
 
 const ITEM_FIELDS = [
   { quantity: 'Text13', description: 'Text14', sizeAndWeight: 'Text15', lineTotal: 'Text16' },
@@ -80,7 +89,79 @@ export class TransportRequestPdfService {
 
     form.updateFieldAppearances(font);
 
+    this.addContinuationPages(pdf, font, request);
+
     return pdf.save();
+  }
+
+  private addContinuationPages(
+    pdf: PDFDocument,
+    font: Awaited<ReturnType<PDFDocument['embedFont']>>,
+    request: TransportRequestResponse,
+  ): void {
+    const additionalItems = request.items.slice(MAX_VISIBLE_ITEMS);
+
+    for (let start = 0; start < additionalItems.length; start += CONTINUATION_ROWS_PER_PAGE) {
+      const page = pdf.addPage([595.2, 420.9]);
+      const pageItems = additionalItems.slice(start, start + CONTINUATION_ROWS_PER_PAGE);
+      const dateLabel = `Fecha: ${this.formatDate(request.requestDate)}`;
+      const numberLabel = `Numero: ${request.requestNumber}`;
+      const fontSize = 9;
+
+      page.drawText(numberLabel, { x: CONTINUATION_TABLE.left, y: 397, size: fontSize, font });
+      page.drawText(dateLabel, {
+        x: CONTINUATION_TABLE.right - font.widthOfTextAtSize(dateLabel, fontSize),
+        y: 397,
+        size: fontSize,
+        font,
+      });
+
+      page.drawLine({
+        start: { x: CONTINUATION_TABLE.left, y: CONTINUATION_TABLE.top },
+        end: { x: CONTINUATION_TABLE.right, y: CONTINUATION_TABLE.top },
+        thickness: 0.7,
+      });
+
+      for (let row = 0; row <= CONTINUATION_ROWS_PER_PAGE; row++) {
+        const y = CONTINUATION_TABLE.top - row * CONTINUATION_TABLE.rowHeight;
+        page.drawLine({
+          start: { x: CONTINUATION_TABLE.left, y },
+          end: { x: CONTINUATION_TABLE.right, y },
+          thickness: 0.35,
+          opacity: 0.7,
+        });
+      }
+
+      for (const x of [CONTINUATION_TABLE.left, ...CONTINUATION_TABLE.columns]) {
+        page.drawLine({
+          start: { x, y: CONTINUATION_TABLE.top },
+          end: { x, y: CONTINUATION_TABLE.bottom },
+          thickness: 0.35,
+          opacity: 0.7,
+        });
+      }
+
+      pageItems.forEach((item, row) => {
+        const y = CONTINUATION_TABLE.top - (row + 1) * CONTINUATION_TABLE.rowHeight + 5;
+        const values = [
+          this.formatQuantity(item.quantity),
+          item.description,
+          item.sizeAndWeight ?? '',
+          this.formatMoney(item.lineTotal),
+        ];
+        const starts = [CONTINUATION_TABLE.left, ...CONTINUATION_TABLE.columns.slice(0, -1)];
+        const ends = CONTINUATION_TABLE.columns;
+
+        values.forEach((value, index) => {
+          page.drawText(this.truncateText(font, value, ends[index] - starts[index] - 6, 8), {
+            x: starts[index] + 3,
+            y,
+            size: 8,
+            font,
+          });
+        });
+      });
+    }
   }
 
   private async loadTemplate(): Promise<ArrayBuffer> {
@@ -105,18 +186,7 @@ export class TransportRequestPdfService {
   }
 
   private buildObservations(request: TransportRequestResponse): string {
-    const observations = request.observations?.trim();
-    const extraItems = request.items.length - MAX_VISIBLE_ITEMS;
-
-    if (extraItems > 0) {
-      const suffix = `Hay ${extraItems} item${extraItems === 1 ? '' : 's'} adicional${
-        extraItems === 1 ? '' : 'es'
-      } registrado${extraItems === 1 ? '' : 's'} en la solicitud.`;
-
-      return observations ? `${observations} ${suffix}` : suffix;
-    }
-
-    return observations ?? '';
+    return request.observations?.trim() ?? '';
   }
 
   private formatDate(value: string | null): string {
@@ -175,5 +245,25 @@ export class TransportRequestPdfService {
     }
 
     return String(value).trim();
+  }
+
+  private truncateText(
+    font: Awaited<ReturnType<PDFDocument['embedFont']>>,
+    value: string,
+    maxWidth: number,
+    size: number,
+  ): string {
+    if (font.widthOfTextAtSize(value, size) <= maxWidth) {
+      return value;
+    }
+
+    const suffix = '...';
+    let result = value;
+
+    while (result && font.widthOfTextAtSize(`${result}${suffix}`, size) > maxWidth) {
+      result = result.slice(0, -1);
+    }
+
+    return `${result}${suffix}`;
   }
 }

@@ -37,6 +37,12 @@ interface MergeItemsDialogData {
   items: InventoryItemResponse[];
 }
 
+type InventoryStockBucket =
+  | 'existenceQuantity'
+  | 'availableQuantity'
+  | 'reservedQuantity'
+  | 'inUseQuantity';
+
 @Component({
   selector: 'app-item-list',
   imports: [
@@ -67,7 +73,7 @@ export class ItemListComponent implements OnInit {
 
   readonly displayedColumns = [
     'description',
-    'quantity',
+    'stockBuckets',
     'totalQuantity',
     'ownerUserId',
     'stateId',
@@ -75,7 +81,7 @@ export class ItemListComponent implements OnInit {
   ];
   readonly storeInventoryColumns = [
     'description',
-    'storeQuantity',
+    'storeStockBuckets',
     'ownerUserId',
     'stateId',
     'actions',
@@ -139,11 +145,28 @@ export class ItemListComponent implements OnInit {
   }
 
   getTotalStock(item: InventoryItemResponse) {
-    return item.storeStocks.reduce((sum, stock) => sum + stock.quantity, 0);
+    return item.existenceQuantity;
   }
 
   getStoreStock(item: InventoryItemResponse, storeId: number) {
-    return item.storeStocks.find((stock) => stock.storeId === storeId)?.quantity ?? 0;
+    return item.storeStocks.find((stock) => stock.storeId === storeId)?.existenceQuantity ?? 0;
+  }
+
+  getStoreStockBuckets(item: InventoryItemResponse, storeId: number) {
+    return item.storeStocks.find((stock) => stock.storeId === storeId) ?? null;
+  }
+
+  getStockTooltip(item: InventoryItemResponse, bucket: InventoryStockBucket): string {
+    return this.storeTabs
+      .map((store) => {
+        const stock = this.getStoreStockBuckets(item, store.id);
+        return `${store.label}: ${this.formatQuantity(stock?.[bucket] ?? 0)}`;
+      })
+      .join('\n');
+  }
+
+  private formatQuantity(value: number): string {
+    return new Intl.NumberFormat('es-CO', { maximumFractionDigits: 2 }).format(value);
   }
 
   getItemsByStore(storeId: number) {
@@ -177,11 +200,29 @@ export class ItemListComponent implements OnInit {
 
     this.realtime.inventoryStockEvents$
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
+      .subscribe((event) => {
         this.snackBar.open('Existencias actualizadas por movimiento de stock.', 'Cerrar', {
           duration: 4000,
         });
-        this.loadItems();
+        const itemId = this.getInventoryItemId(event);
+        if (!itemId) {
+          this.loadItems();
+          return;
+        }
+
+        this.itemService.getById(itemId).subscribe({
+          next: (updatedItem) => {
+            const index = this.items.findIndex((item) => item.id === itemId);
+            if (index < 0) {
+              this.loadItems();
+              return;
+            }
+            this.items = this.items.map((item) => (item.id === itemId ? updatedItem : item));
+            this.buildStoreTabs(this.items);
+            this.applyItemFilter(this.itemFilter.value);
+          },
+          error: () => this.loadItems(),
+        });
       });
 
     this.loadItems();
@@ -261,6 +302,16 @@ export class ItemListComponent implements OnInit {
       .replace(/[\u0300-\u036f]/g, '')
       .trim()
       .toLowerCase();
+  }
+
+  private getInventoryItemId(event: unknown): number | null {
+    if (!event || typeof event !== 'object') {
+      return null;
+    }
+
+    const value = (event as { itemId?: unknown }).itemId;
+    const itemId = Number(value);
+    return Number.isInteger(itemId) && itemId > 0 ? itemId : null;
   }
 
   downloadInventoryExcel() {
@@ -446,7 +497,7 @@ export class MergeItemsDialogComponent {
   errorMessage = '';
 
   getTotalStock(item: InventoryItemResponse) {
-    return item.storeStocks.reduce((sum, stock) => sum + stock.quantity, 0);
+    return item.existenceQuantity;
   }
 
   confirm() {

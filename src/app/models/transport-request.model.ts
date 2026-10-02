@@ -41,6 +41,7 @@ export interface TransportRequestItemRequest {
   sizeAndWeight?: string | null;
   lineTotal?: number | null;
   articleControlType?: ArticleControlType;
+  /** No se envía: el backend calcula el surtido según la prioridad de bodegas. */
   allocations?: TransportRequestItemAllocationRequest[];
 }
 

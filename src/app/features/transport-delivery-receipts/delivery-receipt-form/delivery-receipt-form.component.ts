@@ -207,7 +207,7 @@ export class DeliveryReceiptFormComponent implements OnInit {
           pdfUrl,
           requestNumber: previewReceipt.receiptNumber,
           title: 'Formulario CO-30',
-          subtitle: `Recibo ${previewReceipt.receiptNumber} - Solicitud ${previewReceipt.transportRequestNumber}`,
+          subtitle: `Recibo CO-30 ${previewReceipt.receiptNumber} - Solicitud CO-31 ${previewReceipt.transportRequestNumber}`,
         },
         maxWidth: '96vw',
         panelClass: 'request-pdf-dialog-panel',

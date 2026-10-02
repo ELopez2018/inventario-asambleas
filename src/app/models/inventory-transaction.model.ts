@@ -1,4 +1,4 @@
-export type MovementType = 'INCOME' | 'RETURN' | 'TRANSFER' | 'DECOMMISSION' | 'EGRESS';
+export type MovementType = 'INCOME' | 'LOAN' | 'RETURN' | 'TRANSFER' | 'DECOMMISSION' | 'EGRESS';
 
 export interface InventoryTransactionResponse {
   id: number;
@@ -21,13 +21,13 @@ export interface CreateInventoryTransactionRequest {
   itemId: number;
   quantity: number;
   movementType: MovementType;
-  sourceStoreId?: number;
-  destinationStoreId?: number;
-  origin?: string;
-  destination?: string;
+  sourceStoreId?: number | null;
+  destinationStoreId?: number | null;
+  origin?: string | null;
+  destination?: string | null;
   responsibleUserId: number;
-  receivedByUserId?: number;
-  conditionNotes?: string;
+  receivedByUserId?: number | null;
+  conditionNotes?: string | null;
   movementDate: string;
   eventId: number;
 }

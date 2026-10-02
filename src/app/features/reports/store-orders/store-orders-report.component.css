@@ -1,0 +1,134 @@
+.report-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.report-controls mat-form-field {
+  width: min(100%, 28rem);
+  margin-bottom: -1.25rem;
+}
+
+.report-message {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  background: #fff;
+  color: #334155;
+}
+
+.report-message--error {
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+.report-message--empty {
+  display: block;
+  color: #475569;
+}
+
+.report-heading {
+  margin: 1.25rem 0 1rem;
+  color: #1f2937;
+}
+
+.report-heading h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.report-heading p {
+  margin: 0.25rem 0;
+}
+
+.report-total {
+  margin-top: 0.75rem !important;
+  font-size: 1.05rem;
+}
+
+@media print {
+
+  :host,
+  .store-orders-report {
+    display: block;
+    width: 100%;
+    color: #000;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .report-heading {
+    margin-top: 0;
+  }
+
+  .report-heading h2 {
+    font-size: 18pt;
+  }
+
+  .report-message {
+    border: 0;
+    padding: 0;
+  }
+
+  .app-data-surface {
+    overflow: visible;
+    border: 0;
+    box-shadow: none;
+  }
+
+  .app-table-scroll {
+    overflow: visible;
+  }
+
+  .responsive-table.mat-mdc-table {
+    display: table !important;
+    width: 100%;
+    min-width: 0 !important;
+    background: #fff;
+  }
+
+  .responsive-table thead {
+    position: static;
+    display: table-header-group;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+  }
+
+  .responsive-table tbody {
+    display: table-row-group;
+    padding: 0;
+  }
+
+  .responsive-table .mat-mdc-header-row,
+  .responsive-table .mat-mdc-row {
+    display: table-row;
+    height: auto;
+    break-inside: avoid;
+    box-shadow: none;
+  }
+
+  .responsive-table .mat-mdc-header-cell,
+  .responsive-table .mat-mdc-cell {
+    display: table-cell;
+    padding: 0.5rem;
+    border: 1px solid #666;
+    color: #000;
+    white-space: normal;
+  }
+
+  .responsive-cell-label {
+    display: none !important;
+  }
+}

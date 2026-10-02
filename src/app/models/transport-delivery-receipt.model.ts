@@ -26,6 +26,7 @@ export interface TransportDeliveryReceiptItemResponse {
   transportRequestItemId: number | null;
   lineNumber: number;
   articleNumber: string;
+  articleControlType: 'INDIVIDUAL' | 'LOTE' | 'KIT';
   description: string;
   assignedTo: string | null;
   requestNumber: string;

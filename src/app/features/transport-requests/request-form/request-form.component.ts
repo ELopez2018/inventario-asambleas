@@ -52,12 +52,6 @@ interface TransportRequestItemFormRaw {
   sizeAndWeight: string;
   lineTotal: string | number;
   articleControlType: ArticleControlType;
-  allocations: TransportRequestAllocationFormRaw[];
-}
-
-interface TransportRequestAllocationFormRaw {
-  sourceStoreId: number;
-  allocatedQuantity: number;
 }
 
 function toNullableText(value: string): string | null {
@@ -114,37 +108,6 @@ function decimalPrecisionValidator(
 
     return null;
   };
-}
-
-function itemAllocationValidator(control: AbstractControl): ValidationErrors | null {
-  const quantity = Number(control.get('quantity')?.value || 0);
-  const allocationsControl = control.get('allocations');
-
-  if (!(allocationsControl instanceof FormArray) || allocationsControl.length === 0) {
-    return null;
-  }
-
-  let allocatedTotal = 0;
-  const storeIds = new Set<number>();
-
-  for (const allocationControl of allocationsControl.controls) {
-    const sourceStoreId = Number(allocationControl.get('sourceStoreId')?.value || 0);
-    const allocatedQuantity = Number(allocationControl.get('allocatedQuantity')?.value || 0);
-
-    if (sourceStoreId > 0) {
-      if (storeIds.has(sourceStoreId)) {
-        return { duplicateAllocationStore: true };
-      }
-
-      storeIds.add(sourceStoreId);
-    }
-
-    if (Number.isFinite(allocatedQuantity)) {
-      allocatedTotal += allocatedQuantity;
-    }
-  }
-
-  return allocatedTotal > quantity ? { allocationOverflow: true } : null;
 }
 
 function resolveBackendUserMessage(err: HttpErrorResponse, fallback: string): string {
@@ -283,71 +246,14 @@ export class RequestFormComponent implements OnInit {
   }
 
   private createItemGroup() {
-    return this.fb.group(
-      {
-        quantity: [1, [Validators.required, Validators.min(0.01), this.quantityValidator]],
-        descriptionSource: ['', [Validators.required, Validators.maxLength(255)]],
-        description: ['', [Validators.required, Validators.maxLength(255)]],
-        articleControlType: ['INDIVIDUAL' as ArticleControlType, [Validators.required]],
-        sizeAndWeight: ['', [Validators.maxLength(255)]],
-        lineTotal: ['', [this.lineTotalValidator]],
-        allocations: this.fb.array([]),
-      },
-      { validators: itemAllocationValidator },
-    );
-  }
-
-  private createAllocationGroup(
-    allocation: { sourceStoreId?: number | null; allocatedQuantity?: number | null } = {},
-  ) {
     return this.fb.group({
-      sourceStoreId: [
-        allocation.sourceStoreId ?? this.defaultStoreId(),
-        [Validators.required, Validators.min(1)],
-      ],
-      allocatedQuantity: [
-        allocation.allocatedQuantity ?? 1,
-        [Validators.required, Validators.min(0.01), this.quantityValidator],
-      ],
+      quantity: [1, [Validators.required, Validators.min(0.01), this.quantityValidator]],
+      descriptionSource: ['', [Validators.required, Validators.maxLength(255)]],
+      description: ['', [Validators.required, Validators.maxLength(255)]],
+      articleControlType: ['INDIVIDUAL' as ArticleControlType, [Validators.required]],
+      sizeAndWeight: ['', [Validators.maxLength(255)]],
+      lineTotal: ['', [this.lineTotalValidator]],
     });
-  }
-
-  private defaultStoreId(): number {
-    return this.stores.find((store) => store.available)?.id ?? this.stores[0]?.id ?? 0;
-  }
-
-  getItemAllocations(index: number): FormArray {
-    return this.itemsArray.at(index).get('allocations') as FormArray;
-  }
-
-  addAllocation(index: number): void {
-    this.getItemAllocations(index).push(this.createAllocationGroup());
-    this.itemsArray.at(index).updateValueAndValidity();
-    this.itemsStepForm.patchValue({ ready: false });
-  }
-
-  removeAllocation(itemIndex: number, allocationIndex: number): void {
-    this.getItemAllocations(itemIndex).removeAt(allocationIndex);
-    this.itemsArray.at(itemIndex).updateValueAndValidity();
-    this.itemsStepForm.patchValue({ ready: false });
-  }
-
-  clearAllocations(index: number): void {
-    this.getItemAllocations(index).clear();
-    this.itemsArray.at(index).updateValueAndValidity();
-    this.itemsStepForm.patchValue({ ready: false });
-  }
-
-  allocationTotal(index: number): number {
-    return this.getItemAllocations(index).controls.reduce(
-      (sum, allocation) => sum + Number(allocation.get('allocatedQuantity')?.value || 0),
-      0,
-    );
-  }
-
-  allocationMissing(index: number): number {
-    const quantity = Number(this.itemsArray.at(index).get('quantity')?.value || 0);
-    return Math.max(quantity - this.allocationTotal(index), 0);
   }
 
   getStoreLabel(storeId: number | null | undefined): string {
@@ -605,7 +511,7 @@ export class RequestFormComponent implements OnInit {
 
     if (this.itemsArray.invalid) {
       this.errorMessage =
-        'Revise los items: cantidad, descripcion, tipo de control y surtido por bodega.';
+        'Revise los items: cantidad, descripcion y tipo de control.';
       return;
     }
 
@@ -653,18 +559,6 @@ export class RequestFormComponent implements OnInit {
               lineTotal: item.lineTotal == null ? '' : String(item.lineTotal),
             });
 
-            const allocations = itemGroup.get('allocations') as FormArray;
-            for (const allocation of item.allocations ?? []) {
-              if (allocation.sourceStoreId && allocation.allocatedQuantity > 0) {
-                allocations.push(
-                  this.createAllocationGroup({
-                    sourceStoreId: allocation.sourceStoreId,
-                    allocatedQuantity: allocation.allocatedQuantity,
-                  }),
-                );
-              }
-            }
-
             this.itemsArray.push(itemGroup);
           }
 
@@ -672,7 +566,7 @@ export class RequestFormComponent implements OnInit {
             this.itemsArray.push(this.createItemGroup());
           }
         },
-        error: () => (this.errorMessage = 'No se pudo cargar la solicitud.'),
+        error: () => (this.errorMessage = 'No se pudo cargar la solicitud CO-31.'),
       });
   }
 
@@ -687,7 +581,11 @@ export class RequestFormComponent implements OnInit {
       return;
     }
 
-    if (this.form.invalid || this.saving || this.itemsArray.length < 1) {
+    if (
+      this.form.invalid ||
+      this.saving ||
+      this.itemsArray.length < 1
+    ) {
       this.form.markAllAsTouched();
       return;
     }
@@ -697,23 +595,13 @@ export class RequestFormComponent implements OnInit {
     const raw = this.form.getRawValue();
 
     const rawItems = raw.items as TransportRequestItemFormRaw[];
-    const items: TransportRequestItemRequest[] = rawItems.map((item) => {
-      const allocations = item.allocations
-        .map((allocation) => ({
-          sourceStoreId: Number(allocation.sourceStoreId),
-          allocatedQuantity: Number(allocation.allocatedQuantity),
-        }))
-        .filter((allocation) => allocation.sourceStoreId > 0 && allocation.allocatedQuantity > 0);
-
-      return {
-        quantity: Number(item.quantity),
-        description: item.description.trim(),
-        sizeAndWeight: toNullableText(item.sizeAndWeight),
-        lineTotal: toOptionalNumber(item.lineTotal),
-        articleControlType: item.articleControlType,
-        ...(allocations.length ? { allocations } : {}),
-      };
-    });
+    const items: TransportRequestItemRequest[] = rawItems.map((item) => ({
+      quantity: Number(item.quantity),
+      description: item.description.trim(),
+      sizeAndWeight: toNullableText(item.sizeAndWeight),
+      lineTotal: toOptionalNumber(item.lineTotal),
+      articleControlType: item.articleControlType,
+    }));
 
     const body: CreateTransportRequestRequest = {
       requestDate: raw.requestDate,
@@ -742,15 +630,15 @@ export class RequestFormComponent implements OnInit {
       next: (response) => {
         this.snackBar.open(
           response.stockReserved
-            ? 'Solicitud guardada. El inventario queda reservado.'
-            : 'Solicitud guardada. Los items quedan liberados.',
+            ? 'Solicitud CO-31 guardada. El inventario queda reservado.'
+            : 'Solicitud CO-31 guardada. Los items quedan liberados.',
           'Cerrar',
           { duration: 5000 },
         );
         void this.router.navigate(['/transport-requests']);
       },
       error: (err: HttpErrorResponse) =>
-        (this.errorMessage = resolveBackendUserMessage(err, 'No se pudo guardar la solicitud.')),
+        (this.errorMessage = resolveBackendUserMessage(err, 'No se pudo guardar la solicitud CO-31.')),
     });
   }
 }

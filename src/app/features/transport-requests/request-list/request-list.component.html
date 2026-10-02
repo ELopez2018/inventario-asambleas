@@ -1,8 +1,8 @@
 <section class="app-page">
   <div class="app-page-header">
     <div class="app-page-heading">
-      <h1 class="app-page-title">Solicitudes de transporte</h1>
-      <p class="app-page-subtitle">Gestione solicitudes con su lista de items.</p>
+      <h1 class="app-page-title">Solicitudes de transporte <span class="text-base font-semibold text-slate-500">CO-31</span></h1>
+      <p class="app-page-subtitle">Gestione solicitudes CO-31 con su lista de items.</p>
     </div>
     <div class="app-page-actions">
       @if (canCreateRequests()) {
@@ -32,14 +32,14 @@
     } @else if (errorMessage) {
     <div class="p-6 text-sm text-red-700">{{ errorMessage }}</div>
     } @else if (!requests.length) {
-    <div class="p-6 text-sm text-slate-600">No hay solicitudes registradas.</div>
+    <div class="p-6 text-sm text-slate-600">No hay solicitudes CO-31 registradas.</div>
     } @else {
     <div class="app-table-scroll">
       <table mat-table [dataSource]="requests" class="responsive-table responsive-table--wide">
         <ng-container matColumnDef="requestNumber">
-          <th mat-header-cell *matHeaderCellDef>Nro solicitud</th>
+          <th mat-header-cell *matHeaderCellDef>Nro CO-31</th>
           <td mat-cell *matCellDef="let request">
-            <span class="responsive-cell-label" aria-hidden="true">Nro solicitud</span>
+            <span class="responsive-cell-label" aria-hidden="true">Nro CO-31</span>
             {{ request.requestNumber }}
           </td>
         </ng-container>

@@ -72,6 +72,18 @@
     "notes": "Listado operativo de bodegas y prioridad para surtido automatico. Actualizar prioridad se controla por accion updatePriority."
   },
   {
+    "code": "STORE_ORDERS_REPORT",
+    "title": "Pedidos por almacen",
+    "route": "/reports/store-orders",
+    "icon": "summarize",
+    "section": "REPORTES",
+    "sortOrder": 95,
+    "showInMenu": true,
+    "requiresAuth": true,
+    "defaultRoles": ["SUPER", "ADMIN", "AUX"],
+    "notes": "Reporte de pedidos atendidos por almacen con formulario CO-30."
+  },
+  {
     "code": "INVENTORY_ITEMS",
     "title": "Inventarios",
     "route": "/inventory-items",
@@ -141,7 +153,7 @@
     "showInMenu": true,
     "requiresAuth": true,
     "defaultRoles": ["SUPER", "ADMIN", "AUX"],
-    "notes": "Listado y detalle/edicion de recibos de entrega CO-30 generados desde solicitudes de transporte. Guardado controlado por accion update y eliminacion por accion delete."
+    "notes": "Listado y detalle/edicion de recibos de entrega CO-30 generados desde solicitudes de transporte CO-31. Guardado controlado por accion update y eliminacion por accion delete."
   },
   {
     "code": "ADMIN_CREDENTIALS",

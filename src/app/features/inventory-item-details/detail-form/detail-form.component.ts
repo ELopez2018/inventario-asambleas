@@ -49,6 +49,7 @@ export class DetailFormComponent implements OnInit {
   readonly unitTypeOptions = INVENTORY_UNIT_TYPES;
   readonly itemStatuses: { value: DetailItemStatus; label: string }[] = [
     { value: 'INCOME', label: 'Ingreso' },
+    { value: 'LOAN', label: 'Prestamo' },
     { value: 'RETURN', label: 'Retorno' },
     { value: 'TRANSFER', label: 'Traslado' },
     { value: 'DECOMMISSION', label: 'Baja' },

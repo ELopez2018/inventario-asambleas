@@ -9,11 +9,11 @@
       <p>Acceda rapidamente a los modulos habilitados para la gestion de la asamblea.</p>
     </div>
 
-    @if (canCreateMovementShortcut()) {
-    <a mat-flat-button routerLink="/inventory-transactions/new" class="dashboard-hero__action"
-      aria-label="Registrar movimiento">
+    @if (canCreateTransportRequestShortcut()) {
+    <a mat-flat-button routerLink="/transport-requests/new" class="dashboard-hero__action"
+      aria-label="Nueva solicitud de transporte CO-31">
       <mat-icon>add</mat-icon>
-      Registrar movimiento
+      Solicitud de transporte CO-31
     </a>
     }
   </div>

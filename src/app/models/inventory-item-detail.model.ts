@@ -1,4 +1,4 @@
-export type DetailItemStatus = 'INCOME' | 'RETURN' | 'TRANSFER' | 'DECOMMISSION' | 'EGRESS';
+export type DetailItemStatus = 'INCOME' | 'LOAN' | 'RETURN' | 'TRANSFER' | 'DECOMMISSION' | 'EGRESS';
 
 export interface InventoryItemDetailResponse {
   id: number;

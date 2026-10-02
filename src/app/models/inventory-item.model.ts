@@ -1,7 +1,12 @@
 export interface InventoryItemStoreStock {
   storeId: number;
   storeName: string;
+  /** Alias de availableQuantity, conservado por compatibilidad con el API. */
   quantity: number;
+  existenceQuantity: number;
+  availableQuantity: number;
+  reservedQuantity: number;
+  inUseQuantity: number;
 }
 
 export interface InventoryItemStoreStockRequest {
@@ -16,6 +21,10 @@ export interface InventoryItemResponse {
   stateId: number;
   stateTitle: string;
   stateDescription: string | null;
+  existenceQuantity: number;
+  availableQuantity: number;
+  reservedQuantity: number;
+  inUseQuantity: number;
   storeStocks: InventoryItemStoreStock[];
 }
 

@@ -45,7 +45,9 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         eventContext.loadActiveEvent();
       } else if (err.status === 400 && transportRequestProblem) {
         snackBar.open(
-          err.error?.userMessage || err.error?.detail || 'La solicitud de transporte no es valida.',
+          err.error?.userMessage ||
+            err.error?.detail ||
+            'La solicitud de transporte CO-31 no es valida.',
           'Cerrar',
           { duration: 7000 },
         );

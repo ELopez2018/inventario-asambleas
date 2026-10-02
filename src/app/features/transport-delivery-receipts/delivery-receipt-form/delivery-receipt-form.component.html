@@ -22,7 +22,7 @@
     </div>
     } @else if (missingReceipt) {
     <div class="rounded border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
-      Esta solicitud todavia no tiene recibo de entrega.
+      Esta solicitud CO-31 todavia no tiene recibo de entrega CO-30.
     </div>
     <div class="mt-4">
       <button mat-flat-button color="primary" type="button" [disabled]="generating" (click)="generateReceipt()">
@@ -30,7 +30,7 @@
         <mat-spinner diameter="18" class="mr-2 inline-block" />
         }
         <mat-icon>assignment</mat-icon>
-        Generar recibo
+        Generar recibo CO-30
       </button>
     </div>
     } @else if (receipt) {
@@ -41,11 +41,11 @@
           <div class="receipt-value">{{ receipt.receiptDate | date: 'mediumDate' }}</div>
         </div>
         <div>
-          <div class="receipt-label">Numero</div>
+          <div class="receipt-label">Numero CO-30</div>
           <div class="receipt-value">{{ receipt.receiptNumber }}</div>
         </div>
         <div>
-          <div class="receipt-label">Solicitud</div>
+          <div class="receipt-label">Solicitud CO-31</div>
           <div class="receipt-value">{{ receipt.transportRequestNumber }}</div>
         </div>
         <div>
@@ -56,7 +56,7 @@
 
       @if (!receipt.receivedBy) {
       <div class="mt-4 rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-        Complete el campo Autorizado por en la solicitud antes de imprimir o usar este recibo.
+        Complete el campo Autorizado por en la solicitud CO-31 antes de imprimir o usar este recibo CO-30.
       </div>
       }
 
@@ -107,6 +107,10 @@
               <div>
                 <div class="receipt-label">Descripcion</div>
                 <div class="receipt-value">{{ item.description }}</div>
+              </div>
+              <div>
+                <div class="receipt-label">Control</div>
+                <div class="receipt-value">{{ item.articleControlType }}</div>
               </div>
               <div>
                 <div class="receipt-label">Num. pedido</div>
@@ -199,7 +203,7 @@
           <mat-spinner diameter="18" class="mr-2 inline-block" />
           }
           <mat-icon>save</mat-icon>
-          Guardar recibo
+          Guardar recibo CO-30
         </button>
         }
       </div>
