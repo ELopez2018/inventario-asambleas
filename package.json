@@ -1,6 +1,6 @@
 {
   "name": "inventario-front",
-  "version": "0.0.26",
+  "version": "0.0.30",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -43,6 +43,7 @@
     "pdf-lib": "^1.17.1",
     "rxjs": "~7.8.0",
     "sockjs-client": "^1.6.1",
+    "sweetalert2": "^11.26.25",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"
   },

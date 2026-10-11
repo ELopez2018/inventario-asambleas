@@ -57,7 +57,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         snackBar.open('No tiene permisos para esta accion.', 'Cerrar', { duration: 4000 });
       } else if (err.status === 404) {
         snackBar.open('Recurso no encontrado.', 'Cerrar', { duration: 4000 });
-      } else if (err.status >= 500) {
+      } else if (err.status >= 500 && !req.url.includes('/welcome-email/resend')) {
         snackBar.open('Error interno del servidor.', 'Cerrar', { duration: 4000 });
       }
 

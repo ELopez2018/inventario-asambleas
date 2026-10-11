@@ -18,6 +18,7 @@ import { TransportRequestPdfService } from '../../../core/services/transport-req
 import { TransportRequestService } from '../../../core/services/transport-request.service';
 import { TransportRequestResponse } from '../../../models/transport-request.model';
 import { RequestPdfDialogComponent } from '../request-pdf-dialog/request-pdf-dialog.component';
+import { RedistributeConfirmDialogComponent } from '../redistribute-confirm-dialog/redistribute-confirm-dialog.component';
 
 type RequestArchiveTab = 'pending' | 'attended' | 'all';
 
@@ -79,6 +80,9 @@ export class RequestListComponent implements OnInit {
   readonly canGenerateReceipt = computed(() =>
     this.auth.canAccessAction('TRANSPORT_REQUESTS', 'generateDeliveryReceipt'),
   );
+  readonly canRedistributeRequests = computed(() =>
+    this.auth.canAccessAction('TRANSPORT_REQUESTS', 'redistribute'),
+  );
 
   requests: TransportRequestResponse[] = [];
   activeArchive: RequestArchiveTab = 'pending';
@@ -86,6 +90,7 @@ export class RequestListComponent implements OnInit {
   expandedRequestId: number | null = null;
   previewingRequestId: number | null = null;
   generatingReceiptRequestId: number | null = null;
+  redistributingRequests = false;
   loading = false;
   errorMessage = '';
 
@@ -232,6 +237,37 @@ export class RequestListComponent implements OnInit {
       next: () => this.loadRequests(),
       error: () => (this.errorMessage = 'No se pudo eliminar la solicitud CO-31.'),
     });
+  }
+
+  redistributeRequests(): void {
+    if (!this.canRedistributeRequests() || this.redistributingRequests) {
+      return;
+    }
+
+    this.dialog
+      .open(RedistributeConfirmDialogComponent, { width: 'min(32rem, 94vw)' })
+      .afterClosed()
+      .subscribe((confirmed) => {
+        if (confirmed !== true || this.redistributingRequests) {
+          return;
+        }
+
+        this.redistributingRequests = true;
+        this.errorMessage = '';
+
+        this.requestService
+          .redistribute()
+          .pipe(finalize(() => (this.redistributingRequests = false)))
+          .subscribe({
+            next: () => {
+              this.snackBar.open('Los pedidos se redistribuyeron correctamente.', 'Cerrar', {
+                duration: 5000,
+              });
+              this.loadRequests();
+            },
+            error: () => (this.errorMessage = 'No se pudieron redistribuir los pedidos.'),
+          });
+      });
   }
 
   generateDeliveryReceipt(request: TransportRequestResponse): void {

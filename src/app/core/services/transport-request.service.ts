@@ -41,7 +41,9 @@ export class TransportRequestService {
   }
 
   getAutocompleteOptions() {
-    return this.http.get<TransportRequestAutocompleteOptionsResponse>(`${BASE}/autocomplete-options`);
+    return this.http.get<TransportRequestAutocompleteOptionsResponse>(
+      `${BASE}/autocomplete-options`,
+    );
   }
 
   create(body: CreateTransportRequestRequest) {
@@ -56,6 +58,10 @@ export class TransportRequestService {
     return this.http.post<TransportDeliveryReceiptResponse>(`${BASE}/${id}/delivery-receipt`, {
       observations: observations ?? null,
     });
+  }
+
+  redistribute() {
+    return this.http.post<void>(`${BASE}/redistribute`, null);
   }
 
   delete(id: number) {

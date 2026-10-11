@@ -5,193 +5,222 @@
       <p class="app-page-subtitle">Existencias registradas para la asamblea.</p>
     </div>
     <div class="app-page-actions">
+      @if (canRedistributeRequests()) {
+      <button mat-flat-button type="button" class="inventory-redistribute-button" [disabled]="redistributing || loading"
+        (click)="openRedistributeDialog()">
+        @if (redistributing) {
+        <mat-spinner diameter="18" />
+        } @else {
+        <mat-icon>restart_alt</mat-icon>
+        }
+        Reset
+      </button>
+      }
       @if (canExportItems()) {
-        <button
-          mat-stroked-button
-          type="button"
-          (click)="downloadInventoryExcel()"
-          [disabled]="exporting"
-        >
-          <mat-icon>download</mat-icon>
-          @if (exporting) {
-            Descargando...
-          } @else {
-            Descargar Excel
-          }
-        </button>
+      <button mat-stroked-button type="button" (click)="downloadInventoryExcel()" [disabled]="exporting">
+        <mat-icon>download</mat-icon>
+        @if (exporting) {
+        Descargando...
+        } @else {
+        Descargar Excel
+        }
+      </button>
       }
 
       @if (canCreateItems()) {
-        <a mat-flat-button color="primary" routerLink="/inventory-items/new">
-          <mat-icon>add</mat-icon>
-          Nuevo
-        </a>
+      <a mat-flat-button color="primary" routerLink="/inventory-items/new">
+        <mat-icon>add</mat-icon>
+        Nuevo
+      </a>
       }
     </div>
   </div>
 
   <div class="app-data-surface">
     @if (loading) {
-      <div class="flex items-center justify-center p-10">
-        <mat-spinner diameter="36" />
-      </div>
+    <div class="flex items-center justify-center p-10">
+      <mat-spinner diameter="36" />
+    </div>
     } @else if (errorMessage) {
-      <div class="p-6 text-sm text-red-700">{{ errorMessage }}</div>
+    <div class="p-6 text-sm text-red-700">{{ errorMessage }}</div>
     } @else if (!items.length) {
-      <div class="p-6 text-sm text-slate-600">No hay articulos registrados.</div>
+    <div class="p-6 text-sm text-slate-600">No hay articulos registrados.</div>
     } @else {
-      <div class="inventory-filter">
-        <mat-form-field appearance="outline" class="inventory-filter__field">
-          <mat-label>Filtrar inventarios</mat-label>
-          <mat-icon matPrefix>search</mat-icon>
-          <input
-            matInput
-            type="text"
-            [formControl]="itemFilter"
-            [matAutocomplete]="itemFilterAutocomplete"
-            autocomplete="off"
-          />
-          @if (itemFilter.value) {
-            <button
-              mat-icon-button
-              matSuffix
-              type="button"
-              aria-label="Limpiar filtro"
-              (click)="clearItemFilter()"
-            >
-              <mat-icon>close</mat-icon>
-            </button>
-          }
-          <mat-autocomplete #itemFilterAutocomplete="matAutocomplete">
-            @for (option of autocompleteOptions; track option) {
-              <mat-option [value]="option">{{ option }}</mat-option>
-            }
-          </mat-autocomplete>
-        </mat-form-field>
-        <div class="inventory-filter__count">
-          {{ filteredItems.length }} de {{ items.length }}
-        </div>
-      </div>
-
-      <mat-tab-group class="inventory-tabs" animationDuration="180ms">
-        <mat-tab>
-          <ng-template mat-tab-label>
-            <span class="inventory-tab-label inventory-tab-label--all">
-              <mat-icon aria-hidden="true">inventory_2</mat-icon>
-              <span>Todos</span>
-              <strong>{{ filteredItems.length }}</strong>
-            </span>
-          </ng-template>
-
-          @if (!filteredItems.length) {
-            <div class="p-6 text-sm text-slate-600">No hay inventarios que coincidan.</div>
-          } @else {
-            <div class="app-table-scroll inventory-summary-scroll">
-              <table class="inventory-summary-table">
-                <thead>
-                  <tr>
-                    <th>Descripcion</th>
-                    <th class="inventory-summary-table__existence">Existencia</th>
-                    <th>Disponible</th>
-                    <th>Reservado</th>
-                    <th>En uso</th>
-                    <th class="inventory-summary-table__actions-heading">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (item of filteredItems; track item.id) {
-                    <tr>
-                      <td class="inventory-summary-table__description">{{ item.description }}</td>
-                      <td class="inventory-summary-table__existence" [matTooltip]="getStockTooltip(item, 'existenceQuantity')">{{ item.existenceQuantity | number: '1.0-2' }}</td>
-                      <td [matTooltip]="getStockTooltip(item, 'availableQuantity')">{{ item.availableQuantity | number: '1.0-2' }}</td>
-                      <td [matTooltip]="getStockTooltip(item, 'reservedQuantity')">{{ item.reservedQuantity | number: '1.0-2' }}</td>
-                      <td [matTooltip]="getStockTooltip(item, 'inUseQuantity')">{{ item.inUseQuantity | number: '1.0-2' }}</td>
-                      <td class="inventory-summary-table__actions">
-                        <div class="item-actions">
-                          @if (canEditItems()) {
-                            <a mat-icon-button class="item-actions__button" [routerLink]="['/inventory-items', item.id, 'edit']" matTooltip="Editar">
-                              <mat-icon>edit</mat-icon>
-                            </a>
-                          }
-                          @if (canMergeItems()) {
-                            <button mat-icon-button class="item-actions__button item-actions__button--merge" type="button" matTooltip="Unir con inventario duplicado" [disabled]="items.length < 2" (click)="openMergeDialog(item)">
-                              <mat-icon>call_merge</mat-icon>
-                            </button>
-                          }
-                          @if (canDeleteItems()) {
-                            <button mat-icon-button class="item-actions__button item-actions__button--danger" type="button" matTooltip="Eliminar" (click)="deleteItem(item)">
-                              <mat-icon>delete</mat-icon>
-                            </button>
-                          }
-                        </div>
-                      </td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
-          }
-        </mat-tab>
-
-        @for (tab of storeTabs; track tab.id) {
-          <mat-tab>
-            <ng-template mat-tab-label>
-              <span class="inventory-tab-label">
-                <mat-icon aria-hidden="true">warehouse</mat-icon>
-                <span>{{ tab.label }}</span>
-                <strong>{{ getItemsByStore(tab.id).length }}</strong>
-              </span>
-            </ng-template>
-
-            @if (!getItemsByStore(tab.id).length) {
-              <div class="p-6 text-sm text-slate-600">
-                No hay inventario registrado para esta bodega.
-              </div>
-            } @else {
-              <div class="app-table-scroll inventory-summary-scroll">
-                <table class="inventory-summary-table inventory-summary-table--single-store">
-                  <thead>
-                    <tr>
-                      <th>Articulo</th>
-                      <th class="inventory-summary-table__existence">Existencia</th>
-                      <th>Disponible</th>
-                      <th>Reservado</th>
-                      <th>En uso</th>
-                      <th class="inventory-summary-table__actions-heading">Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (item of getItemsByStore(tab.id); track item.id) {
-                      @if (getStoreStockBuckets(item, tab.id); as stock) {
-                        <tr>
-                          <td class="inventory-summary-table__description">{{ item.description }}</td>
-                          <td class="inventory-summary-table__existence">{{ stock.existenceQuantity | number: '1.0-2' }}</td>
-                          <td>{{ stock.availableQuantity | number: '1.0-2' }}</td>
-                          <td>{{ stock.reservedQuantity | number: '1.0-2' }}</td>
-                          <td>{{ stock.inUseQuantity | number: '1.0-2' }}</td>
-                          <td class="inventory-summary-table__actions">
-                            <div class="item-actions">
-                              @if (canEditItems()) {
-                                <a mat-icon-button class="item-actions__button" [routerLink]="['/inventory-items', item.id, 'edit']" matTooltip="Editar"><mat-icon>edit</mat-icon></a>
-                              }
-                              @if (canMergeItems()) {
-                                <button mat-icon-button class="item-actions__button item-actions__button--merge" type="button" matTooltip="Unir con inventario duplicado" [disabled]="items.length < 2" (click)="openMergeDialog(item)"><mat-icon>call_merge</mat-icon></button>
-                              }
-                              @if (canDeleteItems()) {
-                                <button mat-icon-button class="item-actions__button item-actions__button--danger" type="button" matTooltip="Eliminar" (click)="deleteItem(item)"><mat-icon>delete</mat-icon></button>
-                              }
-                            </div>
-                          </td>
-                        </tr>
-                      }
-                    }
-                  </tbody>
-                </table>
-              </div>
-            }
-          </mat-tab>
+    <div class="inventory-filter">
+      <mat-form-field appearance="outline" class="inventory-filter__field">
+        <mat-label>Filtrar inventarios</mat-label>
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput type="text" [formControl]="itemFilter" [matAutocomplete]="itemFilterAutocomplete"
+          autocomplete="off" />
+        @if (itemFilter.value) {
+        <button mat-icon-button matSuffix type="button" aria-label="Limpiar filtro" (click)="clearItemFilter()">
+          <mat-icon>close</mat-icon>
+        </button>
         }
-      </mat-tab-group>
+        <mat-autocomplete #itemFilterAutocomplete="matAutocomplete">
+          @for (option of autocompleteOptions; track option) {
+          <mat-option [value]="option">{{ option }}</mat-option>
+          }
+        </mat-autocomplete>
+      </mat-form-field>
+      <div class="inventory-filter__count">
+        {{ filteredItems.length }} de {{ items.length }}
+      </div>
+    </div>
+
+    <mat-tab-group class="inventory-tabs" animationDuration="180ms">
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <span class="inventory-tab-label inventory-tab-label--all">
+            <mat-icon aria-hidden="true">inventory_2</mat-icon>
+            <span>Todos</span>
+            <strong>{{ filteredItems.length }}</strong>
+          </span>
+        </ng-template>
+
+        @if (!filteredItems.length) {
+        <div class="p-6 text-sm text-slate-600">No hay inventarios que coincidan.</div>
+        } @else {
+        <div class="app-table-scroll inventory-summary-scroll">
+          <table class="inventory-summary-table">
+            <thead>
+              <tr>
+                <th>Descripcion</th>
+                <th class="inventory-summary-table__existence">Existencia</th>
+                <th>Disponible</th>
+                <th>Reservado</th>
+                <th>En uso</th>
+                <th class="inventory-summary-table__actions-heading">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @let inventoryTotals = getInventoryTotals(filteredItems);
+              @for (item of filteredItems; track item.id) {
+              <tr>
+                <td class="inventory-summary-table__description">{{ item.description }}</td>
+                <td class="inventory-summary-table__existence"
+                  [matTooltip]="getStockTooltip(item, 'existenceQuantity')">{{ item.existenceQuantity | number: '1.0-2'
+                  }}</td>
+                <td [matTooltip]="getStockTooltip(item, 'availableQuantity')">{{ item.availableQuantity | number:
+                  '1.0-2' }}</td>
+                <td [matTooltip]="getStockTooltip(item, 'reservedQuantity')">{{ item.reservedQuantity | number: '1.0-2'
+                  }}</td>
+                <td [matTooltip]="getStockTooltip(item, 'inUseQuantity')">{{ item.inUseQuantity | number: '1.0-2' }}
+                </td>
+                <td class="inventory-summary-table__actions">
+                  <div class="item-actions">
+                    @if (canEditItems()) {
+                    <a mat-icon-button class="item-actions__button" [routerLink]="['/inventory-items', item.id, 'edit']"
+                      matTooltip="Editar">
+                      <mat-icon>edit</mat-icon>
+                    </a>
+                    }
+                    @if (canMergeItems()) {
+                    <button mat-icon-button class="item-actions__button item-actions__button--merge" type="button"
+                      matTooltip="Unir con inventario duplicado" [disabled]="items.length < 2"
+                      (click)="openMergeDialog(item)">
+                      <mat-icon>call_merge</mat-icon>
+                    </button>
+                    }
+                    @if (canDeleteItems()) {
+                    <button mat-icon-button class="item-actions__button item-actions__button--danger" type="button"
+                      matTooltip="Eliminar" (click)="deleteItem(item)">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+              }
+              <tr class="inventory-summary-table__total">
+                <td class="inventory-summary-table__description">Totales</td>
+                <td class="inventory-summary-table__existence">{{ inventoryTotals.existenceQuantity | number: '1.0-2' }}
+                </td>
+                <td>{{ inventoryTotals.availableQuantity | number: '1.0-2' }}</td>
+                <td>{{ inventoryTotals.reservedQuantity | number: '1.0-2' }}</td>
+                <td>{{ inventoryTotals.inUseQuantity | number: '1.0-2' }}</td>
+                <td class="inventory-summary-table__actions"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        }
+      </mat-tab>
+
+      @for (tab of storeTabs; track tab.id) {
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <span class="inventory-tab-label">
+            <mat-icon aria-hidden="true">warehouse</mat-icon>
+            <span>{{ tab.label }}</span>
+            <strong>{{ getItemsByStore(tab.id).length }}</strong>
+          </span>
+        </ng-template>
+
+        @let storeItems = getItemsByStore(tab.id);
+        @if (!storeItems.length) {
+        <div class="p-6 text-sm text-slate-600">
+          No hay inventario registrado para esta bodega.
+        </div>
+        } @else {
+        <div class="app-table-scroll inventory-summary-scroll">
+          <table class="inventory-summary-table inventory-summary-table--single-store">
+            <thead>
+              <tr>
+                <th>Articulo</th>
+                <th class="inventory-summary-table__existence">Existencia</th>
+                <th>Disponible</th>
+                <th>Reservado</th>
+                <th>En uso</th>
+                <th class="inventory-summary-table__actions-heading">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @let storeTotals = getStoreTotals(storeItems, tab.id);
+              @for (item of storeItems; track item.id) {
+              @if (getStoreStockBuckets(item, tab.id); as stock) {
+              <tr>
+                <td class="inventory-summary-table__description">{{ item.description }}</td>
+                <td class="inventory-summary-table__existence">{{ stock.existenceQuantity | number: '1.0-2' }}</td>
+                <td>{{ stock.availableQuantity | number: '1.0-2' }}</td>
+                <td>{{ stock.reservedQuantity | number: '1.0-2' }}</td>
+                <td>{{ stock.inUseQuantity | number: '1.0-2' }}</td>
+                <td class="inventory-summary-table__actions">
+                  <div class="item-actions">
+                    @if (canEditItems()) {
+                    <a mat-icon-button class="item-actions__button" [routerLink]="['/inventory-items', item.id, 'edit']"
+                      matTooltip="Editar"><mat-icon>edit</mat-icon></a>
+                    }
+                    @if (canMergeItems()) {
+                    <button mat-icon-button class="item-actions__button item-actions__button--merge" type="button"
+                      matTooltip="Unir con inventario duplicado" [disabled]="items.length < 2"
+                      (click)="openMergeDialog(item)"><mat-icon>call_merge</mat-icon></button>
+                    }
+                    @if (canDeleteItems()) {
+                    <button mat-icon-button class="item-actions__button item-actions__button--danger" type="button"
+                      matTooltip="Eliminar" (click)="deleteItem(item)"><mat-icon>delete</mat-icon></button>
+                    }
+                  </div>
+                </td>
+              </tr>
+              }
+              }
+              <tr class="inventory-summary-table__total">
+                <td class="inventory-summary-table__description">Totales</td>
+                <td class="inventory-summary-table__existence">{{ storeTotals.existenceQuantity | number: '1.0-2' }}
+                </td>
+                <td>{{ storeTotals.availableQuantity | number: '1.0-2' }}</td>
+                <td>{{ storeTotals.reservedQuantity | number: '1.0-2' }}</td>
+                <td>{{ storeTotals.inUseQuantity | number: '1.0-2' }}</td>
+                <td class="inventory-summary-table__actions"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        }
+      </mat-tab>
+      }
+    </mat-tab-group>
     }
   </div>
 </section>

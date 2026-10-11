@@ -149,7 +149,7 @@
   line-height: 1;
 }
 
-:host ::ng-deep .inventory-tabs > .mat-mdc-tab-header {
+:host ::ng-deep .inventory-tabs>.mat-mdc-tab-header {
   border-bottom: 1px solid #e2e8f0;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.95)),
@@ -189,20 +189,25 @@
 }
 
 :host ::ng-deep .inventory-tabs .mdc-tab--active {
-  border-color: #99f6e4;
+  border-color: #0f766e;
   border-bottom-color: #ffffff;
-  background: #ffffff;
-  color: #0f172a;
-  box-shadow: 0 -1px 0 #ffffff inset, 0 10px 22px rgb(15 23 42 / 0.08);
+  background: #115e59;
+  color: #ffffff;
+  box-shadow: 0 -1px 0 #ffffff inset, 0 8px 18px rgb(15 118 110 / 0.22);
+}
+
+:host ::ng-deep .inventory-tabs .mdc-tab--active .mdc-tab__text-label,
+:host ::ng-deep .inventory-tabs .mdc-tab--active .inventory-tab-label {
+  color: #ffffff;
 }
 
 :host ::ng-deep .inventory-tabs .mdc-tab--active .inventory-tab-label mat-icon {
-  color: var(--inventory-tab-accent);
+  color: #5eead4;
 }
 
 :host ::ng-deep .inventory-tabs .mdc-tab--active .inventory-tab-label strong {
-  background: #ccfbf1;
-  color: #0f766e;
+  background: #99f6e4;
+  color: #134e4a;
 }
 
 :host ::ng-deep .inventory-tabs .mdc-tab-indicator {
@@ -297,6 +302,15 @@
 
 .item-actions__button--danger {
   color: #b91c1c;
+}
+
+.inventory-redistribute-button {
+  background: #b91c1c !important;
+  color: #fff !important;
+}
+
+.inventory-redistribute-button:hover:not(:disabled) {
+  background: #991b1b !important;
 }
 
 .item-actions__button:disabled {

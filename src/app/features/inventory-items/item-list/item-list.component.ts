@@ -24,6 +24,8 @@ import { finalize, forkJoin, startWith } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { InventoryItemService } from '../../../core/services/inventory-item.service';
 import { RealtimeService } from '../../../core/services/realtime.service';
+import { StoreService } from '../../../core/services/store.service';
+import { TransportRequestService } from '../../../core/services/transport-request.service';
 import { UserService } from '../../../core/services/user.service';
 import {
   InventoryItemResponse,
@@ -31,6 +33,7 @@ import {
 } from '../../../models/inventory-item.model';
 import { UserResponse } from '../../../models/user.model';
 import { INVENTORY_STATES } from '../../../shared/catalogs.constants';
+import { RedistributeConfirmDialogComponent } from '../../transport-requests/redistribute-confirm-dialog/redistribute-confirm-dialog.component';
 
 interface MergeItemsDialogData {
   targetItem: InventoryItemResponse;
@@ -64,6 +67,8 @@ type InventoryStockBucket =
 })
 export class ItemListComponent implements OnInit {
   private readonly itemService = inject(InventoryItemService);
+  private readonly storeService = inject(StoreService);
+  private readonly requestService = inject(TransportRequestService);
   private readonly userService = inject(UserService);
   private readonly dialog = inject(MatDialog);
   private readonly auth = inject(AuthService);
@@ -87,11 +92,15 @@ export class ItemListComponent implements OnInit {
     'actions',
   ];
   private readonly stateLabelMap = new Map(INVENTORY_STATES.map((state) => [state.id, state.code]));
+  private storePriorityIndex = new Map<number, number>();
   readonly canCreateItems = computed(() => this.auth.canAccessAction('INVENTORY_ITEMS', 'create'));
   readonly canExportItems = computed(() => this.auth.canAccessAction('INVENTORY_ITEMS', 'export'));
   readonly canEditItems = computed(() => this.auth.canAccessAction('INVENTORY_ITEMS', 'edit'));
   readonly canDeleteItems = computed(() => this.auth.canAccessAction('INVENTORY_ITEMS', 'delete'));
   readonly canMergeItems = computed(() => this.auth.canAccessAction('INVENTORY_ITEMS', 'merge'));
+  readonly canRedistributeRequests = computed(() =>
+    this.auth.canAccessAction('TRANSPORT_REQUESTS', 'redistribute'),
+  );
   readonly itemFilter = new FormControl('', { nonNullable: true });
   items: InventoryItemResponse[] = [];
   filteredItems: InventoryItemResponse[] = [];
@@ -100,6 +109,7 @@ export class ItemListComponent implements OnInit {
   storeTabs: { id: number; label: string }[] = [];
   loading = false;
   exporting = false;
+  redistributing = false;
   errorMessage = '';
 
   getStoreLabel(storeId: number) {
@@ -175,6 +185,48 @@ export class ItemListComponent implements OnInit {
     );
   }
 
+  getInventoryTotals(items: InventoryItemResponse[]) {
+    const totals = {
+      existenceQuantity: 0,
+      availableQuantity: 0,
+      reservedQuantity: 0,
+      inUseQuantity: 0,
+    };
+
+    for (const item of items) {
+      totals.existenceQuantity += item.existenceQuantity;
+      totals.availableQuantity += item.availableQuantity;
+      totals.reservedQuantity += item.reservedQuantity;
+      totals.inUseQuantity += item.inUseQuantity;
+    }
+
+    return totals;
+  }
+
+  getStoreTotals(items: InventoryItemResponse[], storeId: number) {
+    const totals = {
+      existenceQuantity: 0,
+      availableQuantity: 0,
+      reservedQuantity: 0,
+      inUseQuantity: 0,
+    };
+
+    for (const item of items) {
+      const stock = this.getStoreStockBuckets(item, storeId);
+
+      if (!stock) {
+        continue;
+      }
+
+      totals.existenceQuantity += stock.existenceQuantity;
+      totals.availableQuantity += stock.availableQuantity;
+      totals.reservedQuantity += stock.reservedQuantity;
+      totals.inUseQuantity += stock.inUseQuantity;
+    }
+
+    return totals;
+  }
+
   buildStoreTabs(items: InventoryItemResponse[]) {
     const storeTabsMap = new Map<number, string>();
 
@@ -189,7 +241,11 @@ export class ItemListComponent implements OnInit {
     }
 
     this.storeTabs = Array.from(storeTabsMap.entries())
-      .sort((a, b) => a[0] - b[0])
+      .sort((a, b) => {
+        const aPriority = this.storePriorityIndex.get(a[0]) ?? Number.MAX_SAFE_INTEGER;
+        const bPriority = this.storePriorityIndex.get(b[0]) ?? Number.MAX_SAFE_INTEGER;
+        return aPriority - bPriority || a[0] - b[0];
+      })
       .map(([storeId, label]) => ({ id: storeId, label }));
   }
 
@@ -234,13 +290,15 @@ export class ItemListComponent implements OnInit {
 
     forkJoin({
       items: this.itemService.getAll(),
+      stores: this.storeService.getAll(),
       users: this.userService.getAll(),
     })
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({
-        next: ({ items, users }) => {
+        next: ({ items, stores, users }) => {
           this.items = items;
           this.users = users;
+          this.storePriorityIndex = new Map(stores.map((store, index) => [store.id, index]));
           this.buildStoreTabs(items);
           this.applyItemFilter(this.itemFilter.value);
         },
@@ -262,9 +320,7 @@ export class ItemListComponent implements OnInit {
       return;
     }
 
-    this.filteredItems = this.items.filter((item) =>
-      this.getFilterText(item).includes(query),
-    );
+    this.filteredItems = this.items.filter((item) => this.getFilterText(item).includes(query));
   }
 
   private buildAutocompleteOptions(query: string) {
@@ -350,6 +406,49 @@ export class ItemListComponent implements OnInit {
       });
   }
 
+  openRedistributeDialog(): void {
+    if (!this.canRedistributeRequests() || this.redistributing) {
+      return;
+    }
+
+    const dialogRef = this.dialog.open(RedistributeConfirmDialogComponent, {
+      width: 'min(96vw, 34rem)',
+      maxWidth: '96vw',
+    });
+
+    dialogRef.afterClosed().subscribe((confirmed) => {
+      if (confirmed) {
+        this.redistributeRequests();
+      }
+    });
+  }
+
+  private redistributeRequests(): void {
+    if (this.redistributing) {
+      return;
+    }
+
+    this.redistributing = true;
+    this.errorMessage = '';
+
+    this.requestService
+      .redistribute()
+      .pipe(finalize(() => (this.redistributing = false)))
+      .subscribe({
+        next: () => {
+          this.loadItems();
+          this.snackBar.open(
+            'Los pedidos fueron redistribuidos y se actualizaron las existencias por almacén.',
+            'Cerrar',
+            {
+              duration: 5000,
+            },
+          );
+        },
+        error: () => (this.errorMessage = 'No se pudieron redistribuir los pedidos.'),
+      });
+  }
+
   openMergeDialog(targetItem: InventoryItemResponse) {
     if (!this.canMergeItems()) {
       return;
@@ -413,7 +512,9 @@ export class ItemListComponent implements OnInit {
           </div>
         </div>
 
-        <div class="rounded border border-amber-200 bg-amber-50 p-3 text-sm leading-5 text-amber-900">
+        <div
+          class="rounded border border-amber-200 bg-amber-50 p-3 text-sm leading-5 text-amber-900"
+        >
           <div class="flex items-start gap-2">
             <mat-icon class="mt-0.5 text-base">warning</mat-icon>
             <p>

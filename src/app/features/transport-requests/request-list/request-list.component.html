@@ -1,10 +1,18 @@
 <section class="app-page">
   <div class="app-page-header">
     <div class="app-page-heading">
-      <h1 class="app-page-title">Solicitudes de transporte <span class="text-base font-semibold text-slate-500">CO-31</span></h1>
+      <h1 class="app-page-title">Solicitudes de transporte <span
+          class="text-base font-semibold text-slate-500">CO-31</span></h1>
       <p class="app-page-subtitle">Gestione solicitudes CO-31 con su lista de items.</p>
     </div>
     <div class="app-page-actions">
+      @if (canRedistributeRequests()) {
+      <button mat-stroked-button type="button" color="warn" [disabled]="redistributingRequests"
+        (click)="redistributeRequests()">
+        <mat-icon>restart_alt</mat-icon>
+        Redistribuir pedidos
+      </button>
+      }
       @if (canCreateRequests()) {
       <a mat-flat-button color="primary" routerLink="/transport-requests/new">
         <mat-icon>add</mat-icon>
@@ -15,11 +23,8 @@
   </div>
 
   <div class="app-data-surface">
-    <mat-tab-group
-      class="request-archive-tabs"
-      [selectedIndex]="selectedArchiveIndex()"
-      (selectedIndexChange)="changeArchiveTab($event)"
-    >
+    <mat-tab-group class="request-archive-tabs" [selectedIndex]="selectedArchiveIndex()"
+      (selectedIndexChange)="changeArchiveTab($event)">
       @for (tab of archiveTabs; track tab.value) {
       <mat-tab [label]="tab.label"></mat-tab>
       }
@@ -120,21 +125,6 @@
                         {{ item.articleControlType }}
                       </span>
                     </span>
-                    <span class="request-items-panel__qty">Cant: {{ item.quantity }}</span>
-                    @if (item.sizeAndWeight) {
-                    <span class="request-items-panel__meta">{{ item.sizeAndWeight }}</span>
-                    }
-                    @if ((item.allocations ?? []).length) {
-                    <div class="request-items-panel__allocations">
-                      @for (allocation of item.allocations ?? []; track allocation.id) {
-                      <span>
-                        {{ allocation.sourceStoreName || 'Sin bodega' }}:
-                        {{ allocation.allocatedQuantity }}
-                        ({{ getAllocationStatusLabel(allocation.status) }})
-                      </span>
-                      }
-                    </div>
-                    }
                   </div>
                   }
                 </div>

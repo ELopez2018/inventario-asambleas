@@ -128,6 +128,17 @@
         "confirmationRequired": true,
         "defaultRoles": ["SUPER", "ADMIN"],
         "notes": "Usa confirmacion del navegador."
+      },
+      {
+        "code": "USERS_RESEND_WELCOME_EMAIL",
+        "actionKey": "resendWelcomeEmail",
+        "title": "Reenviar correo de bienvenida",
+        "icon": "forward_to_inbox",
+        "style": "icon",
+        "sortOrder": 40,
+        "confirmationRequired": true,
+        "defaultRoles": ["SUPER"],
+        "notes": "POST /users/{id}/welcome-email/resend. Rota la clave temporal; solo SUPER por defecto."
       }
     ],
     "notes": "Cubre /users, /users/new y /users/:id/edit."
@@ -525,6 +536,17 @@
         "confirmationRequired": true,
         "defaultRoles": ["SUPER", "ADMIN"],
         "notes": "Operacion destructiva."
+      },
+      {
+        "code": "TRANSPORT_REQUESTS_REDISTRIBUTE",
+        "actionKey": "redistribute",
+        "title": "Redistribuir todos los pedidos",
+        "icon": "restart_alt",
+        "style": "danger",
+        "sortOrder": 60,
+        "confirmationRequired": true,
+        "defaultRoles": ["SUPER", "ADMIN"],
+        "notes": "POST /transport-requests/redistribute. Recalcula las asignaciones de todos los pedidos."
       }
     ],
     "notes": "Cubre listado y formulario de solicitudes de transporte CO-31."

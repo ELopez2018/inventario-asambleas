@@ -6,6 +6,12 @@ export interface UserResponse {
   email: string;
 }
 
+export interface ResendWelcomeEmailResponse {
+  userId: number;
+  sent: boolean;
+  message: string;
+}
+
 export interface CreateUserRequest {
   firstName: string;
   lastName: string;

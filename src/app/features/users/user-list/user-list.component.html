@@ -51,13 +51,20 @@
         </ng-container>
 
         <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef class="w-28 text-right">Acciones</th>
+          <th mat-header-cell *matHeaderCellDef class="w-40 text-right">Acciones</th>
           <td mat-cell *matCellDef="let user" class="text-right">
             <span class="responsive-cell-label" aria-hidden="true">Acciones</span>
             @if (canEditUsers()) {
             <a mat-icon-button [routerLink]="['/users', user.id, 'edit']" matTooltip="Editar">
               <mat-icon>edit</mat-icon>
             </a>
+            }
+            @if (canResendWelcomeEmail()) {
+            <button mat-icon-button type="button" matTooltip="Reenviar correo de bienvenida"
+              aria-label="Reenviar correo de bienvenida" [disabled]="resendingWelcomeEmailUserId !== null"
+              (click)="resendWelcomeEmail(user)">
+              <mat-icon>forward_to_inbox</mat-icon>
+            </button>
             }
             @if (canDeleteUsers()) {
             <button mat-icon-button type="button" matTooltip="Eliminar" (click)="deleteUser(user)">

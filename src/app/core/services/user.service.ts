@@ -1,7 +1,12 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { API_BASE_URL } from '../api.config';
-import { CreateUserRequest, UpdateUserRequest, UserResponse } from '../../models/user.model';
+import {
+  CreateUserRequest,
+  ResendWelcomeEmailResponse,
+  UpdateUserRequest,
+  UserResponse,
+} from '../../models/user.model';
 
 const BASE = `${API_BASE_URL}/users`;
 
@@ -27,5 +32,9 @@ export class UserService {
 
   delete(id: number) {
     return this.http.delete<void>(`${BASE}/${id}`);
+  }
+
+  resendWelcomeEmail(id: number) {
+    return this.http.post<ResendWelcomeEmailResponse>(`${BASE}/${id}/welcome-email/resend`, null);
   }
 }
