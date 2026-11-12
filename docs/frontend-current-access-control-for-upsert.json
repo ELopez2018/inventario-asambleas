@@ -127,7 +127,7 @@
         "sortOrder": 30,
         "confirmationRequired": true,
         "defaultRoles": ["SUPER", "ADMIN"],
-        "notes": "Usa confirmacion del navegador."
+        "notes": "Usa modal de confirmacion (ConfirmationService)."
       },
       {
         "code": "USERS_RESEND_WELCOME_EMAIL",
@@ -202,6 +202,39 @@
     "defaultRoles": ["SUPER", "ADMIN", "AUX"],
     "actions": [
       {
+        "code": "STORES_CREATE",
+        "actionKey": "create",
+        "title": "Crear bodega",
+        "icon": "add",
+        "style": "primary",
+        "sortOrder": 5,
+        "confirmationRequired": false,
+        "defaultRoles": ["SUPER", "ADMIN"],
+        "notes": "POST /stores. Boton Nuevo. Si no se envia priorityOrder el backend la agrega al final (max + 10)."
+      },
+      {
+        "code": "STORES_EDIT",
+        "actionKey": "edit",
+        "title": "Editar bodega",
+        "icon": "edit",
+        "style": "icon",
+        "sortOrder": 6,
+        "confirmationRequired": false,
+        "defaultRoles": ["SUPER", "ADMIN"],
+        "notes": "PUT /stores/{id}. Edita descripcion, direccion, GPS y telefono. Disponibilidad y prioridad tienen su propio endpoint."
+      },
+      {
+        "code": "STORES_DELETE",
+        "actionKey": "delete",
+        "title": "Eliminar bodega",
+        "icon": "delete",
+        "style": "danger",
+        "sortOrder": 20,
+        "confirmationRequired": true,
+        "defaultRoles": ["SUPER", "ADMIN"],
+        "notes": "DELETE /stores/{id}. Eliminacion logica; se rechaza si la bodega tiene existencia o detalles de inventario."
+      },
+      {
         "code": "STORES_UPDATE_PRIORITY",
         "actionKey": "updatePriority",
         "title": "Actualizar prioridad",
@@ -273,6 +306,17 @@
         "notes": "Acceso a /inventory-items/:id/edit."
       },
       {
+        "code": "INVENTORY_ITEMS_ADJUST",
+        "actionKey": "adjust",
+        "title": "Ajustar inventario",
+        "icon": "tune",
+        "style": "icon",
+        "sortOrder": 35,
+        "confirmationRequired": true,
+        "defaultRoles": ["SUPER", "ADMIN"],
+        "notes": "Modal de ajuste por bodega (agregar/retirar unidades con razon obligatoria) con paso de revision. POST /inventory-items/{id}/adjustments; puede reducir asignaciones de pedidos CO-31/CO-30 afectados."
+      },
+      {
         "code": "INVENTORY_ITEMS_MERGE",
         "actionKey": "merge",
         "title": "Unir inventarios",
@@ -295,7 +339,7 @@
         "notes": "Operacion destructiva."
       }
     ],
-    "notes": "El menu muestra Inventarios. El front ya oculta crear, exportar, editar, unir y eliminar si la accion no llega autorizada."
+    "notes": "El menu muestra Inventarios. El front ya oculta crear, exportar, editar, ajustar, unir y eliminar si la accion no llega autorizada. El boton Redistribuir pedidos de esta pantalla se controla con TRANSPORT_REQUESTS.redistribute."
   },
   {
     "code": "INVENTORY_TRANSACTIONS",
@@ -546,7 +590,7 @@
         "sortOrder": 60,
         "confirmationRequired": true,
         "defaultRoles": ["SUPER", "ADMIN"],
-        "notes": "POST /transport-requests/redistribute. Recalcula las asignaciones de todos los pedidos."
+        "notes": "POST /transport-requests/redistribute. Recalcula las asignaciones de todos los pedidos. Se muestra en Transporte y tambien en Inventarios; usa modal de confirmacion."
       }
     ],
     "notes": "Cubre listado y formulario de solicitudes de transporte CO-31."
@@ -582,7 +626,51 @@
         "sortOrder": 20,
         "confirmationRequired": false,
         "defaultRoles": ["SUPER", "ADMIN", "AUX"],
-        "notes": "Habilita guardado del formulario con PUT /transport-delivery-receipts/{id}."
+        "notes": "Habilita guardado del formulario con PUT /transport-delivery-receipts/{id}. Muestra resumen de cambios para confirmar antes de enviar."
+      },
+      {
+        "code": "TRANSPORT_DELIVERY_RECEIPTS_DELIVER_ITEM",
+        "actionKey": "deliverItem",
+        "title": "Confirmar entrega de linea",
+        "icon": "task_alt",
+        "style": "secondary",
+        "sortOrder": 25,
+        "confirmationRequired": true,
+        "defaultRoles": ["SUPER", "ADMIN", "AUX"],
+        "notes": "POST /transport-delivery-receipts/{id}/items/{itemId}/deliver (itemId = renglon del CO-30). Al confirmar la ultima linea pendiente la solicitud CO-31 pasa a ENTREGADA."
+      },
+      {
+        "code": "TRANSPORT_DELIVERY_RECEIPTS_CORRECT_ITEM_QUANTITY",
+        "actionKey": "correctItemQuantity",
+        "title": "Corregir cantidad de renglon",
+        "icon": "edit_note",
+        "style": "secondary",
+        "sortOrder": 26,
+        "confirmationRequired": true,
+        "defaultRoles": ["SUPER", "ADMIN"],
+        "notes": "PATCH /transport-delivery-receipts/{id}/items/{itemId}/quantity con stockMode AUTOMATIC o MANUAL y razon. Solo renglones pendientes; actualiza tambien el renglon del CO-31."
+      },
+      {
+        "code": "TRANSPORT_DELIVERY_RECEIPTS_REMOVE_ITEM",
+        "actionKey": "removeItem",
+        "title": "Eliminar renglon",
+        "icon": "remove_circle_outline",
+        "style": "danger",
+        "sortOrder": 27,
+        "confirmationRequired": true,
+        "defaultRoles": ["SUPER", "ADMIN"],
+        "notes": "POST /transport-delivery-receipts/{id}/items/{itemId}/remove con stockMode y razon. No permite eliminar el unico renglon; en modo MANUAL solo si el renglon no tiene unidades asignadas."
+      },
+      {
+        "code": "TRANSPORT_DELIVERY_RECEIPTS_MARK_ITEM_NOT_FOUND",
+        "actionKey": "markItemNotFound",
+        "title": "Marcar unidades no encontradas",
+        "icon": "search_off",
+        "style": "secondary",
+        "sortOrder": 28,
+        "confirmationRequired": true,
+        "defaultRoles": ["SUPER", "ADMIN"],
+        "notes": "POST /transport-delivery-receipts/{id}/items/{itemId}/not-found con quantity (0,01 a quantity - notFoundQuantity), stockMode y razon. El renglon conserva la cantidad solicitada y muestra la nota (-N No se encontraron); en AUTOMATIC descuenta de la existencia las unidades apartadas."
       },
       {
         "code": "TRANSPORT_DELIVERY_RECEIPTS_DELETE",

@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { ConfirmationService } from '../../../shared/confirmation.service';
 import {
   AfterViewChecked,
   Component,
@@ -63,6 +64,7 @@ function toApiLocalDateTime(value: string): string | undefined {
   styleUrl: './photo-list.component.css',
 })
 export class PhotoListComponent implements OnInit {
+  private readonly confirmation = inject(ConfirmationService);
   private readonly fb = inject(NonNullableFormBuilder);
   readonly eventContext = inject(EventContextService);
   private readonly auth = inject(AuthService);
@@ -321,14 +323,16 @@ export class PhotoListComponent implements OnInit {
     );
   }
 
-  private handleGpsFailure(reason: string): void {
+  private async handleGpsFailure(reason: string): Promise<void> {
     this.gpsVerified = false;
     this.gpsGateForm.patchValue({ gpsReady: false });
     this.errorMessage = `${reason} Debe encender GPS para continuar con la carga de fotos.`;
 
-    const confirmation = confirm(
-      'No fue posible validar GPS. Confirma que NO es posible encender GPS en este momento.',
-    );
+    const confirmation = await this.confirmation.confirm({
+      title: 'GPS no disponible',
+      text: 'No fue posible validar GPS. Confirme que NO es posible encender GPS en este momento.',
+      confirmButtonText: 'Sí, no puedo activar GPS',
+    });
 
     if (confirmation) {
       this.gpsFallbackConfirmations += 1;
@@ -605,12 +609,12 @@ export class PhotoListComponent implements OnInit {
     });
   }
 
-  deletePhoto(photo: InventoryItemDetailPhotoResponse) {
+  async deletePhoto(photo: InventoryItemDetailPhotoResponse) {
     if (!this.canDeletePhotoAction()) {
       return;
     }
 
-    if (!confirm(`Eliminar la foto ${photo.fileName}?`)) {
+    if (!(await this.confirmation.confirmDelete(`¿Eliminar la foto ${photo.fileName}?`))) {
       return;
     }
 

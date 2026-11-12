@@ -118,6 +118,10 @@
                     <span class="request-items-panel__line">#{{ item.lineNumber }}</span>
                     <span class="request-items-panel__description">
                       {{ item.description }}
+                      @if (item.inventoryAdjustmentNote) {
+                      <span class="text-red-700 font-semibold">{{ item.inventoryAdjustmentNote }}</span>
+                      <span class="block text-sm">{{ item.inventoryAdjustmentReason }}</span>
+                      }
                       @if (item.newItem) {
                       <span class="request-items-panel__badge">Nuevo</span>
                       }

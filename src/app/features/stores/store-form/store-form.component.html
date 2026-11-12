@@ -1,0 +1,88 @@
+<section class="app-page app-page--form">
+  <div class="mb-5">
+    <a routerLink="/stores" class="app-back-link">
+      <mat-icon class="text-base">arrow_back</mat-icon>
+      Bodegas
+    </a>
+    <h1 class="app-page-title mt-2">
+      {{ storeId ? 'Editar bodega' : 'Nueva bodega' }}
+    </h1>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="app-form-card">
+    @if (loading) {
+      <div class="flex justify-center p-8">
+        <mat-spinner diameter="36" />
+      </div>
+    } @else {
+      <div class="app-form-grid">
+        <mat-form-field appearance="outline" class="md:col-span-2">
+          <mat-label>Descripcion</mat-label>
+          <input matInput formControlName="description" [maxlength]="maxLengths.description" />
+          @if (form.controls.description.hasError('required')) {
+            <mat-error>La descripcion es obligatoria.</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="md:col-span-2">
+          <mat-label>Direccion</mat-label>
+          <input matInput formControlName="address" [maxlength]="maxLengths.address" />
+          @if (form.controls.address.hasError('required')) {
+            <mat-error>La direccion es obligatoria.</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Coordenadas GPS</mat-label>
+          <input matInput formControlName="gpsCoordinates" [maxlength]="maxLengths.gpsCoordinates" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Telefono</mat-label>
+          <input matInput formControlName="phone" [maxlength]="maxLengths.phone" />
+        </mat-form-field>
+
+        @if (!storeId) {
+          <mat-form-field appearance="outline">
+            <mat-label>Prioridad</mat-label>
+            <input
+              matInput
+              type="number"
+              min="0"
+              step="1"
+              formControlName="priorityOrder"
+              placeholder="Se agrega al final"
+            />
+            <mat-hint>Menor numero = mayor prioridad de surtido. 0 = bodega principal.</mat-hint>
+            @if (form.controls.priorityOrder.hasError('min')) {
+              <mat-error>La prioridad no puede ser negativa.</mat-error>
+            } @else if (form.controls.priorityOrder.hasError('integer')) {
+              <mat-error>La prioridad debe ser un numero entero.</mat-error>
+            }
+          </mat-form-field>
+        }
+      </div>
+
+      @if (errorMessage) {
+        <div class="mb-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {{ errorMessage }}
+        </div>
+      }
+
+      <div class="app-form-actions">
+        <a mat-button routerLink="/stores">Cancelar</a>
+        <button
+          mat-flat-button
+          color="primary"
+          type="submit"
+          [disabled]="form.invalid || saving || loadFailed"
+        >
+          @if (saving) {
+            <mat-spinner diameter="18" class="mr-2 inline-block" />
+          }
+          Guardar
+        </button>
+      </div>
+    }
+  </form>
+</section>

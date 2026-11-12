@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { ConfirmationService } from '../../../shared/confirmation.service';
 import { Component, OnInit, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -33,6 +34,7 @@ import {
   styleUrl: './detail-list.component.css',
 })
 export class DetailListComponent implements OnInit {
+  private readonly confirmation = inject(ConfirmationService);
   private readonly detailService = inject(InventoryItemDetailService);
   private readonly itemService = inject(InventoryItemService);
   private readonly storeService = inject(StoreService);
@@ -122,8 +124,8 @@ export class DetailListComponent implements OnInit {
       });
   }
 
-  deleteDetail(detail: InventoryItemDetailResponse) {
-    const confirmed = confirm(`Eliminar el detalle ${detail.code}?`);
+  async deleteDetail(detail: InventoryItemDetailResponse) {
+    const confirmed = await this.confirmation.confirmDelete(`¿Eliminar el detalle ${detail.code}?`);
 
     if (!confirmed) {
       return;

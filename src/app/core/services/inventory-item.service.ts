@@ -1,3 +1,4 @@
+import { InventoryAdjustmentRequest, InventoryAdjustmentResponse } from '../../models/inventory-adjustment.model';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
@@ -40,6 +41,14 @@ export class InventoryItemService {
 
   merge(id: number, body: MergeInventoryItemRequest) {
     return this.http.post<InventoryItemResponse>(`${BASE}/${id}/merge`, body);
+  }
+
+  adjust(id: number, body: InventoryAdjustmentRequest) {
+    return this.http.post<InventoryAdjustmentResponse>(`${BASE}/${id}/adjustments`, body);
+  }
+
+  getAdjustments(id: number) {
+    return this.http.get<InventoryAdjustmentResponse[]>(`${BASE}/${id}/adjustments`);
   }
 
   delete(id: number) {

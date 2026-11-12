@@ -93,7 +93,7 @@
     "showInMenu": true,
     "requiresAuth": true,
     "defaultRoles": ["SUPER", "ADMIN", "AUX", "USER"],
-    "notes": "Mismo permiso para /inventory-items/new y /inventory-items/:id/edit. Incluye exportacion Excel. Crear/exportar/editar/unir/eliminar se controla por acciones (create/export/edit/merge/delete)."
+    "notes": "Mismo permiso para /inventory-items/new y /inventory-items/:id/edit. Incluye exportacion Excel. Crear/exportar/editar/ajustar/unir/eliminar se controla por acciones (create/export/edit/adjust/merge/delete). Redistribuir pedidos desde esta pantalla usa TRANSPORT_REQUESTS.redistribute."
   },
   {
     "code": "INVENTORY_TRANSACTIONS",
@@ -153,7 +153,7 @@
     "showInMenu": true,
     "requiresAuth": true,
     "defaultRoles": ["SUPER", "ADMIN", "AUX"],
-    "notes": "Listado y detalle/edicion de recibos de entrega CO-30 generados desde solicitudes de transporte CO-31. Guardado controlado por accion update y eliminacion por accion delete."
+    "notes": "Listado y detalle/edicion de recibos de entrega CO-30 generados desde solicitudes de transporte CO-31. Guardado controlado por accion update, confirmacion de entrega por linea por accion deliverItem, correccion de cantidad por accion correctItemQuantity, eliminacion de renglon por accion removeItem, unidades no encontradas por accion markItemNotFound (historial en GET /transport-delivery-receipts/{id}/corrections) y eliminacion por accion delete."
   },
   {
     "code": "ADMIN_CREDENTIALS",

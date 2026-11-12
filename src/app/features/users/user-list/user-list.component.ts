@@ -9,7 +9,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { finalize, firstValueFrom } from 'rxjs';
-import Swal from 'sweetalert2';
+import { ConfirmationService } from '../../../shared/confirmation.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { UserService } from '../../../core/services/user.service';
 import { UserResponse } from '../../../models/user.model';
@@ -36,6 +36,7 @@ function resolveBackendMessage(err: HttpErrorResponse, fallback: string): string
   styleUrl: './user-list.component.css',
 })
 export class UserListComponent implements OnInit {
+  private readonly confirmation = inject(ConfirmationService);
   private readonly userService = inject(UserService);
   private readonly auth = inject(AuthService);
   private readonly snackBar = inject(MatSnackBar);
@@ -69,8 +70,8 @@ export class UserListComponent implements OnInit {
       });
   }
 
-  deleteUser(user: UserResponse) {
-    const confirmed = confirm(`Eliminar a ${user.firstName} ${user.lastName}?`);
+  async deleteUser(user: UserResponse) {
+    const confirmed = await this.confirmation.confirmDelete(`¿Eliminar a ${user.firstName} ${user.lastName}?`);
 
     if (!confirmed) {
       return;
@@ -90,20 +91,15 @@ export class UserListComponent implements OnInit {
     this.resendingWelcomeEmailUserId = user.id;
 
     try {
-      const confirmation = await Swal.fire({
+      const confirmation = await this.confirmation.confirm({
         title: 'Reenviar correo de bienvenida',
         text:
           `Se generará una nueva clave temporal para ${user.firstName} ${user.lastName}, ` +
           'se invalidará la clave actual y se enviará un nuevo correo. ¿Continuar?',
-        icon: 'warning',
-        showCancelButton: true,
         confirmButtonText: 'Sí, reenviar',
-        cancelButtonText: 'Cancelar',
-        confirmButtonColor: '#3f51b5',
-        focusCancel: true,
       });
 
-      if (!confirmation.isConfirmed) {
+      if (!confirmation) {
         return;
       }
 

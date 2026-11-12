@@ -23,7 +23,18 @@
     <div class="flex justify-center p-8">
       <mat-spinner diameter="36" />
     </div>
+    } @else if (loadFailed) {
+    <div role="alert" class="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+      {{ errorMessage }}
+    </div>
+    <a mat-button routerLink="/transport-requests">Volver a solicitudes</a>
     } @else {
+    @if (partialEdit) {
+    <div class="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+      <p>Esta solicitud tiene un CO-30. Los cambios en artículos pendientes se actualizarán en ese recibo. Los artículos entregados o con devoluciones están bloqueados. La asamblea se conserva.</p>
+      <p>Para finalizarla como DEVUELTA, REGRESADA o CERRADA, registre primero la devolución completa de las unidades asignadas en el CO-30. Una solicitud finalizada no puede reactivarse.</p>
+    </div>
+    }
     <div class="wizard-help mb-4 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900">
       <div class="flex items-start gap-2">
         <mat-icon class="text-base">help</mat-icon>
@@ -73,7 +84,8 @@
             <mat-label>Estado</mat-label>
             <mat-select formControlName="status">
               @for (status of statuses; track status) {
-                <mat-option [value]="status">{{ status }}</mat-option>
+                <mat-option [value]="status" [disabled]="!!statusRestriction(status)"
+                  [matTooltip]="statusRestriction(status) || ''">{{ status }}</mat-option>
               }
             </mat-select>
             @if (form.controls.status.hasError('required')) {
@@ -81,7 +93,7 @@
             }
           </mat-form-field>
 
-          @if (releasesStock()) {
+          @if (releasesStock() && !partialEdit) {
           <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
             <div class="flex items-start gap-2">
               <mat-icon class="text-base">warning</mat-icon>
@@ -203,10 +215,10 @@
           <div class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
             <div class="text-xs font-semibold uppercase text-slate-500">Evento seleccionado</div>
             <div class="mt-1 text-sm font-semibold text-slate-900">
-              {{ eventContext.selectedDescription() || 'Sin evento activo' }}
+              {{ eventDescription }}
             </div>
-            @if (eventContext.selectedAddress()) {
-            <div class="mt-1 text-xs text-slate-600">{{ eventContext.selectedAddress() }}</div>
+            @if (eventAddress) {
+            <div class="mt-1 text-xs text-slate-600">{{ eventAddress }}</div>
             }
           </div>
 
@@ -291,11 +303,13 @@
         <section class="mt-4 rounded-lg border border-slate-200 p-4">
           <div class="mb-3 flex items-center justify-between gap-2">
             <h2 class="text-base font-semibold text-slate-800">Items de transporte</h2>
+            @if (!itemsLocked) {
             <button mat-stroked-button type="button" (click)="addItem()"
               [matTooltip]="'Agregue cada articulo que necesita transportar'">
               <mat-icon>add</mat-icon>
               Agregar item
             </button>
+            }
           </div>
 
           <div class="space-y-3" formArrayName="items">
@@ -380,16 +394,120 @@
                 }
               </mat-form-field>
 
+              @if (!isItemLocked($index)) {
               <div class="flex items-center justify-end md:col-span-1">
                 <button mat-icon-button type="button" (click)="removeItem($index)" [disabled]="itemsArray.length === 1"
                   [matTooltip]="'Eliminar este item'">
                   <mat-icon>delete</mat-icon>
                 </button>
               </div>
+              }
+
+              @if (originalItemAt($index); as current) {
+              <div class="md:col-span-12 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+                @if (partialEdit) {
+                <span class="font-semibold" [class.text-green-700]="current.deliveryConfirmed">
+                  {{ current.deliveryConfirmed ? 'Entregado' : 'Pendiente de entrega' }}
+                </span>
+                }
+                <span>Solicitada: {{ current.quantity }} · Asignada: {{ current.allocatedQuantity ?? '-' }}</span>
+                @if (current.inventoryAdjustmentNote) {
+                <span class="font-semibold text-red-700">{{ current.inventoryAdjustmentNote }}</span>
+                }
+                @if (current.inventoryAdjustmentReason) {
+                <span class="w-full break-words text-slate-700">Razón del último ajuste: {{ current.inventoryAdjustmentReason }}</span>
+                }
+              </div>
+              }
+
+              @if (isManual(itemIndex) || canChooseManually(itemIndex)) {
+              <div class="md:col-span-12 space-y-2 rounded border border-slate-200 bg-slate-50 p-3" formArrayName="allocations">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  @if (canChooseManually(itemIndex)) {
+                  <mat-slide-toggle
+                    [checked]="isManual(itemIndex)"
+                    [disabled]="previewingIndex !== null"
+                    (change)="setManual(itemIndex, $event.checked)"
+                  >
+                    Asignar bodegas manualmente
+                  </mat-slide-toggle>
+                  } @else {
+                  <span class="text-sm font-semibold text-slate-800">Asignación manual de bodegas</span>
+                  }
+                  @if (previewingIndex === itemIndex) {
+                  <mat-spinner diameter="18" />
+                  }
+                </div>
+
+                @if (isManual(itemIndex)) {
+                  @if (isAllocationReadonly(itemIndex)) {
+                  <ul class="text-sm text-slate-800">
+                    @for (line of allocationLines(itemIndex).controls; track $index) {
+                    <li>{{ getStoreLabel(line.get('sourceStoreId')?.value) }}: {{ line.get('allocatedQuantity')?.value }}</li>
+                    }
+                  </ul>
+                  <p class="text-xs text-slate-600">
+                    {{ canManualAllocation ? 'Las bodegas asignadas se conservan; cambie la cantidad del renglón para reasignarlas.' : 'No tiene permiso para modificar la asignación manual.' }}
+                  </p>
+                  } @else {
+                  @for (line of allocationLines(itemIndex).controls; track line; let lineIndex = $index) {
+                  <div [formGroupName]="lineIndex" class="grid items-start gap-2 md:grid-cols-12">
+                    <mat-form-field appearance="outline" class="md:col-span-6">
+                      <mat-label>Bodega</mat-label>
+                      <mat-select formControlName="sourceStoreId">
+                        @for (choice of storeChoices(itemIndex, line.get('sourceStoreId')?.value); track choice.id) {
+                        <mat-option [value]="choice.id" [disabled]="choice.available <= 0">{{ choice.label }}</mat-option>
+                        }
+                      </mat-select>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline" class="md:col-span-3">
+                      <mat-label>Cantidad</mat-label>
+                      <input matInput type="number" min="0" formControlName="allocatedQuantity" />
+                      @if (availableForLine(itemIndex, line.get('sourceStoreId')?.value) !== null) {
+                      <mat-hint>Disponible: {{ availableForLine(itemIndex, line.get('sourceStoreId')?.value) }}</mat-hint>
+                      }
+                      @if (line.get('allocatedQuantity')?.hasError('min')) {
+                      <mat-error>Debe ser mayor a 0.</mat-error>
+                      } @else if (line.get('allocatedQuantity')?.hasError('decimalPrecision')) {
+                      <mat-error>Maximo 2 decimales.</mat-error>
+                      }
+                    </mat-form-field>
+
+                    <div class="flex items-center md:col-span-3">
+                      <button mat-icon-button type="button" matTooltip="Quitar bodega" (click)="removeAllocation(itemIndex, lineIndex)">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </div>
+                  </div>
+                  }
+                  <button mat-stroked-button type="button" (click)="addAllocation(itemIndex)">
+                    <mat-icon>add</mat-icon>
+                    Agregar bodega
+                  </button>
+                  }
+
+                  <div class="text-sm font-semibold text-slate-800">
+                    Asignado {{ allocationTotals(itemIndex).assigned }} de {{ allocationTotals(itemIndex).requested }}
+                  </div>
+                  @if (allocationTotals(itemIndex).missing > 0) {
+                  <div class="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                    {{ allocationTotals(itemIndex).missing }} unidades quedarán sin existencia. Agregue otra bodega si desea cubrirlas.
+                  </div>
+                  }
+                }
+              </div>
+              }
 
               <div class="md:col-span-12">
                 <div class="rounded border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-900">
+                  @if (partialEdit) {
+                  {{ isItemLocked($index) ? 'Artículo entregado o con devoluciones: se conserva sin cambios.' : 'Pendiente: al guardar se actualizará su renglón del CO-30 y su asignación.' }}
+                  } @else if (isManual(itemIndex)) {
+                  Se reservará exactamente lo elegido, sin usar la prioridad de bodegas.
+                  } @else {
                   El surtido se calcula automaticamente por prioridad de bodegas al guardar la solicitud.
+                  }
                 </div>
               </div>
             </div>
@@ -434,7 +552,7 @@
               </div>
               <div>
                 <dt>Evento</dt>
-                <dd>{{ eventContext.selectedDescription() || 'Sin evento activo' }}</dd>
+                <dd>{{ eventDescription }}</dd>
               </div>
               <div>
                 <dt>Fecha solicitud CO-31</dt>
@@ -534,7 +652,7 @@
                   </div>
                   <div>
                     <dt>Surtido</dt>
-                    <dd>Automatico por prioridad de bodegas</dd>
+                    <dd>{{ allocationReviewLabel($index) }}</dd>
                   </div>
                 </dl>
               </div>
@@ -554,13 +672,13 @@
               Cancelar
             </a>
           </div>
-          <button mat-flat-button color="primary" type="submit" [disabled]="saving || form.invalid"
-            [matTooltip]="'Guarda la solicitud CO-31 completa con todos sus items'">
-            @if (saving) {
+          <button mat-flat-button color="primary" type="submit" [disabled]="saving || reviewing || form.invalid || !canSave"
+            [matTooltip]="partialEdit ? 'Revisa el resumen de cambios antes de actualizar el CO-31 y los artículos pendientes del CO-30' : 'Guarda la solicitud CO-31 completa con todos sus items'">
+            @if (saving || reviewing) {
             <mat-spinner diameter="18" class="mr-2 inline-block" />
             }
             <mat-icon>save</mat-icon>
-            Guardar solicitud CO-31
+            {{ saving ? 'Aplicando cambios…' : 'Guardar solicitud CO-31' }}
           </button>
         </div>
       </mat-step>

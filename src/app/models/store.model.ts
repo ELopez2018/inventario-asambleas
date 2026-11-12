@@ -8,6 +8,26 @@ export interface StoreResponse {
   available: boolean;
 }
 
+export interface CreateStoreRequest {
+  description: string;
+  address: string;
+  gpsCoordinates?: string | null;
+  phone?: string | null;
+  priorityOrder?: number | null;
+}
+
+export interface UpdateStoreRequest {
+  description: string;
+  address: string;
+  gpsCoordinates?: string | null;
+  phone?: string | null;
+}
+
+export const STORE_DESCRIPTION_MAX_LENGTH = 255;
+export const STORE_ADDRESS_MAX_LENGTH = 255;
+export const STORE_GPS_MAX_LENGTH = 120;
+export const STORE_PHONE_MAX_LENGTH = 30;
+
 export interface StorePriorityUpdateRequest {
   priorityOrder: number;
 }

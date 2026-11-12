@@ -107,6 +107,12 @@
               <div>
                 <div class="receipt-label">Descripcion</div>
                 <div class="receipt-value">{{ item.description }}</div>
+                @if (item.inventoryAdjustmentNote) {
+                <div class="mt-1 text-red-700 font-semibold">{{ item.inventoryAdjustmentNote }}</div>
+                }
+                @if (item.inventoryAdjustmentReason) {
+                <div class="text-sm break-words">Razón del último ajuste: {{ item.inventoryAdjustmentReason }}</div>
+                }
               </div>
               <div>
                 <div class="receipt-label">Control</div>
@@ -117,10 +123,58 @@
                 <div class="receipt-value">{{ item.requestNumber }}</div>
               </div>
               <div>
-                <div class="receipt-label">Cantidad</div>
-                <div class="receipt-value">{{ item.quantity }}</div>
+                <div class="receipt-label">Cantidad solicitada</div>
+                <div class="receipt-value">{{ item.quantity }} · Asignada: {{ item.allocatedQuantity ?? item.quantity }}
+                  @if ((item.notFoundQuantity ?? 0) > 0) { · No encontradas: {{ item.notFoundQuantity }} }
+                  @if ((item.unavailableQuantity ?? 0) > 0) { · Faltante: {{ item.unavailableQuantity }} }
+                  · Pendiente de devolver: {{ (item.allocatedQuantity ?? item.quantity) - (item.internalReturnQuantity ?? 0) }}</div>
               </div>
             </div>
+
+            <div class="mt-3 flex flex-wrap items-center gap-3">
+              <span class="font-semibold" [class.text-green-700]="item.deliveryConfirmed">
+                {{ item.deliveryConfirmed ? 'Entregado' : 'Pendiente de entrega' }}
+              </span>
+              @if (!item.deliveryConfirmed && canConfirmDelivery()) {
+              <button mat-stroked-button type="button" (click)="confirmItemDelivery(item)"
+                [disabled]="saving || reviewing || deliveringItemId !== null || form.dirty || (item.allocatedQuantity ?? item.quantity) <= 0"
+                [matTooltip]="form.dirty ? 'Guarda los cambios antes de confirmar' : 'Confirma la entrega física y protege este artículo'">
+                <mat-icon>task_alt</mat-icon>
+                {{ deliveringItemId === item.id ? 'Confirmando…' : 'Marcar como entregado' }}
+              </button>
+              }
+              @if (canCorrectItemQuantity()) {
+              <!-- El span muestra el tooltip aunque el botón esté deshabilitado. -->
+              <span [matTooltip]="correctionLock(item) ?? (form.dirty ? 'Guarda los cambios antes de corregir' : 'Corrige la cantidad en el CO-30 y en el CO-31')">
+                <button mat-stroked-button type="button" (click)="correctItemQuantity(item)"
+                  [disabled]="correctionBusy || form.dirty || !!correctionLock(item)">
+                  <mat-icon>edit_note</mat-icon>
+                  {{ correctingItemId === item.id ? 'Aplicando…' : 'Corregir cantidad' }}
+                </button>
+              </span>
+              }
+              @if (canMarkItemNotFound()) {
+              <span [matTooltip]="notFoundLock(item) ?? (form.dirty ? 'Guarda los cambios antes de marcar' : 'Marca unidades que se buscaron y no aparecieron')">
+                <button mat-stroked-button type="button" (click)="markItemNotFound(item)"
+                  [disabled]="correctionBusy || form.dirty || !!notFoundLock(item)">
+                  <mat-icon>search_off</mat-icon>
+                  No se encontraron
+                </button>
+              </span>
+              }
+              @if (canRemoveItem()) {
+              <span [matTooltip]="removalLock(item) ?? (form.dirty ? 'Guarda los cambios antes de eliminar' : 'Elimina el renglón del CO-30 y del CO-31')">
+                <button mat-stroked-button color="warn" type="button" (click)="removeItem(item)"
+                  [disabled]="correctionBusy || form.dirty || !!removalLock(item)">
+                  <mat-icon>remove_circle_outline</mat-icon>
+                  Eliminar renglón
+                </button>
+              </span>
+              }
+            </div>
+            @if (hasAnyCorrectionAction() && correctionLock(item); as lock) {
+            <p class="mt-1 text-sm text-slate-600">{{ lock }}</p>
+            }
 
             <div class="app-form-grid mt-3">
               <mat-form-field appearance="outline">
@@ -132,7 +186,7 @@
                 <mat-label>Cantidad devuelta interna</mat-label>
                 <input matInput type="number" min="0" step="0.01" formControlName="internalReturnQuantity" />
                 @if (receiptItems.at(itemIndex).get('internalReturnQuantity')?.hasError('internalReturnQuantity')) {
-                <mat-error>No puede superar {{ item.quantity }}.</mat-error>
+                <mat-error>No puede superar {{ item.allocatedQuantity ?? item.quantity }}.</mat-error>
                 }
               </mat-form-field>
 
@@ -164,6 +218,32 @@
           }
         </div>
       </section>
+
+      @if (corrections.length || correctionsError) {
+      <section class="mt-5 rounded-lg border border-slate-200 p-4">
+        <h2 class="mb-3 text-base font-semibold text-slate-800">Historial de correcciones</h2>
+        @if (correctionsError) {
+        <p class="text-sm text-red-700">{{ correctionsError }}</p>
+        }
+        @for (correction of corrections; track correction.id) {
+        <div class="border-t py-2 text-sm first:border-t-0">
+          <strong>{{ correctionTypeLabels[correction.type] }}</strong> · {{ correction.description }}
+          · {{ correction.createdAt | date: 'short' }}
+          @if (correction.createdByUserId) { · Usuario #{{ correction.createdByUserId }} }
+          <div>
+            Cantidad: {{ correction.quantityBefore }} → {{ correction.quantityAfter }}
+            · Asignadas: {{ correction.assignedBefore }} → {{ correction.assignedAfter }}
+            @if (correction.type === 'NOT_FOUND') { · No encontradas: {{ correction.notFoundQuantity ?? 0 }} }
+            · {{ stockModeLabels[correction.mode] }}
+            @if (correction.pendingManualQuantity !== 0) {
+            · <span class="font-semibold text-amber-700">Pendiente de ajuste manual: {{ correction.pendingManualQuantity }}</span>
+            }
+          </div>
+          <p class="break-words">{{ correction.reason }}</p>
+        </div>
+        }
+      </section>
+      }
 
       <section class="mt-5 rounded-lg border border-slate-200 p-4">
         <h2 class="mb-3 text-base font-semibold text-slate-800">Devolucion</h2>
@@ -198,12 +278,13 @@
       <div class="app-form-actions mt-5">
         <a mat-button routerLink="/transport-delivery-receipts">Cancelar</a>
         @if (canUpdateReceipts()) {
-        <button mat-flat-button color="primary" type="submit" [disabled]="saving || form.invalid">
-          @if (saving) {
+        <button mat-flat-button color="primary" type="submit" [disabled]="saving || reviewing || deliveringItemId !== null || form.invalid"
+          matTooltip="Revisa el resumen de cambios antes de guardar">
+          @if (saving || reviewing) {
           <mat-spinner diameter="18" class="mr-2 inline-block" />
           }
           <mat-icon>save</mat-icon>
-          Guardar recibo CO-30
+          {{ saving ? 'Aplicando cambios…' : 'Guardar recibo CO-30' }}
         </button>
         }
       </div>
@@ -214,6 +295,12 @@
     <div class="mt-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
       {{ errorMessage }}
     </div>
+    @if (!receipt && !loading && !missingReceipt) {
+    <button mat-stroked-button type="button" class="mt-3" (click)="loadReceipt()">
+      <mat-icon>refresh</mat-icon>
+      Reintentar
+    </button>
+    }
     }
   </div>
 </section>

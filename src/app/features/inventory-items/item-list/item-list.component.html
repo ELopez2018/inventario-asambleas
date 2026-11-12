@@ -115,6 +115,10 @@
                       <mat-icon>edit</mat-icon>
                     </a>
                     }
+                    @if (canAdjustItems()) {
+                    <button mat-icon-button type="button" class="item-actions__button" matTooltip="Ajustar inventario"
+                      (click)="openAdjustment(item)"><mat-icon>tune</mat-icon></button>
+                    }
                     @if (canMergeItems()) {
                     <button mat-icon-button class="item-actions__button item-actions__button--merge" type="button"
                       matTooltip="Unir con inventario duplicado" [disabled]="items.length < 2"
@@ -190,6 +194,10 @@
                     @if (canEditItems()) {
                     <a mat-icon-button class="item-actions__button" [routerLink]="['/inventory-items', item.id, 'edit']"
                       matTooltip="Editar"><mat-icon>edit</mat-icon></a>
+                    }
+                    @if (canAdjustItems()) {
+                    <button mat-icon-button type="button" class="item-actions__button" matTooltip="Ajustar inventario"
+                      (click)="openAdjustment(item, tab.id)"><mat-icon>tune</mat-icon></button>
                     }
                     @if (canMergeItems()) {
                     <button mat-icon-button class="item-actions__button item-actions__button--merge" type="button"

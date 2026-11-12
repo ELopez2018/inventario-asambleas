@@ -1,3 +1,4 @@
+import { addInventoryAdjustmentPages } from './inventory-adjustment-pdf';
 import { Injectable } from '@angular/core';
 import { PDFDocument, PDFTextField, StandardFonts, rgb } from 'pdf-lib';
 import {
@@ -83,6 +84,7 @@ export class TransportDeliveryReceiptPdfService {
     form.updateFieldAppearances(font);
 
     this.addContinuationPages(pdf, font, boldFont, receipt);
+    addInventoryAdjustmentPages(pdf, font, receipt.items, `CO-30 ${receipt.receiptNumber}`);
 
     return pdf.save();
   }
@@ -122,7 +124,7 @@ export class TransportDeliveryReceiptPdfService {
         const y = CONTINUATION_TABLE.top - (row + 1) * CONTINUATION_TABLE.rowHeight;
         const values = [
           item.articleNumber,
-          `(${item.quantity}) ${item.description}`,
+          `(${item.quantity}) ${item.inventoryAdjustmentNote ?? ''} ${item.description}`,
           item.assignedTo ?? '',
           item.requestNumber,
         ];
@@ -170,7 +172,7 @@ export class TransportDeliveryReceiptPdfService {
     item: TransportDeliveryReceiptItemResponse | undefined,
   ): void {
     setText(fields.articleNumber, item?.articleNumber);
-    const description = item != null ? `(${item.quantity}) ${item.description}` : undefined;
+    const description = item != null ? `(${item.quantity}) ${item.inventoryAdjustmentNote ?? ''} ${item.description}` : undefined;
     setText(fields.description, description);
     setText(fields.assignedTo, item?.assignedTo);
     setText(fields.requestNumber, item?.requestNumber);

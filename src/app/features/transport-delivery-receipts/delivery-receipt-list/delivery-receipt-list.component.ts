@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { ConfirmationService } from '../../../shared/confirmation.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
@@ -34,6 +35,7 @@ import { RequestPdfDialogComponent } from '../../transport-requests/request-pdf-
   styleUrl: './delivery-receipt-list.component.css',
 })
 export class DeliveryReceiptListComponent implements OnInit {
+  private readonly confirmation = inject(ConfirmationService);
   private readonly receiptService = inject(TransportDeliveryReceiptService);
   private readonly receiptPdfService = inject(TransportDeliveryReceiptPdfService);
   private readonly auth = inject(AuthService);
@@ -158,12 +160,12 @@ export class DeliveryReceiptListComponent implements OnInit {
     }
   }
 
-  deleteReceipt(receipt: TransportDeliveryReceiptResponse): void {
+  async deleteReceipt(receipt: TransportDeliveryReceiptResponse): Promise<void> {
     if (this.deletingReceiptId) {
       return;
     }
 
-    const confirmed = confirm(`Eliminar recibo CO-30 ${receipt.receiptNumber}?`);
+    const confirmed = await this.confirmation.confirmDelete(`¿Eliminar recibo CO-30 ${receipt.receiptNumber}?`);
 
     if (!confirmed) {
       return;

@@ -1,3 +1,5 @@
+import { InventoryAdjustmentDialogComponent } from '../inventory-adjustment-dialog/inventory-adjustment-dialog.component';
+import { InventoryAdjustmentResponse } from '../../../models/inventory-adjustment.model';
 import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, OnInit, computed, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -33,7 +35,7 @@ import {
 } from '../../../models/inventory-item.model';
 import { UserResponse } from '../../../models/user.model';
 import { INVENTORY_STATES } from '../../../shared/catalogs.constants';
-import { RedistributeConfirmDialogComponent } from '../../transport-requests/redistribute-confirm-dialog/redistribute-confirm-dialog.component';
+import { ConfirmationService } from '../../../shared/confirmation.service';
 
 interface MergeItemsDialogData {
   targetItem: InventoryItemResponse;
@@ -66,6 +68,7 @@ type InventoryStockBucket =
   styleUrl: './item-list.component.css',
 })
 export class ItemListComponent implements OnInit {
+  private readonly confirmation = inject(ConfirmationService);
   private readonly itemService = inject(InventoryItemService);
   private readonly storeService = inject(StoreService);
   private readonly requestService = inject(TransportRequestService);
@@ -97,6 +100,7 @@ export class ItemListComponent implements OnInit {
   readonly canExportItems = computed(() => this.auth.canAccessAction('INVENTORY_ITEMS', 'export'));
   readonly canEditItems = computed(() => this.auth.canAccessAction('INVENTORY_ITEMS', 'edit'));
   readonly canDeleteItems = computed(() => this.auth.canAccessAction('INVENTORY_ITEMS', 'delete'));
+  readonly canAdjustItems = computed(() => this.auth.canAccessAction('INVENTORY_ITEMS', 'adjust'));
   readonly canMergeItems = computed(() => this.auth.canAccessAction('INVENTORY_ITEMS', 'merge'));
   readonly canRedistributeRequests = computed(() =>
     this.auth.canAccessAction('TRANSPORT_REQUESTS', 'redistribute'),
@@ -406,21 +410,21 @@ export class ItemListComponent implements OnInit {
       });
   }
 
-  openRedistributeDialog(): void {
+  async openRedistributeDialog(): Promise<void> {
     if (!this.canRedistributeRequests() || this.redistributing) {
       return;
     }
 
-    const dialogRef = this.dialog.open(RedistributeConfirmDialogComponent, {
-      width: 'min(96vw, 34rem)',
-      maxWidth: '96vw',
+    const confirmed = await this.confirmation.confirm({
+      title: 'Redistribuir pedidos',
+      text: 'Esta acción redistribuirá todos los pedidos entre los almacenes y reemplazará las asignaciones actuales. ¿Desea continuar?',
+      confirmButtonText: 'Sí, redistribuir',
+      confirmButtonColor: '#b91c1c',
     });
 
-    dialogRef.afterClosed().subscribe((confirmed) => {
-      if (confirmed) {
-        this.redistributeRequests();
-      }
-    });
+    if (confirmed) {
+      this.redistributeRequests();
+    }
   }
 
   private redistributeRequests(): void {
@@ -449,6 +453,21 @@ export class ItemListComponent implements OnInit {
       });
   }
 
+  openAdjustment(item: InventoryItemResponse, storeId?: number) {
+    if (!this.canAdjustItems()) return;
+    this.dialog.open(InventoryAdjustmentDialogComponent, {
+      width: '680px', maxWidth: '95vw', data: { item, storeId },
+    }).afterClosed().subscribe((saved?: InventoryAdjustmentResponse) => {
+      if (saved) {
+        this.loadItems();
+        const requests = new Set(saved.impacts.map((impact) => impact.requestNumber));
+        this.snackBar.open(requests.size
+          ? `Ajuste registrado. Pedidos afectados: ${[...requests].join(', ')}.`
+          : 'Ajuste registrado. No se modificaron asignaciones de pedidos.', 'Cerrar', { duration: 6000 });
+      }
+    });
+  }
+
   openMergeDialog(targetItem: InventoryItemResponse) {
     if (!this.canMergeItems()) {
       return;
@@ -472,8 +491,8 @@ export class ItemListComponent implements OnInit {
     });
   }
 
-  deleteItem(item: InventoryItemResponse) {
-    const confirmed = confirm(`Eliminar "${item.description}"?`);
+  async deleteItem(item: InventoryItemResponse) {
+    const confirmed = await this.confirmation.confirmDelete(`¿Eliminar "${item.description}"?`);
 
     if (!confirmed) {
       return;

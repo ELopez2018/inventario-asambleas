@@ -18,7 +18,7 @@ import { TransportRequestPdfService } from '../../../core/services/transport-req
 import { TransportRequestService } from '../../../core/services/transport-request.service';
 import { TransportRequestResponse } from '../../../models/transport-request.model';
 import { RequestPdfDialogComponent } from '../request-pdf-dialog/request-pdf-dialog.component';
-import { RedistributeConfirmDialogComponent } from '../redistribute-confirm-dialog/redistribute-confirm-dialog.component';
+import { ConfirmationService } from '../../../shared/confirmation.service';
 
 type RequestArchiveTab = 'pending' | 'attended' | 'all';
 
@@ -39,6 +39,7 @@ type RequestArchiveTab = 'pending' | 'attended' | 'all';
   styleUrl: './request-list.component.css',
 })
 export class RequestListComponent implements OnInit {
+  private readonly confirmation = inject(ConfirmationService);
   private readonly requestService = inject(TransportRequestService);
   private readonly requestPdfService = inject(TransportRequestPdfService);
   private readonly eventService = inject(EventService);
@@ -226,8 +227,8 @@ export class RequestListComponent implements OnInit {
     });
   }
 
-  deleteRequest(request: TransportRequestResponse): void {
-    const confirmed = confirm(`Eliminar solicitud CO-31 ${request.requestNumber}?`);
+  async deleteRequest(request: TransportRequestResponse): Promise<void> {
+    const confirmed = await this.confirmation.confirmDelete(`¿Eliminar solicitud CO-31 ${request.requestNumber}?`);
 
     if (!confirmed) {
       return;
@@ -239,34 +240,36 @@ export class RequestListComponent implements OnInit {
     });
   }
 
-  redistributeRequests(): void {
+  async redistributeRequests(): Promise<void> {
     if (!this.canRedistributeRequests() || this.redistributingRequests) {
       return;
     }
 
-    this.dialog
-      .open(RedistributeConfirmDialogComponent, { width: 'min(32rem, 94vw)' })
-      .afterClosed()
-      .subscribe((confirmed) => {
-        if (confirmed !== true || this.redistributingRequests) {
-          return;
-        }
+    const confirmed = await this.confirmation.confirm({
+      title: 'Redistribuir pedidos',
+      text: 'Esta acción redistribuirá todos los pedidos entre los almacenes y reemplazará las asignaciones actuales. ¿Desea continuar?',
+      confirmButtonText: 'Sí, redistribuir',
+      confirmButtonColor: '#b91c1c',
+    });
 
-        this.redistributingRequests = true;
-        this.errorMessage = '';
+    if (!confirmed || this.redistributingRequests) {
+      return;
+    }
 
-        this.requestService
-          .redistribute()
-          .pipe(finalize(() => (this.redistributingRequests = false)))
-          .subscribe({
-            next: () => {
-              this.snackBar.open('Los pedidos se redistribuyeron correctamente.', 'Cerrar', {
-                duration: 5000,
-              });
-              this.loadRequests();
-            },
-            error: () => (this.errorMessage = 'No se pudieron redistribuir los pedidos.'),
+    this.redistributingRequests = true;
+    this.errorMessage = '';
+
+    this.requestService
+      .redistribute()
+      .pipe(finalize(() => (this.redistributingRequests = false)))
+      .subscribe({
+        next: () => {
+          this.snackBar.open('Los pedidos se redistribuyeron correctamente.', 'Cerrar', {
+            duration: 5000,
           });
+          this.loadRequests();
+        },
+        error: () => (this.errorMessage = 'No se pudieron redistribuir los pedidos.'),
       });
   }
 

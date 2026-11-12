@@ -3,6 +3,8 @@ import { Injectable, inject } from '@angular/core';
 import { API_BASE_URL } from '../api.config';
 import { TransportDeliveryReceiptResponse } from '../../models/transport-delivery-receipt.model';
 import {
+  AllocationPreviewRequest,
+  AllocationPreviewResponse,
   CreateTransportRequestRequest,
   TransportRequestAutocompleteOptionsResponse,
   TransportRequestNextNumberResponse,
@@ -58,6 +60,11 @@ export class TransportRequestService {
     return this.http.post<TransportDeliveryReceiptResponse>(`${BASE}/${id}/delivery-receipt`, {
       observations: observations ?? null,
     });
+  }
+
+  /** Calcula sin guardar lo que asignaría el modo automático. */
+  previewAllocation(body: AllocationPreviewRequest) {
+    return this.http.post<AllocationPreviewResponse>(`${BASE}/allocation-preview`, body);
   }
 
   redistribute() {

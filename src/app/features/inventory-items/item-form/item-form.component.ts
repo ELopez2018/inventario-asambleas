@@ -93,6 +93,9 @@ export class ItemFormComponent implements OnInit {
 
   readonly itemId = Number(this.route.snapshot.paramMap.get('id')) || null;
   readonly stateOptions = INVENTORY_STATES;
+  users: UserResponse[] = [];
+  storeOptions: StoreResponse[] = [];
+
   readonly form = this.fb.group({
     description: ['', [Validators.required, Validators.maxLength(255)]],
     ownerUserId: [0, [Validators.required, Validators.min(1)]],
@@ -102,8 +105,6 @@ export class ItemFormComponent implements OnInit {
     }),
   });
 
-  users: UserResponse[] = [];
-  storeOptions: StoreResponse[] = [];
   loading = false;
   saving = false;
   errorMessage = '';

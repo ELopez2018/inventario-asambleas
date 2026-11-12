@@ -5,6 +5,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { catchError, throwError } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { EventContextService } from '../services/event-context.service';
+import { OPTIONAL_RESOURCE } from '../http-context';
 
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
@@ -27,6 +28,12 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         'INV-TRANSPORT-REQUEST-ALLOCATION-002',
         'INV-TRANSPORT-REQUEST-ALLOCATION-STORE-001',
         'INV-TRANSPORT-RECEIPT-RETURN-001',
+        'INV-TRANSPORT-REQUEST-RECEIPT-001',
+        'INV-TRANSPORT-REQUEST-EVENT-001',
+        'INV-TRANSPORT-REQUEST-DESTINATION-001',
+        'INV-TRANSPORT-REQUEST-IN-USE-001',
+        'INV-TRANSPORT-REQUEST-RETURN-002',
+        'INV-TRANSPORT-REQUEST-REOPEN-001',
         'INV-STOCK-001',
       ].includes(err.error?.errorCode);
 
@@ -55,7 +62,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         snackBar.open('Sin conexion con el servidor.', 'Cerrar', { duration: 4000 });
       } else if (err.status === 403) {
         snackBar.open('No tiene permisos para esta accion.', 'Cerrar', { duration: 4000 });
-      } else if (err.status === 404) {
+      } else if (err.status === 404 && !req.context.get(OPTIONAL_RESOURCE)) {
         snackBar.open('Recurso no encontrado.', 'Cerrar', { duration: 4000 });
       } else if (err.status >= 500 && !req.url.includes('/welcome-email/resend')) {
         snackBar.open('Error interno del servidor.', 'Cerrar', { duration: 4000 });

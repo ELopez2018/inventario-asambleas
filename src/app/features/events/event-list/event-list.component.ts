@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { ConfirmationService } from '../../../shared/confirmation.service';
 import { Component, OnInit, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -27,6 +28,7 @@ import { EventResponse } from '../../../models/event.model';
   styleUrl: './event-list.component.css',
 })
 export class EventListComponent implements OnInit {
+  private readonly confirmation = inject(ConfirmationService);
   private readonly eventService = inject(EventService);
   private readonly eventContext = inject(EventContextService);
   private readonly auth = inject(AuthService);
@@ -87,8 +89,8 @@ export class EventListComponent implements OnInit {
       });
   }
 
-  deleteEvent(event: EventResponse) {
-    const confirmed = confirm(`Eliminar "${event.description}"?`);
+  async deleteEvent(event: EventResponse) {
+    const confirmed = await this.confirmation.confirmDelete(`¿Eliminar "${event.description}"?`);
 
     if (!confirmed) {
       return;

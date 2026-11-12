@@ -36,13 +36,43 @@ export interface TransportRequestItemAllocationRequest {
 }
 
 export interface TransportRequestItemRequest {
+  id?: number | null;
   quantity: number;
   description: string;
   sizeAndWeight?: string | null;
   lineTotal?: number | null;
   articleControlType?: ArticleControlType;
-  /** No se envía: el backend calcula el surtido según la prioridad de bodegas. */
+  /** Por defecto AUTO: el backend surte por prioridad de bodegas. */
+  allocationMode?: AllocationMode;
+  /** Solo se envía con `allocationMode = 'MANUAL'`; en AUTO el backend la ignora. */
   allocations?: TransportRequestItemAllocationRequest[];
+}
+
+export type AllocationMode = 'AUTO' | 'MANUAL';
+
+export interface AllocationPreviewRequest {
+  /** Solo al editar un CO-31 existente, para contar como disponible lo que ya reservó. */
+  transportRequestId?: number | null;
+  items: { description: string; quantity: number }[];
+}
+
+export interface AllocationPreviewAllocation {
+  sourceStoreId: number | null;
+  sourceStoreName: string | null;
+  requestedQuantity: number;
+  allocatedQuantity: number;
+  status: TransportAllocationStatus;
+}
+
+export interface AllocationPreviewResponse {
+  items: {
+    description: string;
+    quantity: number;
+    newItem: boolean;
+    allocations: AllocationPreviewAllocation[];
+    allocatedQuantity: number;
+    unavailableQuantity: number;
+  }[];
 }
 
 export interface CreateTransportRequestRequest {
@@ -75,7 +105,16 @@ export interface TransportRequestItemResponse {
   lineTotal: number | null;
   newItem: boolean;
   articleControlType: ArticleControlType;
+  /** Ausente en respuestas antiguas: se trata como AUTO. */
+  allocationMode?: AllocationMode;
   allocations: TransportRequestItemAllocationResponse[];
+  allocatedQuantity?: number;
+  unavailableQuantity?: number;
+  /** Unidades marcadas como no encontradas desde el CO-30 (0 si no hay). */
+  notFoundQuantity?: number;
+  inventoryAdjustmentNote?: string | null;
+  inventoryAdjustmentReason?: string | null;
+  deliveryConfirmed?: boolean;
 }
 
 export interface TransportRequestItemAllocationResponse {

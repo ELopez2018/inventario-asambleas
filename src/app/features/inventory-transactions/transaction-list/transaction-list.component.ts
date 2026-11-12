@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { ConfirmationService } from '../../../shared/confirmation.service';
 import { Component, OnInit, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -27,6 +28,7 @@ import { InventoryTransactionResponse } from '../../../models/inventory-transact
   styleUrl: './transaction-list.component.css',
 })
 export class TransactionListComponent implements OnInit {
+  private readonly confirmation = inject(ConfirmationService);
   private readonly transactionService = inject(InventoryTransactionService);
   private readonly storeService = inject(StoreService);
   private readonly auth = inject(AuthService);
@@ -86,8 +88,8 @@ export class TransactionListComponent implements OnInit {
       });
   }
 
-  deleteTransaction(transaction: InventoryTransactionResponse) {
-    const confirmed = confirm(`Eliminar el movimiento #${transaction.id}?`);
+  async deleteTransaction(transaction: InventoryTransactionResponse) {
+    const confirmed = await this.confirmation.confirmDelete(`¿Eliminar el movimiento #${transaction.id}?`);
 
     if (!confirmed) {
       return;

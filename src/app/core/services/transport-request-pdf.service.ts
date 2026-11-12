@@ -1,3 +1,4 @@
+import { addInventoryAdjustmentPages } from './inventory-adjustment-pdf';
 import { Injectable } from '@angular/core';
 import { PDFDocument, PDFTextField, StandardFonts } from 'pdf-lib';
 import {
@@ -67,8 +68,8 @@ export class TransportRequestPdfService {
 
     setText('Text1', request.requestNumber);
     setText('Text2', this.formatDate(request.requestDate));
-    setText('Text3', request.requestedFrom);
-    setText('Text4', request.requestedTo);
+    setText('Text3', request.requestedTo);
+    setText('Text4', request.requestedFrom);
     setText('Text5', eventDescription);
     setText('Text6', request.targetDepartment);
     setText('Text7', request.targetPlace);
@@ -81,15 +82,29 @@ export class TransportRequestPdfService {
       this.fillItemRow(setText, fields, item);
     }
 
-    setText('Text33', this.buildObservations(request));
-    setText('Text34', request.receivedBy);
+    setText('Text34', '');
     setText('Text35', request.authorizedBy);
-    setText('Text36', this.formatDate(request.receivedDate));
-    setText('Text37', this.formatTime(request.receivedTime, true));
-
-    form.updateFieldAppearances(font);
+    setText('Text36', '');
+    setText('Text37', '');
 
     this.addContinuationPages(pdf, font, request);
+    addInventoryAdjustmentPages(pdf, font, request.items, `CO-31 ${request.requestNumber}`);
+
+    const totalPages = pdf.getPageCount();
+    setText('Text33', this.buildObservations(request, totalPages));
+
+    if (totalPages > 1) {
+      pdf.getPages().slice(1).forEach((page, index) => {
+        page.drawText(`Observaciones: ${index + 2}/${totalPages} páginas`, {
+          x: CONTINUATION_TABLE.left,
+          y: 20,
+          size: 8,
+          font,
+        });
+      });
+    }
+
+    form.updateFieldAppearances(font);
 
     return pdf.save();
   }
@@ -145,7 +160,7 @@ export class TransportRequestPdfService {
         const y = CONTINUATION_TABLE.top - (row + 1) * CONTINUATION_TABLE.rowHeight + 5;
         const values = [
           this.formatQuantity(item.quantity),
-          item.description,
+          `${item.inventoryAdjustmentNote ?? ''} ${item.description}`,
           item.sizeAndWeight ?? '',
           this.formatMoney(item.lineTotal),
         ];
@@ -180,13 +195,17 @@ export class TransportRequestPdfService {
     item: TransportRequestItemResponse | undefined,
   ): void {
     setText(fields.quantity, item ? this.formatQuantity(item.quantity) : null);
-    setText(fields.description, item?.description);
+    setText(fields.description, item ? `${item.inventoryAdjustmentNote ?? ''} ${item.description}`.trim() : null);
     setText(fields.sizeAndWeight, item?.sizeAndWeight);
     setText(fields.lineTotal, item ? this.formatMoney(item.lineTotal) : null);
   }
 
-  private buildObservations(request: TransportRequestResponse): string {
-    return request.observations?.trim() ?? '';
+  private buildObservations(request: TransportRequestResponse, totalPages: number): string {
+    const observations = request.observations?.trim() ?? '';
+
+    return totalPages > 1
+      ? [observations, `1/${totalPages} páginas`].filter(Boolean).join(' - ')
+      : observations;
   }
 
   private formatDate(value: string | null): string {

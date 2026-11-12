@@ -89,6 +89,24 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'stores/new',
+        canActivate: [screenAccessGuard],
+        data: { screenCode: 'STORES' },
+        loadComponent: () =>
+          import('./features/stores/store-form/store-form.component').then(
+            (m) => m.StoreFormComponent,
+          ),
+      },
+      {
+        path: 'stores/:id/edit',
+        canActivate: [screenAccessGuard],
+        data: { screenCode: 'STORES' },
+        loadComponent: () =>
+          import('./features/stores/store-form/store-form.component').then(
+            (m) => m.StoreFormComponent,
+          ),
+      },
+      {
         path: 'reports/store-orders',
         canActivate: [screenAccessGuard],
         data: { screenCode: 'STORE_ORDERS_REPORT' },
